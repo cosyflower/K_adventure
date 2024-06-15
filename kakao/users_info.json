@@ -1,0 +1,37 @@
+{
+    "U072MMSHFGR": {
+        "id": "U072MMSHFGR",
+        "name": "isangho736",
+        "real_name": "이상호",
+        "display_name": "",
+        "authority": 1
+    },
+    "U073ARB375W": {
+        "id": "U073ARB375W",
+        "name": "kakaotest240509",
+        "real_name": "kakao_test_240509",
+        "display_name": "",
+        "authority": 1
+    },
+    "U075MCMUL04": {
+        "id": "U075MCMUL04",
+        "name": "ssu.sexycode",
+        "real_name": "황성훈",
+        "display_name": "황성훈",
+        "authority": 1
+    },
+    "USLACKBOT": {
+        "id": "USLACKBOT",
+        "name": "slackbot",
+        "real_name": "Slackbot",
+        "display_name": "Slackbot",
+        "authority": 4
+    },
+    "U072925FWV9": {
+        "id": "U072925FWV9",
+        "name": "kakaotest",
+        "real_name": "kakao_test",
+        "display_name": "",
+        "authority": 4
+    }
+}

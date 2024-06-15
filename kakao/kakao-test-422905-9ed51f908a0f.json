@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "kakao-test-422905",
+  "private_key_id": "9ed51f908a0f6966ecbe13f002cc3a3bd428fe2d",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCwkHbxcey6JU3P\neUVF3x5WleWGlbTc3izTpwAkSCQGK42/xsXxHzYivjxXDdhYg8n35n60Wlv2Zrn2\nl3jv7Tbt673pNopybjcw8rNMMaHNK90JphxQSFSQ+3MZeCWQocQzKeFDHU0pJvTK\ntfN78NFWfjW+p/yZgb3KFg4fQ63AGSznCm6wUwlwgJp4as9xttIx8g6K7u/q7EpC\nM9SEpFAH3INqgU3DdEOfiDN0dBIzCxEDYSwIxELxshFq03IFmkmvOB21V0ABCg1S\nuNw8xP3Z7p84zZ1UhTIYJillvy9YxOVrGVYtihteGwAeWegIWWxFn31EVdvV1P8v\nhbh6yQGRAgMBAAECggEAJ4ID423bCyH6wcCAhCxzROugotdP05YxUKDPMs8jpG/N\ndYqcUyJpQifwJ4iVDuVaZYqhcmi/qCh/VxK4wHMDdgRoh80o+Ib5+Y1tGlEGw/qb\nKKQPNNWiepiRPjM4sJ7J4Krv2U0urVUmtE83btXJecGe9AzxxEWYOqZpvYwuzktU\nm7QKsx5tKX9YqX1K8H8kAzR60mlaU7xTZ0hY/euYsEmo00H0NuZMCA9yEfFLvWkB\nt+on1CIr4lrEnVtIvHS5fiJ/tw83r4nscShzgHGHQnyRqJwd/7GvHqiazR9GcrfI\njjwHCvx21Qs8/9HZFlyP3yPfSkKc0F79UO+YkkOquQKBgQDdeUZJ1PD9EDlw0OYR\nI/u7mLTKsloyUtQ+5hIihCOXyLfW7jTSlnZl7orXgu/kNI8ArPLosVwLgNfM4uPt\n5v30PlXkhTBorOntQ612oqm3Y0CcQoBW6Ycj7wssUlipH7aUZ4B9mDL6rqXDFzuO\nXIxyhQiexMOUezK2FOjRr1LfxQKBgQDMFuoUerh/9gZpVQRWt3wTnbnWrga2yMd3\n9XHGbBA3IsK4Sbq0t4x0/GwdFQ+2FhLY9M3PdLwtIcck2lXCxxlK8WT62QHGftdW\njLzYg+0++WbT3k+ajA/NwVhXo66qJlZ8+IThA9FQMd7EFXZV925amdSL3xb6Tqul\n5grUNJNLXQKBgQDPnI7qSUZ7Q8lE217ANKYXTmg0Fwr8X679I3leh9ZBw/Op9HTp\n8AgfN4VJz0GIAEkJjhbLUO+DDQ2+z/ZwnnfzjLfB16Twix9ivm2OZ5+G/PClSqW6\nU4HOiphDvRHFwKfL6FaH5bPsUOmsv0uiAVnbRKA3DSZ2OyLnkyRI4/xhLQKBgQCx\naGXYoYkKKsoN/ApGez9PKfdmp2ZMs6G5JFHfowZBd2T+n5C+ESP2eYpdiXZb2TpP\nABZ79MSzEr6yyVxtcXcKD2axK7yAWLhFkxeBusSbzl7VY1WdSY1fVWe+3xkw7RyX\ni8yucQwdgwxbNTDlr61s8nWxlJ67vXE2SA83wfAcPQKBgQDLXZCBU5K0762ViCXo\n8CyR4SOmQkgKZBVOhPZ8VLltuMOxKr76gL6P5hjxP4pRjmYyoVL3XOU+NibJc3it\nbxyEV9AJXkD/aA01N8EdH4TBtP/91ZLp0APOxclGWbaCWZZBxQnMtZGIUX5TZ0TU\nLyNfP/BSQ9VTzhZtkHnx47Vyng==\n-----END PRIVATE KEY-----\n",
+  "client_email": "kakao-test@kakao-test-422905.iam.gserviceaccount.com",
+  "client_id": "115104835195781223441",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/kakao-test%40kakao-test-422905.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

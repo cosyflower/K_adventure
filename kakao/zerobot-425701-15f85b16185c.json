@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "zerobot-425701",
+  "private_key_id": "15f85b16185c5f555d5b5e9cb6898133287e5ddf",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDP8NXXW7B9JnGi\nwSTQdlODjZf6XqV7PtBf6AqD0Wo1DNlqvUFItmqHNBk7AffXv2DI9TtSVUWWB6FQ\nZ/RjfjMhiYibmJl/JGCRAiGwfvHHYPfa9hzgxgSanRkP8AS2YT4CiY+ngVozgdpl\nudz2FoGLQaKEbXbfz0hmeWbG1rTk1tzLI7UOsWS5CMrk2b8hkDOoLwJiZw7jvQxU\nrMp3rS5P+SpJ38S8CwSD6hAC+Z0lq7fXoJfC9taiZUPt1Hf5RA9kq/zRls3qGLcd\nCPH6gOCkjs9X7sNITtS1E/bcdTwKIGqctHMGzYRmwVu3JvA26sZMB46/IyJR6ZjF\nMpnny9tFAgMBAAECggEANXBs3GhFbpxTJuMhPWuzYcMhVCg/ufE2JvegwCiw9UpE\nk9BodzHeJboHY+lJEwqtamfPo4Sjmf+C/wGARpN3u343e9lXVVv5bzrPgqbVJwqu\nF/kZCdEJ/NwzxStHYsGR6KAGqaMuFb+g63S9Kwc0qp+nDwZ8vt7r+d3oQmCKY6a3\nkMSSKcT08Op2w4xcXrkaqOJOQ+Iao5+H4cL2eWcSqgV0C9oB1bdILLOReDi115AT\n0/XSH2r3ZpXi7OYLFIUQrEnHPzcHqoamdfX12iZFBNW17P5EVwhbewS3hWImwmKX\n/KM4/8SKsU31T7mPO0YY6s9NwThhWfIfeKG8GghG7wKBgQD1ArlJXE0cF2ApVns2\nQESS5De64kp3vQWgGDqQ6SDKFXp9zg4/PVpWu0wIXDdqgoq4IotkR3kA0wkoSyKf\nVOzEvrpGT7g1prM9wIvxFK4YcjSDs0MTbVo/Mp4DDx5iyNUqhnFrlEgqRgZpyLWn\nLYqkbn46pKAS8ErU5dBgE8/0ZwKBgQDZRHcsmwU8tZRMf61K+m2tTi1EI3ECSFAO\nuyccuaOAZkxkbsa9+S6rnEDiRWUADmbP/r7hjXyPqbDSsCeLho4ZPIUr9nBgWbws\nTCJ6Ln+lHzZ/EXGoQDw4QQvMJQvSL8lD0pMbOOQN1ehgASPZ89r89FcT2MGZEefx\n8Ffm21PHcwKBgQDFE1LMgnT30omj1o82/QzrhqyZIyo5FA7xTmvVYd/hDNPBW7wz\n+/qtZuxqkRp2Dtjb8dVjbOYU1qs4AO+xb5MfUjbtFXSbmyHz2uv1l+fNfBdnlAqx\nFrWPvfxBg6iyVs637PpQSS6e6kKAVlRfS4+IYeQg8Yhck3Htu4kXrvgHowKBgQDG\na6ya5AhoZTxGkOPmccbwW1EjxWpTt07F5U3XAgK8JLDnl/ORU5y3xT/MZavT3VMv\n6WrR+rEjUsnV4GJ9HilwCsFkYPBITit4GR/zjbutRVAzw+6UxfU5Os5XZg3hqxqY\nAhuu5MoBiLVr2B6x0e7QzSUpTu+fp6a4YdMlVnCw2QKBgQCFKIm7vRkNBzPzlGX5\nXBUIYWnR7mnn3n/dXyj/GKoGSbjYOcp79AWg8Wbxt54CQIVVX3hTnOedpttIg0vP\nzjQ24B6s94WdsNM0sXA14KX6Br/TobqVxUn8A9VgvTF389do39OSyhVGFLzOZhlo\nU4Crb6pXEqZ9pvhTxZwiksY1FA==\n-----END PRIVATE KEY-----\n",
+  "client_email": "zerobot@zerobot-425701.iam.gserviceaccount.com",
+  "client_id": "113930975830190331630",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/zerobot%40zerobot-425701.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
