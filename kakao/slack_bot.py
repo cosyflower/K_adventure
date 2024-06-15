@@ -5,7 +5,7 @@ import googleapi
 import chatgpt
 import re
 import time
-from user_commend import docx_generate, full_rest, half_rest, search_db, one_and_one, authority_update, view_all_user_authority_list, view_updated_user_authority_list, view_my_authority, authority_change # 사용자 명령어 DB
+from user_commend import docx_generate, full_rest, half_rest, search_db, one_and_one, authority_update, view_all_user_authority_list, view_updated_user_authority_list, view_my_authority, authority_change, vacation_list # 사용자 명령어 DB
 import get_slack_user_info
 import json
 import config
@@ -32,6 +32,8 @@ def check_the_user_purpose(user_input):
         return view_my_authority[0]
     elif user_input in authority_change:
         return authority_change[0]
+    elif user_input in vacation_list: # 휴가 신청 키워드 포함 - 휴가 신청할래로 반환
+        return vacation_list[0]
     else:
         print("chatgpt 사용 + 3원")
         return chatgpt.analyze_user_purpose(user_input)
@@ -59,7 +61,7 @@ def handle_message_events(event, say):
     ### 사용자 명령어 인식 프로세스
     if user_id not in user_states:
         user_purpose_handler(event, say) # 0. Mention하고 명령어를 입력하면 
-        user_input_info[user_id] = user_input
+        user_input_info[user_id] = user_input 
     else: # state 확인 - 케이스에 맞는 함수를 실행하는 구간이 되겠다
         if user_states[user_id] == 'docx_generating_waiting_company_name': 
             docx_generating_company_name_handler(event, say)
@@ -73,6 +75,9 @@ def handle_message_events(event, say):
             authority_update_authority_category(event, say)
         elif user_states[user_id] == 'authority_update_json_file':
              authority_update_authority_update_json_file(event, say)
+        elif user_states[user_id] == 'request_vacation':
+            request_vacation(event, say)
+        
         
 def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 user_states[] 변경해야 한다 
     user_id = message['user']
@@ -128,8 +133,17 @@ def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 use
     elif purpose == "권한 업데이트해줘":
         get_slack_user_info.update_authority()
         say(f"<@{user_id}> 권한 업데이트가 끝났습니다")
+    elif purpose == "휴가 신청할래": # 휴가 신청 관련 
+        say(f"<@{user_id}> 휴가 / 연차를 신청합니다.")
+        user_states[user_id] = 'request_vacation'
     else:
         say(f"<@{user_id}> 없는 기능입니다. 다시 입력해주세요")
+
+######### 휴가/연차 #######
+def request_vacation(message, say):
+    
+
+
 #########################   문서 생성    ########################################
 def docx_generating_company_name_handler(message, say):
     user_id = message['user']
