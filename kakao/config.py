@@ -14,6 +14,15 @@ fileD_id = '1chSNrto9JelvbpbdonxDOGX-yPdFUT2snOhT_W6mSTQ' # 투자집행품의�
 fileABCD_parent_folder_id = '1wkwxCOFl2yINER3ixaLuA7P2vp7SUIdf' 
 app_token_id = 'xoxb-7070442783094-7112861109200-UImo7AdRysDFCYB69xub4Pxf'
 user_token_id = 'xapp-1-A072N1TECNN-7089950489011-4fa8538d3daed24db4a9195dc7ffe6a2041c7e6f76502e8cba875b96f082d468'
+
+######### Dummy ###########
+# 연차 / 반차 dummy Id
+dummy_vacation_db_id = '1s1x0S4Gqt5mv8jgYyJWhv7GdVy_2Fs-QnlH6_IIcpXk'
+
+
+
+######## Past Dummy Files
+
 # kakao_json_key_path = 'zerobot-425701-15f85b16185c.json'
 # db_1_id = '1sjoyLXr9a1ltEnI8GtReMO55FqSPdFbgLJL4f0ER3Rg'
 # db_2_id = ''

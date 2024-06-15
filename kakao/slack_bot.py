@@ -10,6 +10,10 @@ import get_slack_user_info
 import json
 import config
 
+# Testing
+from googleVacationApi import append_data
+from validator import validate_name
+
 # 원하는 기능명을 반환해야 한다
 def check_the_user_purpose(user_input):
     if user_input in docx_generate:
@@ -48,6 +52,7 @@ inv_list_info = {}
 inv_info = {}
 user_input_info = {}
 
+
 @app.event("message")
 def handle_message_events(body, logger):
     # 이벤트로부터 메시지의 내용을 추출하고 로그로 기록합니다.
@@ -61,7 +66,7 @@ def handle_message_events(event, say):
     ### 사용자 명령어 인식 프로세스
     if user_id not in user_states:
         user_purpose_handler(event, say) # 0. Mention하고 명령어를 입력하면 
-        user_input_info[user_id] = user_input 
+        user_input_info[user_id] = user_input
     else: # state 확인 - 케이스에 맞는 함수를 실행하는 구간이 되겠다
         if user_states[user_id] == 'docx_generating_waiting_company_name': 
             docx_generating_company_name_handler(event, say)
@@ -134,14 +139,56 @@ def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 use
         get_slack_user_info.update_authority()
         say(f"<@{user_id}> 권한 업데이트가 끝났습니다")
     elif purpose == "휴가 신청할래": # 휴가 신청 관련 
-        say(f"<@{user_id}> 휴가 / 연차를 신청합니다.")
+        say(f"<@{user_id}> 휴가 / 연차를 신청합니다. 아래의 형식에 맞게 입력해주세요\n\n"
+            "############# 다음은 형식입니다 #############"
+            "\n이름 - 휴가 시작일 - 휴가 종료일 - 연차 / 반차 - 휴가 사유 - 휴가 상세 사유 - 이메일 주소\n\n"
+            "############# 다음은 유의 사항입니다 #############\n"
+            "[유의] 각각에 들어갈 내용들을 '-'로 구분합니다.\n"
+            "[유의] 휴가 시작일과 휴가 종료일은 YYYYMMDD로 작성하세요\n"
+            "[유의] 휴가 종류에 연차, 반차, 반반차오전, 반반차오후 중 하나를 택하세요\n"
+            "[유의] 휴가 사유에 개인, 경조, 특별, 예비군(민방위), 보건, 안식, 출산 중 하나를 택하세요\n"
+            "[유의] 경조, 특별, 출산휴가의 경우 휴가 상세 사유를 필수 작성하세요. (이외의 휴가는 휴가 상세 사유를 공백으로 제출해주세요)\n\n"
+            "############# 다음은 예시입니다 #############\n"
+            "[예시] *경조, 특별, 출산휴가를 선택한 경우 : 성훈 - 20240501 - 20240501 - 반반차(오후) - 결혼식 준비 - sunghun@naver.com\n"
+            "[예시] *이외의 경우 : 성훈 - 20240301 - 20240301 - 연차 - 개인휴가 - - sunghun@gmail.com\n")
+
         user_states[user_id] = 'request_vacation'
     else:
         say(f"<@{user_id}> 없는 기능입니다. 다시 입력해주세요")
 
+
 ######### 휴가/연차 #######
 def request_vacation(message, say):
+    user_id = message['user']
+    user_input = message['text']
+    # 정규 표현식 활용해서 원하는 구간 추출하는거 모듈화해야할지도? 
+    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
+    say(f"(used for test) without regular expression : <{cleaned_user_input}>")
     
+    """
+    
+
+    # 더미 파일 id 
+    dummy_vacation_db_id = config.dummy_vacation_db_id
+    
+    requester_name = cleaned_user_input
+    say(f"(휴가 / 연차 테스트) <{requester_name}> 을 입력했습니다.\n")
+
+    say(f"(테스트) user_id : <@{user_id}>\n user_input: <{user_input}> ")
+    
+    # 타임 스탬프 - 누구 - 휴가 시작일 - 휴가 종료일 - 연차 / 반차 구분 - 휴가 사유 - 휴가 상세 사유 - 이메일 주소
+    
+
+
+
+
+
+    # row_data 만들기
+    new_row_data = [user_id, cleaned_user_input] # user_input : <@mention_name> 입력한 문자열
+    # 추가하기
+    append_data(dummy_vacation_db_id, new_row_data)
+    say(f"(테스트를 진행하는 중입니다). <{cleaned_user_input}> append 완료! 더미 파일을 확인해주세요")
+    """
 
 
 #########################   문서 생성    ########################################
