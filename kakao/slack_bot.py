@@ -11,10 +11,13 @@ import get_slack_user_info
 import json
 import config
 
-# Testing
+# Testing for vacation
 from googleVacationApi import append_data
 from validator import is_validate_name, is_valid_date, is_valid_vacation_sequence, is_valid_vacation_reason_sequence, \
 is_valid_email
+
+# testing for validating on generating docx
+import gspread
 
 # 원하는 기능명을 반환해야 한다
 def check_the_user_purpose(user_input):
@@ -149,6 +152,11 @@ def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 use
         user_states[user_id] = 'request_vacation'
     else:
         say(f"<@{user_id}> 없는 기능입니다. 다시 입력해주세요")
+
+######### 휴가 / 연차 시스템 #############
+#########
+
+
 
 ##### 휴가 종류를 입력받는다
 def input_vacation_type(message, say):
@@ -354,7 +362,36 @@ def docx_generating_company_name_handler(message, say):
     user_id = message['user']
     user_input = message['text']
     user_input = process_user_input(user_input)
-    all_company_names, all_company_names_full = googleapi.get_all_company_names()
+    # 모든 기업 이름을 가지고 오는 구간
+    try:
+        say("스프레드시트에 등록된 기업명 정보를 로드중입니다.\n")
+        all_company_names, all_company_names_full = googleapi.get_all_company_names()
+        say("스프레드시트에 등록된 기업명 정보 로드 완료. 잠시만 기다려주세요...\n")
+    except FileNotFoundError as e: # JSON 키 파일이 없는 경우
+        say("등록된 키 파일의 정보를 찾을 수 없습니다. JSON 키 파일을 등록해주세요. 프로그램을 종료합니다.\n")
+        # say(f"File not found error: {e}")
+        # all_company_names, all_company_names_full = [], []
+        del user_states[user_id]
+        return
+    except gspread.exceptions.SpreadsheetNotFound as e: # 스프레드시트를 찾지 못한 경우
+        say("연결된 스프레트시트 정보를 찾을 수 없습니다. 파일을 확인해주세요. 프로그램을 종료합니다.\n")
+        # say(f"Spreadsheet not found: {e}")
+        # all_company_names, all_company_names_full = [], []
+        del user_states[user_id]
+        return
+    except gspread.exceptions.APIError as e: # API 호출 중 에러가 발생한 경우
+        say("gspread API 호출 중 에러가 발생했습니다. 다시 시도해주세요. 프로그램을 종료합니다.\n")
+        # say(f"API error: {e}")
+        # all_company_names, all_company_names_full = [], []
+        del user_states[user_id]
+        return
+    except Exception as e: # 그 외의 기타 에러가 발생한 경우
+        say("알 수 없는 에러가 발생했습니다. 에러를 확인해주세요. 프로그램을 종료합니다.\n")
+        say(f"An unexpected error occurred: {e}") 
+        # all_company_names, all_company_names_full = [], []
+        del user_states[user_id]
+        return
+
     if user_input == '종료':
         say(f"<@{user_id}> 종료합니다.")
         del user_states[user_id]
