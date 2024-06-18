@@ -10,24 +10,6 @@ from datetime import datetime
 
 """
 
-def is_validate_name(name):
-    """
-    이름을 검증하는 함수.
-    
-    :param name: str, 입력받은 이름
-    :return: bool, 이름이 유효한 경우 True, 그렇지 않은 경우 False
-    :raises ValueError: 이름이 유효하지 않은 경우 예외 발생
-    """
-    if not name:
-        raise ValueError("이름이 비어 있습니다. 유효한 이름을 입력해주세요.")
-    
-    if any(char.isdigit() for char in name):
-        raise ValueError("이름에 숫자가 포함되어 있습니다. 유효한 이름을 입력해주세요.")
-    
-    # 다른 검증 조건을 추가할 수 있습니다.
-    
-    return True
-
 def is_valid_date(date_str, comparison_date_str=None):
     # 정규식 패턴 정의 (YYYY-MM-DD HH:MM)
     date_pattern = r'^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):[0-5]\d$'
@@ -87,6 +69,14 @@ def is_valid_confirm_sequence(confirm_sequence):
     if re.fullmatch(r'\d+', confirm_sequence):
         reason_sequence = int(confirm_sequence)
         if reason_sequence <= 1:
+            return True
+    
+    return False
+
+def is_valid_cancel_sequence(cancel_sequeunce, candidate):
+    if re.fullmatch(r'\d+', cancel_sequeunce):
+        reason_sequence = int(cancel_sequeunce)
+        if 1 <= reason_sequence <= candidate:
             return True
     
     return False
