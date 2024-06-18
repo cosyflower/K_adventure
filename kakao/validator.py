@@ -1,6 +1,9 @@
 import re
 from datetime import datetime
 
+###### 새로 추가된 validator.py 파일
+##### 해당 파일에서는 검증 관련 함수만 넣을 예정
+
 """
 * 예외 처리 관련 함수들을 모아둔 Module
 * Process for validating inputs depending on proper format such as Date or name
@@ -38,6 +41,7 @@ def is_valid_date(date_str, comparison_date_str=None):
         return False
     
     if comparison_date_str:
+        # 추후 삭제 - 입력을 확인하기 위해서 임시 print
         print(date_str, comparison_date_str)
         # 비교 날짜의 형식도 체크합니다.
         # end_date >= start_date 인지를 확인합니다
@@ -80,6 +84,7 @@ def is_valid_vacation_reason_sequence(vacation_reason_sequence):
 
 def is_valid_email(email):
     # 이메일 형식을 검증하기 위한 정규식 패턴
+    # 추후 삭제 - 입력을 확인하기 위해서 임시 print
     print(email)
     pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     
