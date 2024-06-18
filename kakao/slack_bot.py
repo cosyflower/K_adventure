@@ -14,7 +14,7 @@ import config
 # Testing for vacation
 from googleVacationApi import append_data
 from validator import is_validate_name, is_valid_date, is_valid_vacation_sequence, is_valid_vacation_reason_sequence, \
-is_valid_email
+is_valid_email, is_valid_confirm_sequence
 
 # testing for validating on generating docx
 import gspread
@@ -225,6 +225,32 @@ def input_vacation_email(message, say):
     else:
         say(f"<@{user_id}>님 휴가 신청 진행중입니다. <{email}>올바르지 않은 이메일 형식입니다. 다시 입력하세요\n\n")
 
+def is_confirmed(confirm_sequence):
+    if(confirm_sequence == '0'):
+        return True
+    
+    return False
+
+def checking_final_confirm(message, say):
+    user_id = message['user']
+    user_input = message['text']
+    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
+    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
+    confirm_sequence = cleaned_user_input
+
+    # 유요한 입력인지 확인
+    if is_valid_confirm_sequence(confirm_sequence):
+        if is_confirmed(confirm_sequence):
+            user_vacation_status[user_id] = 'confirmed'
+        else:
+            say(f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 신청 정보를 재입력합니다. 휴가 시작 날짜를 알려주세요. 입력 형식은 YYYY-MM-DD 입니다.\n\n")
+            del user_vacation_status[user_id]
+            del user_vacation_info[user_id]
+    else:
+        say(f"<@{user_id}>님 휴가 신청 진행중입니다. <{confirm_sequence}> 잘못된 입력입니다. 0 혹은 1을 입력하세요(0: 저장, 1: 수정)\n\n")
+    # 0번이면 DB 반영하는 단계로 이어지도록 (상태 변경해야 한다) + info 정보 wrapping 해서 DB에 반영해야 한다
+    # 1번이면 user_vacation_info, user_vacation_status 해당 인덱스 정보 삭제하기
+
 ######### 휴가/연차 #######
 def request_vacation(message, say):
     user_id = message['user']
@@ -330,14 +356,21 @@ def request_vacation(message, say):
         say(f"<@{user_id}>님 휴가 신청 진행중입니다. <@{user_id}>의 개인 이메일을 작성해주세요")
         user_vacation_status[user_id] = "checking_vacation_email"
     
-    if user_vacation_status[user_id] == "pre-confirmed":
+    if user_vacation_status[user_id] == "waiting_final_confirm":
+        checking_final_confirm(message, say)
+    
+    if user_id in user_vacation_info and user_vacation_status[user_id] == "pre-confirmed":
         say(f"<@{user_id}>의 휴가 신청 정보입니다.")
         for a, value in enumerate(user_vacation_info[user_id]):
             # 저장된 정보 출력 
             # user_states, user_vacation_info, user_vacation_status 로 상태를 지속적으로 확인하는 중으로 생각하기
             say(f"{value}\n")
+        say(f"<@{user_id}>의 휴가 신청을 완료하려면 0을, 수정을 원하면 1을 입력하세요.")
+        user_vacation_status[user_id] = "waiting_final_confirm"
 
-
+    if user_id in user_vacation_info and user_vacation_status[user_id] == "confirmed":
+        # DB에 저장한다
+        return
     # 연차를 실행하는 경우 - 기존 기록을 업데이트 해야 한다 
     # 마지막에서 가장 최근 기록을 서치하고 - 해당 기록을 다시 입력한 기록으로 업데이트를 진행한다
     """

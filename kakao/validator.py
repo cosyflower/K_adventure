@@ -93,3 +93,11 @@ def is_valid_email(email):
         return True
     else:
         return False
+    
+def is_valid_confirm_sequence(confirm_sequence):
+    if re.fullmatch(r'\d+', confirm_sequence):
+        reason_sequence = int(confirm_sequence)
+        if reason_sequence <= 1:
+            return True
+    
+    return False
