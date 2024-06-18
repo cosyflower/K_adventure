@@ -184,7 +184,7 @@ def input_cancel_sequence(message, say):
         cancel_vacation_status[user_id] = 'waiting_deleting'
         cancel_vacation(message, say) # 입력한 수를 넘겨야 한다
     else:
-        say(f"잘못된 번호입니다. 다시 입력해주세요.")
+        say(f"<@{user_id}>님의 휴가 취소 프로세스를 진행중입니다.. 잘못된 번호입니다. 다시 입력해주세요.")
 
 #### 휴가 취소 --- 진행중
 def cancel_vacation(message, say):
@@ -206,6 +206,7 @@ def cancel_vacation(message, say):
             say(f"{seq}. {format_vacation_info(result)}")
             seq += 1
         cancel_vacation_status[user_id] = 'waiting_cancel_sequence'
+        return
     
     if cancel_vacation_status[user_id] == 'waiting_cancel_sequence':
         input_cancel_sequence(message, say)
