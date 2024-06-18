@@ -29,38 +29,27 @@ def is_validate_name(name):
     return True
 
 def is_valid_date(date_str, comparison_date_str=None):
-    # 먼저 길이를 체크합니다.
-    if len(date_str) != 10:
+    # 정규식 패턴 정의 (YYYY-MM-DD HH:MM)
+    date_pattern = r'^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):[0-5]\d$'
+    # date_str 형식 검증
+    if not re.match(date_pattern, date_str):
         return False
-    # 정규식을 사용하여 형식이 올바른지 체크합니다.
-    if not re.match(r'\d{4}-\d{2}-\d{2}', date_str):
-        return False
+    # 날짜 및 시간 유효성 검사
     try:
-        date = datetime.strptime(date_str, '%Y-%m-%d')
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d %H:%M')
     except ValueError:
         return False
-    
+    # comparison_date_str이 주어졌을 때의 처리
     if comparison_date_str:
-        # 추후 삭제 - 입력을 확인하기 위해서 임시 print
-        print(date_str, comparison_date_str)
-        # 비교 날짜의 형식도 체크합니다.
-        # end_date >= start_date 인지를 확인합니다
-        if len(comparison_date_str) != 10:
-            return False
-        if not re.match(r'\d{4}-\d{2}-\d{2}', comparison_date_str):
+        if not re.match(date_pattern, comparison_date_str):
             return False
         try:
-            comparison_date = datetime.strptime(comparison_date_str, '%Y-%m-%d')
+            comparison_date_obj = datetime.strptime(comparison_date_str, '%Y-%m-%d %H:%M')
         except ValueError:
             return False
-        
-        # 날짜 비교를 수행합니다.
-        # 한번 더 확인하기 (수정해야 함)
-        if datetime.strptime(comparison_date_str, '%Y-%m-%d') <= datetime.strptime(date_str, '%Y-%m-%d'):
-            return True
-        else:
-            return False
-    
+        # date_str이 comparison_date_str 이상인지 비교
+        return date_obj >= comparison_date_obj
+    # comparison_date_str이 없는 경우 형식이 올바른지 여부 반환
     return True
     
 
@@ -87,7 +76,7 @@ def is_valid_email(email):
     # 추후 삭제 - 입력을 확인하기 위해서 임시 print
     print(email)
     pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-    
+
     # 정규식 패턴과 일치하는지 확인
     if re.match(pattern, email):
         return True

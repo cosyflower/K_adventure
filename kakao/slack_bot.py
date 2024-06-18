@@ -15,9 +15,11 @@ import config
 from googleVacationApi import append_data
 from validator import is_validate_name, is_valid_date, is_valid_vacation_sequence, is_valid_vacation_reason_sequence, \
 is_valid_email, is_valid_confirm_sequence
+from translator import to_specific_date
 
 # testing for validating on generating docx
 import gspread
+import datetime
 
 # 원하는 기능명을 반환해야 한다
 def check_the_user_purpose(user_input):
@@ -148,7 +150,11 @@ def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 use
         get_slack_user_info.update_authority()
         say(f"<@{user_id}> 권한 업데이트가 끝났습니다")
     elif purpose == "휴가 신청할래": # 휴가 신청 관련 -> 추후 휴가 신청할래로 변경
-        say(f"<@{user_id}>님의 휴가 신청 프로세스를 진행합니다. 휴가 시작 날짜를 입력해주세요\n\n")
+        say(f"<@{user_id}>님의 휴가 신청 프로세스를 진행합니다. 휴가 시작 날짜와 시간을 입력해주세요\n"
+            "날짜는 YYYY-MM-DD 형태로 작성해주세요. 시간은 HH:MM 형태로 작성해주세요.\n"
+            "[예시 1] 2024-04-04 09:00\n"
+            "[예시 2] 2024-04-04 09:00\n"
+            )
         user_states[user_id] = 'request_vacation'
     else:
         say(f"<@{user_id}> 없는 기능입니다. 다시 입력해주세요")
@@ -214,9 +220,13 @@ def input_vacation_email(message, say):
     cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
     email = cleaned_user_input
 
-    email = email.split('|')[1]
-    # 만약 꺾쇠 괄호(<, >)도 제거하고 싶다면 strip 메서드를 사용할 수 있습니다.
-    email = email.strip('>')
+    print(email)
+
+    # 이메일에 '!' 문자가 있는지 확인
+    if '!' not in email:
+        email = email.split('|')[1]
+        # 만약 꺾쇠 괄호(<, >)도 제거하고 싶다면 strip 메서드를 사용할 수 있습니다.
+        email = email.strip('>')
 
     if is_valid_email(email):
         user_vacation_info[user_id].append(email) # 변환 모듈
@@ -279,20 +289,24 @@ def request_vacation(message, say):
         start_date = process_user_input(cleaned_user_input)
         if is_valid_date(start_date):
             user_vacation_info[user_id].append(start_date)
-            say(f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종료 날짜를 입력해주세요.\n날짜는 YYYY-MM-DD 형태로 입력하세요\n"
-            "[예시] 2024-01-01\n\n")
+            say(f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종료 날짜와 시간을 입력해주세요.\n"
+                "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 입력하세요\n"
+                "[예시] 2024-04-04 18:00\n"
+                )
         else:
-            say("시작 날짜 형식이 잘못되었습니다. 휴가 시작 날짜를 YYYY-MM-DD 형태로 다시 입력해주세요.")
+            say("잘못된 형식입니다. 휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로 다시 입력해주세요.")
             user_vacation_status[user_id] = 'pending'
     elif user_vacation_status[user_id] == 'pending': # 다시 시작 날짜부터 받는다 
         start_date = process_user_input(cleaned_user_input)
         if is_valid_date(start_date):
             user_vacation_info[user_id].append(start_date)
-            say(f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종료 날짜를 입력해주세요.\n날짜는 YYYY-MM-DD 형태로 입력하세요\n"
-            "[예시] 2024-01-01\n\n")
+            say(f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종료 날짜와 시간을 입력해주세요.\n"
+                "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 작성해주세요\n"
+                "[예시] 2024-01-01 19:00\n"
+                )
             user_vacation_status[user_id] = 'requesting'
         else:
-            say(f"<@{user_id}>님 휴가 시작 날짜를 다시 입력해주세요 (YYYY-MM-DD) 형태로 입력하세요 \n\n")
+            say(f"<@{user_id}>님 휴가 시작 날짜와 시간을 다시 입력해주세요 YYYY-MM-DD HH:MM 형태로 입력하세요 \n\n")
     elif user_vacation_status[user_id] == 'requesting': # 시작 날짜 문제가 없는 상황 - 종료 날짜를 입력받는다
         end_date = process_user_input(cleaned_user_input)
         if is_valid_date(end_date, comparison_date_str=user_vacation_info[user_id][0]):
@@ -302,7 +316,7 @@ def request_vacation(message, say):
             say(f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종류를 선택하세요\n\n")
             user_vacation_status[user_id] = 'waiting_vacation_type'
         else:
-            say("시작 날짜 형식이 잘못되었습니다. 휴가 시작 날짜를 YYYY-MM-DD 형태로 다시 입력해주세요.")
+            say("잘못된 형식입니다. 휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로 다시 입력해주세요.")
             user_vacation_info[user_id] = []
             user_vacation_status[user_id] = 'pending'
 
@@ -353,7 +367,9 @@ def request_vacation(message, say):
         input_vacation_email(message, say)
     if user_vacation_status[user_id] == "waiting_vacation_email":
         # email 입력받기
-        say(f"<@{user_id}>님 휴가 신청 진행중입니다. <@{user_id}>의 개인 이메일을 작성해주세요")
+        say(f"<@{user_id}>님 휴가 신청 진행중입니다. <@{user_id}>의 개인 이메일을 작성해주세요.\n"
+            "* 유의 * 이메일 아이디 내 느낌표(!)가 존재해서는 안 됩니다."
+            )
         user_vacation_status[user_id] = "checking_vacation_email"
     
     if user_vacation_status[user_id] == "waiting_final_confirm":
@@ -370,25 +386,46 @@ def request_vacation(message, say):
 
     if user_id in user_vacation_info and user_vacation_status[user_id] == "confirmed":
         # DB에 저장한다
+        # user_vacation_info[user_id] 안에 모두 담겨져있는 상황 : 시작 - 종료 - 종류 - 사유 - 상세 사유 - 이메일 
+        new_row_data = []
+        current_time = datetime.datetime.now().strftime('%Y. %m. %d %p %I:%M:%S').replace('AM', '오전').replace('PM', '오후')
+        # 시간을 넣어야 한다
+        start_date_formatted = to_specific_date(user_vacation_info[user_id][0])
+        end_date_formatted = to_specific_date(user_vacation_info[user_id][1])
+        type = user_vacation_info[user_id][2]
+        reason = user_vacation_info[user_id][3]
+        specific_reason = user_vacation_info[user_id][4]
+        email = user_vacation_info[user_id][5]
+
+        new_row_data.extend([
+            current_time,
+            user_id, # 저장시 ID로 저장 - uesrs_info에서 찾아서 대신 넣어야 한다 (있는 경우 없는 경우 생각하기)
+            start_date_formatted,
+            end_date_formatted,
+            type,
+            reason,
+            specific_reason,
+            email
+        ])
+
+        is_stored = False
+        while is_stored is False:
+            try:
+                say(f"<@{user_id}>의 휴가 신청을 처리중입니다.")
+                append_data(config.dummy_vacation_db_id, new_row_data)
+                is_stored =True
+            except gspread.exceptions.APIError as e:
+                say(f"APIError occurred: {e}")
+            except gspread.exceptions.GSpreadException as e:
+                say(f"GSpreadException occurred: {e}")
+            except FileNotFoundError as e:
+                say(f"File not found: {e}")
+            except Exception as e:
+                say(f"An unexpected error occurred: {e}")
+        
+        say(f"<@{user_id}>의 휴가 신청을 완료합니다. 휴가 / 연차 서비스를 종료합니다.\n")
         return
-    # 연차를 실행하는 경우 - 기존 기록을 업데이트 해야 한다 
-    # 마지막에서 가장 최근 기록을 서치하고 - 해당 기록을 다시 입력한 기록으로 업데이트를 진행한다
-    """
-    # 더미 파일 id 
-    dummy_vacation_db_id = config.dummy_vacation_db_id
-
-    say(f"(테스트) user_id : <@{user_id}>\n user_input: <{user_input}> ")
     
-    # 타임 스탬프 - 누구 - 휴가 시작일 - 휴가 종료일 - 연차 / 반차 구분 - 휴가 사유 - 휴가 상세 사유 - 이메일 주소
-
-    # row_data 만들기 - wrapping 하기
-    new_row_data = [user_id, cleaned_user_input] # user_input : <@mention_name> 입력한 문자열
-
-    # 추가하기
-    append_data(dummy_vacation_db_id, new_row_data)
-    say(f"(테스트를 진행하는 중입니다). <{cleaned_user_input}> append 완료! 더미 파일을 확인해주세요")
-    """
-
 
 #########################   문서 생성    ########################################
 def docx_generating_company_name_handler(message, say):
