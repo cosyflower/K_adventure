@@ -5,14 +5,16 @@ import googleapi
 import chatgpt
 import re
 import time
-from user_commend import docx_generate, full_rest, half_rest, search_db, one_and_one, authority_update, view_all_user_authority_list, view_updated_user_authority_list, view_my_authority, authority_change, vacation_list # 사용자 명령어 DB
+from user_commend import docx_generate, full_rest, half_rest, search_db, one_and_one, authority_update, view_all_user_authority_list, view_updated_user_authority_list, view_my_authority, authority_change, vacation_list, VACATION_SEQUENCE_TO_TPYE, \
+VACATION_SEQUENCE_TO_REASON # 사용자 명령어 DB
 import get_slack_user_info
 import json
 import config
 
 # Testing
 from googleVacationApi import append_data
-from validator import validate_name
+from validator import is_validate_name, is_valid_date, is_valid_vacation_sequence, is_valid_vacation_reason_sequence, \
+is_valid_email
 
 # 원하는 기능명을 반환해야 한다
 def check_the_user_purpose(user_input):
@@ -52,6 +54,10 @@ inv_list_info = {}
 inv_info = {}
 user_input_info = {}
 
+# 연차 프로세스를 실행한 적 없을 때
+# 연차 프로세스를 실행중일 때 
+user_vacation_status = {}
+user_vacation_info = {}
 
 @app.event("message")
 def handle_message_events(body, logger):
@@ -138,53 +144,205 @@ def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 use
     elif purpose == "권한 업데이트해줘":
         get_slack_user_info.update_authority()
         say(f"<@{user_id}> 권한 업데이트가 끝났습니다")
-    elif purpose == "휴가 신청할래": # 휴가 신청 관련 
-        say(f"<@{user_id}> 휴가 / 연차를 신청합니다. 아래의 형식에 맞게 입력해주세요\n\n"
-            "############# 다음은 형식입니다 #############"
-            "\n이름 - 휴가 시작일 - 휴가 종료일 - 연차 / 반차 - 휴가 사유 - 휴가 상세 사유 - 이메일 주소\n\n"
-            "############# 다음은 유의 사항입니다 #############\n"
-            "[유의] 각각에 들어갈 내용들을 '-'로 구분합니다.\n"
-            "[유의] 휴가 시작일과 휴가 종료일은 YYYYMMDD로 작성하세요\n"
-            "[유의] 휴가 종류에 연차, 반차, 반반차오전, 반반차오후 중 하나를 택하세요\n"
-            "[유의] 휴가 사유에 개인, 경조, 특별, 예비군(민방위), 보건, 안식, 출산 중 하나를 택하세요\n"
-            "[유의] 경조, 특별, 출산휴가의 경우 휴가 상세 사유를 필수 작성하세요. (이외의 휴가는 휴가 상세 사유를 공백으로 제출해주세요)\n\n"
-            "############# 다음은 예시입니다 #############\n"
-            "[예시] *경조, 특별, 출산휴가를 선택한 경우 : 성훈 - 20240501 - 20240501 - 반반차(오후) - 결혼식 준비 - sunghun@naver.com\n"
-            "[예시] *이외의 경우 : 성훈 - 20240301 - 20240301 - 연차 - 개인휴가 - - sunghun@gmail.com\n")
-
+    elif purpose == "휴가 신청할래": # 휴가 신청 관련 -> 추후 휴가 신청할래로 변경
+        say(f"<@{user_id}>님의 휴가 신청 프로세스를 진행합니다. 휴가 시작 날짜를 입력해주세요\n\n")
         user_states[user_id] = 'request_vacation'
     else:
         say(f"<@{user_id}> 없는 기능입니다. 다시 입력해주세요")
 
+##### 휴가 종류를 입력받는다
+def input_vacation_type(message, say):
+    user_id = message['user']
+    user_input = message['text']
+    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
+    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
+    vacation_sequence = cleaned_user_input
+
+    if is_valid_vacation_sequence(vacation_sequence):
+        vacation_type = VACATION_SEQUENCE_TO_TPYE[int(vacation_sequence)]
+        user_vacation_info[user_id].append(vacation_type) # 변환 모듈
+        say(f"<@{user_id}>님 휴가 신청 진행중입니다. {vacation_type}을 신청했습니다.\n\n")
+        user_vacation_status[user_id] = "waiting_vacation_reason"
+    else:
+        say(f"<@{user_id}>님 휴가 신청 진행중입니다. 잘못된 휴가 종류입니다. 1 - 5번 사이의 번호를 입력하세요\n\n")
+
+#### 휴가 사유를 입력받는다
+def input_vacation_reason(message, say):
+    user_id = message['user']
+    user_input = message['text']
+    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
+    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
+    vacation_reason_sequence = cleaned_user_input
+
+    # 예외 처리 관련
+    if is_valid_vacation_reason_sequence(vacation_reason_sequence):
+        vacation_reason_type = VACATION_SEQUENCE_TO_REASON[int(vacation_reason_sequence)]
+        user_vacation_info[user_id].append(vacation_reason_type)
+        say(f"<@{user_id}>님 휴가 신청 진행중입니다. {vacation_reason_type}를 신청했습니다.\n\n")
+        if vacation_reason_type in ["경조휴가", "특별휴가", "출산휴가"]:
+            user_vacation_status[user_id] = "waiting_vacation_specific_reason"
+        else:
+            user_vacation_info[user_id].append("") # 휴가 상세 자유를 공백으로 추가해둔다
+            user_vacation_status[user_id] = "waiting_vacation_email"
+    else:
+        say(f"<@{user_id}>님 휴가 신청 진행중입니다. 잘못된 휴가 사유입니다. 1 - 8번 사이의 번호를 입력하세요\n\n")
+
+#### 휴가 상세 사유 입력받기
+def input_vacation_specific_reason(message, say):
+    user_id = message['user']
+    user_input = message['text']
+    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
+    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
+    vacation_specific_reason = cleaned_user_input
+
+    user_vacation_info[user_id].append(vacation_specific_reason)
+    user_vacation_status[user_id] = "waiting_vacation_email"
+
+#### 휴가 개인 이메일 입력받기
+def input_vacation_email(message, say):
+    user_id = message['user']
+    user_input = message['text']
+    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
+    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
+    email = cleaned_user_input
+
+    email = email.split('|')[1]
+    # 만약 꺾쇠 괄호(<, >)도 제거하고 싶다면 strip 메서드를 사용할 수 있습니다.
+    email = email.strip('>')
+
+    if is_valid_email(email):
+        user_vacation_info[user_id].append(email) # 변환 모듈
+        say(f"<@{user_id}>님 휴가 신청 진행중입니다. <@{user_id}>님의 휴가 신청 이메일은 {email} 입니다.\n\n")
+        user_vacation_status[user_id] = "pre-confirmed"
+    else:
+        say(f"<@{user_id}>님 휴가 신청 진행중입니다. <{email}>올바르지 않은 이메일 형식입니다. 다시 입력하세요\n\n")
 
 ######### 휴가/연차 #######
 def request_vacation(message, say):
     user_id = message['user']
     user_input = message['text']
-    # 정규 표현식 활용해서 원하는 구간 추출하는거 모듈화해야할지도? 
+    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
     cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
-    say(f"(used for test) without regular expression : <{cleaned_user_input}>")
-    
-    """
-    
+    say(f"input : {cleaned_user_input}")
 
+    if cleaned_user_input == '종료':
+        say(f"<@{user_id}>님 휴가 신청 프로세스를 종료합니다.\n\n")
+        if user_id in user_states:
+            del user_states[user_id]
+        if user_id in user_vacation_info:
+            del user_vacation_info[user_id]
+        if user_id in user_vacation_status:
+            del user_vacation_status[user_id]
+        return # 슬랙 봇은 각 이벤트 별로 독립적으로 작동하기 떄문에 return을 작성해도 다른 이벤트 함수에 영향이 없음.. 이거 알고 있었냐?? 
+
+    # 첫 입력 - Date 관련만 request_vacation() 내부에 로직을 넣음
+    # 이외의 입력 받는 애들은 따로 함수화 함
+    # waiting_ : 값 입력을 기다리는 상황
+    # checking_ : 입력받는 것에 오류가 있는지 확인하는 상황이라고 생각하면 될 듯!
+    if user_id not in user_vacation_status and cleaned_user_input != "종료":
+        user_vacation_info[user_id] = []
+        user_vacation_status[user_id] = 'requesting'
+        start_date = process_user_input(cleaned_user_input)
+        if is_valid_date(start_date):
+            user_vacation_info[user_id].append(start_date)
+            say(f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종료 날짜를 입력해주세요.\n날짜는 YYYY-MM-DD 형태로 입력하세요\n"
+            "[예시] 2024-01-01\n\n")
+        else:
+            say("시작 날짜 형식이 잘못되었습니다. 휴가 시작 날짜를 YYYY-MM-DD 형태로 다시 입력해주세요.")
+            user_vacation_status[user_id] = 'pending'
+    elif user_vacation_status[user_id] == 'pending': # 다시 시작 날짜부터 받는다 
+        start_date = process_user_input(cleaned_user_input)
+        if is_valid_date(start_date):
+            user_vacation_info[user_id].append(start_date)
+            say(f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종료 날짜를 입력해주세요.\n날짜는 YYYY-MM-DD 형태로 입력하세요\n"
+            "[예시] 2024-01-01\n\n")
+            user_vacation_status[user_id] = 'requesting'
+        else:
+            say(f"<@{user_id}>님 휴가 시작 날짜를 다시 입력해주세요 (YYYY-MM-DD) 형태로 입력하세요 \n\n")
+    elif user_vacation_status[user_id] == 'requesting': # 시작 날짜 문제가 없는 상황 - 종료 날짜를 입력받는다
+        end_date = process_user_input(cleaned_user_input)
+        if is_valid_date(end_date, comparison_date_str=user_vacation_info[user_id][0]):
+            user_vacation_info[user_id].append(end_date)
+            start_date = user_vacation_info[user_id][0]
+            end_date = user_vacation_info[user_id][1]
+            say(f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종류를 선택하세요\n\n")
+            user_vacation_status[user_id] = 'waiting_vacation_type'
+        else:
+            say("시작 날짜 형식이 잘못되었습니다. 휴가 시작 날짜를 YYYY-MM-DD 형태로 다시 입력해주세요.")
+            user_vacation_info[user_id] = []
+            user_vacation_status[user_id] = 'pending'
+
+    # 휴가 종류 선택하기
+    if user_vacation_status[user_id] == 'checking_vacation_type':
+        input_vacation_type(message, say)
+    
+    if user_vacation_status[user_id] == 'waiting_vacation_type':
+        say("휴가 종류에는 5가지로 숫자로 1 - 5번 사이의 수를 입력해주세요\n"
+            "1. 연차\n"
+            "2. 반차(오전)\n"
+            "3. 반차(오후)\n"
+            "4. 반반차(오전)\n"
+            "5. 반반차(오후)\n"
+            )
+        user_vacation_status[user_id] = 'checking_vacation_type'
+
+    # 휴가 사유 선택하기
+    if user_vacation_status[user_id] == 'checking_vacation_reason':
+        input_vacation_reason(message, say)
+
+    if user_vacation_status[user_id] == "waiting_vacation_reason":
+        # 휴가 이유 선택하기
+        say("휴가 사유에는 8가지로 숫자로 1 - 8번 사이의 수를 입력해주세요\n"
+            "1. 개인휴가\n"
+            "2. 경조휴가\n"
+            "3. 특별휴가\n"
+            "4. 예비군,민방위휴가\n"
+            "5. 보건휴가\n"
+            "6. 안식휴가\n"
+            "7. 출산휴가\n"
+            "8. 기타휴가\n"
+            )
+        user_vacation_status[user_id] = 'checking_vacation_reason'
+
+
+    ### 상세사유 입력하는 경우 그리고 입력하지 않는 경우 구분해서 입력해야 한다
+    if user_vacation_status[user_id] == "checking_vacation_specific_reason":
+        input_vacation_specific_reason(message, say)
+
+    if user_vacation_status[user_id] == "waiting_vacation_specific_reason":
+        # 상세 사유 입력받기
+        say(f"<@{user_id}>님 휴가 신청 진행중입니다. 선택하신 {user_vacation_info[user_id][-1]}의 휴가 상세 사유를 작성해주세요")
+        user_vacation_status[user_id] = "checking_vacation_specific_reason"
+
+    # 이메일 입력 
+    if user_vacation_status[user_id] == "checking_vacation_email":
+        input_vacation_email(message, say)
+    if user_vacation_status[user_id] == "waiting_vacation_email":
+        # email 입력받기
+        say(f"<@{user_id}>님 휴가 신청 진행중입니다. <@{user_id}>의 개인 이메일을 작성해주세요")
+        user_vacation_status[user_id] = "checking_vacation_email"
+    
+    if user_vacation_status[user_id] == "pre-confirmed":
+        say(f"<@{user_id}>의 휴가 신청 정보입니다.")
+        for a, value in enumerate(user_vacation_info[user_id]):
+            # 저장된 정보 출력 
+            # user_states, user_vacation_info, user_vacation_status 로 상태를 지속적으로 확인하는 중으로 생각하기
+            say(f"{value}\n")
+
+
+    # 연차를 실행하는 경우 - 기존 기록을 업데이트 해야 한다 
+    # 마지막에서 가장 최근 기록을 서치하고 - 해당 기록을 다시 입력한 기록으로 업데이트를 진행한다
+    """
     # 더미 파일 id 
     dummy_vacation_db_id = config.dummy_vacation_db_id
-    
-    requester_name = cleaned_user_input
-    say(f"(휴가 / 연차 테스트) <{requester_name}> 을 입력했습니다.\n")
 
     say(f"(테스트) user_id : <@{user_id}>\n user_input: <{user_input}> ")
     
     # 타임 스탬프 - 누구 - 휴가 시작일 - 휴가 종료일 - 연차 / 반차 구분 - 휴가 사유 - 휴가 상세 사유 - 이메일 주소
-    
 
-
-
-
-
-    # row_data 만들기
+    # row_data 만들기 - wrapping 하기
     new_row_data = [user_id, cleaned_user_input] # user_input : <@mention_name> 입력한 문자열
+
     # 추가하기
     append_data(dummy_vacation_db_id, new_row_data)
     say(f"(테스트를 진행하는 중입니다). <{cleaned_user_input}> append 완료! 더미 파일을 확인해주세요")
@@ -291,7 +449,7 @@ def docx_generating_docx_category_handler(message, say):
                 googleapi.make_docx_fileD(db_1,db_4,db_7,current_time)
                 say(f"<@{user_id}> 투자집행품의서 서류 생성.")
             say(f"<@{user_id}> 모든 서류 생성 완료. 이용해주셔서 감사합니다.")
-            del user_states[user_id]        
+            del user_states[user_id]
 #########################   권한 업데이트    ########################################
 def authority_update_person_number_handler(message, say):
     user_id = message['user']
