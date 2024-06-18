@@ -186,7 +186,7 @@ def input_cancel_sequence(message, say):
     else:
         say(f"잘못된 번호입니다. 다시 입력해주세요.")
 
-#### 휴가 최소 --- 진행중
+#### 휴가 취소 --- 진행중
 def cancel_vacation(message, say):
     user_id = message['user']
     user_input = message['text']
