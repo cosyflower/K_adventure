@@ -52,4 +52,8 @@ def format_vacation_info(data):
 
 # # 함수 호출 및 결과 출력
 # print(format_vacation_info(data))
+def to_cancel_sequence_list(input_string):
+    # 문자열에서 공백을 제거하고 ','로 구분하여 리스트로 변환
+    split_items = [int(i.strip()) for i in input_string.split(',')]
+    return split_items
 

@@ -73,10 +73,31 @@ def is_valid_confirm_sequence(confirm_sequence):
     
     return False
 
-def is_valid_cancel_sequence(cancel_sequeunce, candidate):
-    if re.fullmatch(r'\d+', cancel_sequeunce):
-        reason_sequence = int(cancel_sequeunce)
-        if 1 <= reason_sequence <= candidate:
-            return True
+def is_valid_cancel_sequence(cancel_sequeunce_list, candidate):
+    for num in cancel_sequeunce_list:
+        num = str(num)
+        if re.fullmatch(r'\d+', num):
+            reason_sequence = int(num)
+            if 1 > reason_sequence or reason_sequence > candidate:
+                return False
+        else:
+            return False
+    return True
+
+
+def is_valid_vacation_purpose(user_input):
+    # 수인지 확인
+    # 1,2,3 중 하나인지 확인
+    # 모두 만족하면 True, 하나라도 만족하지 못하면 False를 반환한다
+    try:
+        # 입력이 수인지 확인
+        number = int(user_input)
+    except ValueError:
+        # 입력이 수가 아닌 경우
+        return False
     
-    return False
+    # 1, 2, 3 중 하나인지 확인
+    if number in [1, 2, 3]:
+        return True
+    else:
+        return False
