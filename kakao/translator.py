@@ -57,3 +57,44 @@ def to_cancel_sequence_list(input_string):
     split_items = [int(i.strip()) for i in input_string.split(',')]
     return split_items
 
+def convert_type_value(type_value):
+    """
+    주어진 type_value에 따라 값을 변환하는 함수
+    1. type의 값이 "연차"인 경우 1로 변경
+    2. type의 값이 "반차"로 시작하는 경우 0.5로 변경
+    3. type의 값이 "반반차"로 시작하는 경우 0.25로 변경
+    """
+    if type_value == '연차':
+        return 1
+    elif type_value.startswith('반차'):
+        return 0.5
+    elif type_value.startswith('반반차'):
+        return 0.25
+    
+def parse_date(date_str):
+    date_str = date_str.strip("' ")
+    # 날짜 문자열을 datetime 객체로 변환
+    return datetime.strptime(date_str, '%Y. %m. %d %p %I:%M:%S')
+
+def format_vacation_data(vacation_data):
+    formatted_data = []
+    for data in vacation_data:
+        applicant = data[1]
+        start_date = parse_date(data[2].replace('오전', 'AM').replace('오후', 'PM'))
+        end_date = parse_date(data[3].replace('오전', 'AM').replace('오후', 'PM'))
+        vacation_type = data[4]
+        vacation_reason = data[5]
+
+        print(start_date)
+        print(end_date)
+        
+        # 휴가 날짜 형식 변환
+        if start_date.date() == end_date.date():
+            date_str = f"{start_date.strftime('%Y-%m-%d')} {start_date.strftime('%H:%M')} - {end_date.strftime('%H:%M')}"
+        else:
+            date_str = f"{start_date.strftime('%Y-%m-%d %H:%M')} - {end_date.strftime('%Y-%m-%d %H:%M')}"
+        
+        formatted_str = f"신청자: {applicant}\n휴가 날짜: {date_str}\n휴가 종류: {vacation_type} - {vacation_reason}\n"
+        formatted_data.append(formatted_str)
+    
+    return formatted_data

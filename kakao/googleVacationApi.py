@@ -18,6 +18,8 @@ from googleapiclient.errors import HttpError
 import config
 import json
 
+from translator import parse_date
+
 def get_spreadsheet(spreadsheet_id, json_keyfile_path):
     # 구글 스프레드시트 API 인증 및 클라이언트 생성
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -42,7 +44,7 @@ def add_row_to_sheet(spreadsheet, sheet_number, row_data): ## spreadsheet에 row
 
 def append_data(spreadsheet_id, sheet_number, row_data):
     add_row_to_sheet(get_spreadsheet(spreadsheet_id, config.kakao_json_key_path), sheet_number, row_data)
-    print("데이터 추가 완료")
+    print("Data appended")
 
 def delete_row_to_sheet(spreadsheet, sheet_number, row_data):
     # row_data는 단일 레코드가 들어온다고 생각하기
@@ -72,7 +74,7 @@ def get_real_name_by_user_id(user_id, json_path='users_info.json'):
             return user_data['real_name']
     return None
 
-def get_data_by_real_name(sheet, real_name=None):
+def get_data_by_real_name(sheet, real_name, attribute_sequence):
     data = sheet.get_all_values()
     matched_data = []
 
@@ -80,17 +82,13 @@ def get_data_by_real_name(sheet, real_name=None):
         return matched_data
 
     for row in data:
-        if len(row) > 1 and row[1] == real_name:
+        if len(row) > attribute_sequence and row[attribute_sequence] == real_name:
             matched_data.append(row)
     
     return matched_data
 
-def find_data_by_userId(spreadsheet_id, sheet_number, user_id):
-    scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name(config.kakao_json_key_path, scope)
-    client = gspread.authorize(creds)
-    spreadsheet = client.open_by_key(spreadsheet_id)
-    
+def find_data_by_userId(spreadsheet_id, sheet_number, user_id, attribute_sequence):
+    spreadsheet = get_spreadsheet(spreadsheet_id, config.kakao_json_key_path)
     # 전체 시트 개수를 파악
     sheet_list = spreadsheet.worksheets()
     total_sheets = len(sheet_list)
@@ -103,8 +101,42 @@ def find_data_by_userId(spreadsheet_id, sheet_number, user_id):
     sheet = sheet_list[sheet_number - 1]
 
     real_name = get_real_name_by_user_id(user_id)
-    if real_name is None:
-        return get_data_by_real_name(sheet)
-
-    data = get_data_by_real_name(sheet, real_name)
+    data = get_data_by_real_name(sheet, real_name, attribute_sequence)
     return data
+
+# [연차 휴가의 잔여일수, 안식 휴가의 잔여 일수] 를 반환한다
+# uer_id를 활용해서 해당 user의 휴가를 조회합니다
+def get_remained_vacation_by_userId(spreadsheet_id, user_id):
+    found_data = find_data_by_userId(spreadsheet_id, 3, user_id, 0)
+    # 리스트로 구성 - 10(연차 휴가 잔여일수), 14(안식 휴가 잔여 일수)
+    remained_vacation = []
+
+    remained_vacation.append(found_data[0][9])
+    remained_vacation.append(found_data[0][13])
+    
+    return remained_vacation
+
+def get_today_vacation_data(spreadsheet_id):
+    # 스프레드시트 객체 얻기
+    spreadsheet = get_spreadsheet(spreadsheet_id, config.kakao_json_key_path)
+    sheet = spreadsheet.worksheets()[0]
+    # 모든 데이터 얻기
+    all_data = sheet.get_all_values()
+    # 오늘 날짜 구하기 (YYYY-MM-DD 형식)
+    today = datetime.today()
+    today_str = today.strftime('%Y. %-m. %-d')
+    print(f"today is {today_str}\n")
+
+    # 오늘의 날짜와 휴가 시작 날짜가 같은 데이터 필터링
+    today_vacation_data = []
+    
+    for data in all_data:
+        start_date = data[2].strip("' ")
+        extracted_date = start_date.split()[0:3]
+        extracted_date = ' '.join(extracted_date).strip()
+
+        if extracted_date == today_str:
+            print("추가!")
+            today_vacation_data.append(data)
+
+    return today_vacation_data

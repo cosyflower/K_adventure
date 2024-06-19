@@ -5,17 +5,18 @@ import googleapi
 import chatgpt
 import re
 import time
-from user_commend import docx_generate, full_rest, half_rest, search_db, one_and_one, authority_update, view_all_user_authority_list, view_updated_user_authority_list, view_my_authority, authority_change, vacation_request_list, VACATION_SEQUENCE_TO_TPYE, \
-VACATION_SEQUENCE_TO_REASON, vacation_cancel_list # 사용자 명령어 DB
 import get_slack_user_info
 import json
 import config
+from user_commend import docx_generate, full_rest, half_rest, search_db, one_and_one, authority_update, view_all_user_authority_list, view_updated_user_authority_list, view_my_authority, authority_change, vacation_request_list, VACATION_SEQUENCE_TO_TPYE, \
+VACATION_SEQUENCE_TO_REASON, vacation_cancel_list, remained_vacation_list, totday_vacation_list # 사용자 명령어 DB
 
 # Testing for vacation
-from googleVacationApi import append_data, get_real_name_by_user_id, find_data_by_userId, delete_data
+from googleVacationApi import append_data, get_real_name_by_user_id, find_data_by_userId, delete_data, get_remained_vacation_by_userId, get_today_vacation_data, \
+    get_today_vacation_data
 from validator import is_valid_date, is_valid_vacation_sequence, is_valid_vacation_reason_sequence, \
 is_valid_email, is_valid_confirm_sequence, is_valid_cancel_sequence, is_valid_vacation_purpose
-from translator import to_specific_date, format_vacation_info, to_cancel_sequence_list
+from translator import to_specific_date, format_vacation_info, to_cancel_sequence_list, convert_type_value, format_vacation_data
 
 # testing for validating on generating docx
 import gspread
@@ -47,6 +48,10 @@ def check_the_user_purpose(user_input):
         return vacation_request_list[0]
     elif user_input in vacation_cancel_list: # 휴가 취소 키워드 포함 - 휴가 취소할래로 반환
         return vacation_cancel_list[0]
+    elif user_input in remained_vacation_list:
+        return remained_vacation_list[0]
+    elif user_input in totday_vacation_list:
+        return totday_vacation_list[0]
     else:
         print("chatgpt 사용 + 3원")
         return chatgpt.analyze_user_purpose(user_input)
@@ -68,6 +73,8 @@ user_vacation_info = {}
 # 휴가 취소 프로세스
 cancel_vacation_status = {}
 
+dummy_vacation_db_id = config.dummy_vacation_db_id
+
 @app.event("message")
 def handle_message_events(body, logger):
     # 이벤트로부터 메시지의 내용을 추출하고 로그로 기록합니다.
@@ -77,12 +84,13 @@ def handle_message_events(body, logger):
 def handle_message_events(event, say):
     user_id = event['user']
     user_input = event['text']
-    user_input = process_user_input(user_input)
     ### 사용자 명령어 인식 프로세스
+    user_input = process_user_input(user_input)
+    ## 입력 초기 
     if user_id not in user_states:
-        user_purpose_handler(event, say) # 0. Mention하고 명령어를 입력하면 
+        user_purpose_handler(event, say)
         user_input_info[user_id] = user_input
-    else: # state 확인 - 케이스에 맞는 함수를 실행하는 구간이 되겠다
+    else: # 입력 초기가 아닌 경우
         if user_states[user_id] == 'docx_generating_waiting_company_name': 
             docx_generating_company_name_handler(event, say)
         elif user_states[user_id] == 'docx_generating_waiting_inv_choice':
@@ -168,10 +176,49 @@ def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 use
         say(f"<@{user_id}>님의 휴가 취소 프로세스를 진행합니다. <@{user_id}>님의 휴가 리스트를 출력합니다. 잠시만 기다려주세요.\n")
         user_states[user_id] = 'cancel_vacation'
         cancel_vacation(message, say)
+    elif purpose == "남은 휴가":
+        say(f"<@{user_id}>님의 잔여 휴가를 조회합니다. 잠시만 기다려주세요.\n")
+        get_remained_vacation(message, say)
+    elif purpose == "금일 휴가자":
+        say(f"금일 휴가자 정보를 조회합니다. 잠시만 기다려주세요.\n")
+        get_today_vacation_info(message, say)
     else:
         say(f"<@{user_id}> 없는 기능입니다. 다시 입력해주세요")
 
-######### 휴가 / 연차 시스템 #############
+######################################
+########## 휴가 / 연차 시스템 ############
+# 금일 휴가자 정보 조회하기
+def get_today_vacation_info(message, say):
+    # say(f"금일 휴가자 정보를 조회합니다. 잠시만 기다려주세요.\n")
+    # 휴가자 내역을 모두 조회하고 금일 날짜 데이터만 가지고 온다
+    today_vacation_data = get_today_vacation_data(dummy_vacation_db_id)
+    if len(today_vacation_data) == 0:
+        say(f"금일 휴가자 정보가 존재하지 않습니다. 금일 휴가 조회를 종료합니다")
+        return
+
+    # 정보들을 일정한 형식에 맞게 출력한다
+    formatted_result = format_vacation_data(today_vacation_data)
+        
+    for info in formatted_result:
+        say(f"{info}\n")
+        
+    say(f"금일 휴가 조회를 종료합니다\n")
+
+# 남은 휴가 조회하기
+def get_remained_vacation(message, say):
+    user_id = message['user']
+    user_input = message['text']
+    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
+
+    remained_vacation = get_remained_vacation_by_userId(dummy_vacation_db_id, user_id)
+    say(f"<@{user_id}>님의 잔여 휴가 정보입니다\n"
+        f"연차 휴가 잔여 일수 : {float(remained_vacation[0])}\n"
+        f"안식 휴가 잔여 일수 : {float(remained_vacation[1])}\n"
+        )
+    
+    say(f"<@{user_id}>님 잔여 휴가 조회를 종료합니다.\n\n")
+    return
+
 def vacation_purpose_handler(message, say):
     # 조회는 1번, 추가는 2번, 삭제는 3번을, 종료를 원하시면 \"종료\"를 입력하세요 (1, 2, 3, 종료)
     user_id = message['user']
@@ -191,7 +238,7 @@ def vacation_purpose_handler(message, say):
         if cleaned_user_input == '1': # 조회하기 - user_states 변경
             say(f"<@{user_id}>님 휴가 조회 기능을 실행합니다. 휴가 리스트를 출력합니다\n\n")
             try:
-                found_data_list = find_data_by_userId(config.dummy_vacation_db_id, 1, user_id)
+                found_data_list = find_data_by_userId(config.dummy_vacation_db_id, 1, user_id, 1)
             except ValueError as e:
                 say(f"Unvalid sheet_number: {e}")
     
@@ -237,7 +284,7 @@ def input_cancel_sequence(message, say):
     cancel_sequence_list = to_cancel_sequence_list(cancel_sequeunce) # [1] / [1,2]
 
     try:
-        found_data_list = find_data_by_userId(config.dummy_vacation_db_id, 1, user_id)
+        found_data_list = find_data_by_userId(config.dummy_vacation_db_id, 1, user_id, 1)
     except ValueError as e:
         say(f"Unvalid sheet_number: {e}")
 
@@ -264,7 +311,7 @@ def cancel_vacation(message, say):
     # 먼저 휴가를 리스트업 한다 
     # 시트 번호가 적절하지 않은 경우 예외 처리를 진행한다
     try:
-        found_data_list = find_data_by_userId(config.dummy_vacation_db_id, 1, user_id)
+        found_data_list = find_data_by_userId(config.dummy_vacation_db_id, 1, user_id, 1)
     except ValueError as e:
         say(f"Unvalid sheet_number: {e}")
         return
@@ -308,7 +355,7 @@ def input_vacation_type(message, say):
     if is_valid_vacation_sequence(vacation_sequence):
         vacation_type = VACATION_SEQUENCE_TO_TPYE[int(vacation_sequence)]
         user_vacation_info[user_id].append(vacation_type) # 변환 모듈
-        say(f"<@{user_id}>님 휴가 신청 진행중입니다. {vacation_type}을 신청했습니다.\n\n")
+        say(f"<@{user_id}>님 휴가 신청 진행중입니다. 신청한 휴가는 {vacation_type}입니다.\n\n")
         user_vacation_status[user_id] = "waiting_vacation_reason"
     else:
         say(f"<@{user_id}>님 휴가 신청 진행중입니다. 잘못된 휴가 종류입니다. 1 - 5번 사이의 번호를 입력하세요\n\n")
@@ -408,10 +455,7 @@ def request_vacation(message, say):
             del user_vacation_status[user_id]
         return # 슬랙 봇은 각 이벤트 별로 독립적으로 작동하기 떄문에 return을 작성해도 다른 이벤트 함수에 영향이 없음.. 이거 알고 있었냐?? 
 
-    # 첫 입력 - Date 관련만 request_vacation() 내부에 로직을 넣음
-    # 이외의 입력 받는 애들은 따로 함수화 함
-    # waiting_ : 값 입력을 기다리는 상황
-    # checking_ : 입력받는 것에 오류가 있는지 확인하는 상황이라고 생각하면 될 듯!
+    # waiting_ : 값 입력을 기다리는 상황 // checking_ : 입력받는 것에 오류가 있는지 확인
     if user_id not in user_vacation_status and cleaned_user_input != "종료":
         user_vacation_info[user_id] = []
         user_vacation_status[user_id] = 'requesting'
@@ -517,10 +561,10 @@ def request_vacation(message, say):
         # DB에 저장한다
         # user_vacation_info[user_id] 안에 모두 담겨져있는 상황 : 시작 - 종료 - 종류 - 사유 - 상세 사유 - 이메일 
         new_row_data = []
-        current_time = datetime.datetime.now().strftime('%Y. %m. %d %p %I:%M:%S').replace('AM', '오전').replace('PM', '오후')
+        current_time = datetime.datetime.now().strftime('%Y. %m. %d %p %I:%M:%S').replace('AM', '오전').replace('PM', '오후').lstrip("'")
         # 시간을 넣어야 한다
-        start_date_formatted = to_specific_date(user_vacation_info[user_id][0])
-        end_date_formatted = to_specific_date(user_vacation_info[user_id][1])
+        start_date_formatted = to_specific_date(user_vacation_info[user_id][0]).lstrip("'")
+        end_date_formatted = to_specific_date(user_vacation_info[user_id][1]).lstrip("'")
         type = user_vacation_info[user_id][2]
         reason = user_vacation_info[user_id][3]
         specific_reason = user_vacation_info[user_id][4]
@@ -537,6 +581,34 @@ def request_vacation(message, say):
             email
         ])
 
+        # DB 반영하기 전, 개인휴가 안식휴가에 대해서 if 조건을 추가해야 한다
+        # 개인휴가 혹은 안식 휴가라면 - 잔여 휴가 정보를 가지고 온다
+        # 선택한 휴가 종류 연차면 1, 반차면 0.5, 반반차면 0.25로 구분
+        # 잔여 휴가 < 휴가 종류 인 경우 신청 불가 사유를 알려주고  종료
+        # 종료 시 아래의 del 가지고 오고 return 할 것
+        remained_vacation = get_remained_vacation_by_userId(dummy_vacation_db_id, user_id)
+        # type -> 수로 변경해야 함
+        converted_value = convert_type_value(type)
+        if reason == "개인휴가" and float(remained_vacation[0]) < converted_value:
+            say(f"<@{user_id}>님의 개인휴가 신청이 불가합니다. 개인휴가의 잔여 일수를 확인하세요.\n")
+            say(f"<@{user_id}>님의 휴가 신청을 종료합니다.")
+
+            del user_states[user_id]
+            del user_vacation_info[user_id]
+            del user_vacation_status[user_id]
+            return
+        if reason == "안식휴가" and float(remained_vacation[1]) < converted_value:
+            say(f"<@{user_id}>의 안식휴가 신청이 불가합니다. 안식휴가의 잔여 일수를 확인하세요.\n")
+            say(f"<@{user_id}>님의 휴가 신청을 종료합니다.")
+
+            del user_states[user_id]
+            del user_vacation_info[user_id]
+            del user_vacation_status[user_id]
+            return
+        
+        # 기존 휴가와 동일한 날짜면 반려
+        
+        # DB에 반영한다 
         is_stored = False
         while is_stored is False:
             try:
