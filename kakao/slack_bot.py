@@ -63,7 +63,7 @@ def check_the_user_purpose(user_input):
 def process_user_input(user_input):
     return re.split(r'>\s*', user_input, maxsplit=1)[-1].strip()
 
-app = App(token=config.app_token_id)
+app = App(token=config.bot_token_id)
 
 # Scheduler 관련 함수 정의
 # 매일 오전 8시에 notify_today_vacation_info 함수 실행

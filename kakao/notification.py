@@ -13,7 +13,7 @@ from googleVacationApi import  get_today_vacation_data
 
 def send_slack_message(channel_id, text):
     try:
-        client = WebClient(token=config.bot_user_token_id)
+        client = WebClient(token=config.bot_token_id)
         response = client.chat_postMessage(
             channel=channel_id,
             text=text
