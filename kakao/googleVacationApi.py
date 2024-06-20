@@ -116,9 +116,9 @@ def get_remained_vacation_by_userId(spreadsheet_id, user_id):
     
     return remained_vacation
 
-def get_today_vacation_data(spreadsheet_id):
+def get_today_vacation_data(spreadsheet_id, json_keyfile_path):
     # 스프레드시트 객체 얻기
-    spreadsheet = get_spreadsheet(spreadsheet_id, config.kakao_json_key_path)
+    spreadsheet = get_spreadsheet(spreadsheet_id, json_keyfile_path)
     sheet = spreadsheet.worksheets()[0]
     # 모든 데이터 얻기
     all_data = sheet.get_all_values()

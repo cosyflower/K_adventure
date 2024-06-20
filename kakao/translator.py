@@ -85,9 +85,6 @@ def format_vacation_data(vacation_data):
         vacation_type = data[4]
         vacation_reason = data[5]
 
-        print(start_date)
-        print(end_date)
-        
         # 휴가 날짜 형식 변환
         if start_date.date() == end_date.date():
             date_str = f"{start_date.strftime('%Y-%m-%d')} {start_date.strftime('%H:%M')} - {end_date.strftime('%H:%M')}"

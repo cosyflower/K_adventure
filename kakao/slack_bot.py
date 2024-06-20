@@ -8,6 +8,9 @@ import time
 import get_slack_user_info
 import json
 import config
+import schedule
+import time
+import threading
 from user_commend import docx_generate, full_rest, half_rest, search_db, one_and_one, authority_update, view_all_user_authority_list, view_updated_user_authority_list, view_my_authority, authority_change, vacation_request_list, VACATION_SEQUENCE_TO_TPYE, \
 VACATION_SEQUENCE_TO_REASON, vacation_cancel_list, remained_vacation_list, totday_vacation_list # 사용자 명령어 DB
 
@@ -17,6 +20,7 @@ from googleVacationApi import append_data, get_real_name_by_user_id, find_data_b
 from validator import is_valid_date, is_valid_vacation_sequence, is_valid_vacation_reason_sequence, \
 is_valid_email, is_valid_confirm_sequence, is_valid_cancel_sequence, is_valid_vacation_purpose
 from translator import to_specific_date, format_vacation_info, to_cancel_sequence_list, convert_type_value, format_vacation_data
+from notification import notify_today_vacation_info
 
 # testing for validating on generating docx
 import gspread
@@ -60,6 +64,16 @@ def process_user_input(user_input):
     return re.split(r'>\s*', user_input, maxsplit=1)[-1].strip()
 
 app = App(token=config.app_token_id)
+
+# Scheduler 관련 함수 정의
+# 매일 오전 8시에 notify_today_vacation_info 함수 실행
+schedule.every().day.at("08:00").do(notify_today_vacation_info)
+
+# 스케줄러 실행 함수
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 user_states = {}
 inv_list_info = {}
@@ -191,7 +205,7 @@ def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 use
 def get_today_vacation_info(message, say):
     # say(f"금일 휴가자 정보를 조회합니다. 잠시만 기다려주세요.\n")
     # 휴가자 내역을 모두 조회하고 금일 날짜 데이터만 가지고 온다
-    today_vacation_data = get_today_vacation_data(dummy_vacation_db_id)
+    today_vacation_data = get_today_vacation_data(dummy_vacation_db_id, config.kakao_json_key_path)
     if len(today_vacation_data) == 0:
         say(f"금일 휴가자 정보가 존재하지 않습니다. 금일 휴가 조회를 종료합니다")
         return
@@ -865,5 +879,9 @@ def authority_update_authority_update_json_file(message, say):
             user_states[user_id] = 'authority_update_json_file'
             
 if __name__ == "__main__":
-    SocketModeHandler(app,config.user_token_id).start()
+    # 스케줄러 실행을 위한 스레드 시작
+    scheduler_thread = threading.Thread(target=run_scheduler)
+    scheduler_thread.start()
+    # App 실행하기
+    SocketModeHandler(app,config.app_token_id).start()
     
