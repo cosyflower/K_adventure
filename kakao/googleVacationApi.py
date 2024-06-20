@@ -136,7 +136,6 @@ def get_today_vacation_data(spreadsheet_id, json_keyfile_path):
         extracted_date = ' '.join(extracted_date).strip()
 
         if extracted_date == today_str:
-            print("추가!")
             today_vacation_data.append(data)
 
     return today_vacation_data

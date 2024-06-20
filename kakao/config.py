@@ -16,7 +16,8 @@ bot_token_id = 'xoxb-7070442783094-7112861109200-UImo7AdRysDFCYB69xub4Pxf' # app
 app_token_id = 'xapp-1-A072N1TECNN-7089950489011-4fa8538d3daed24db4a9195dc7ffe6a2041c7e6f76502e8cba875b96f082d468' # user_token_id
 
 # test 서버 채널 id
-test_slack_channel_id = 'C07264YTB7X'
+test_slack_first_channel_id = 'C07264YTB7X'
+test_slack_second_channel_id = 'C0722D0PU22'
 ######### Dummy ###########
 # 연차 / 반차 dummy Id
 dummy_vacation_db_id = '1s1x0S4Gqt5mv8jgYyJWhv7GdVy_2Fs-QnlH6_IIcpXk'

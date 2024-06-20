@@ -22,7 +22,7 @@ def send_slack_message(channel_id, text):
         print(f"Error sending message: {e.response['error']}")
 
 def notify_today_vacation_info():
-    channel_id = config.test_slack_channel_id
+    channel_id = config.test_slack_second_channel_id
     spreadsheet_id = config.dummy_vacation_db_id
     json_keyfile_path = config.kakao_json_key_path
 
