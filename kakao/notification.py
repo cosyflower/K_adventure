@@ -1,15 +1,12 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
-import schedule
 import time
 import config
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from translator import format_vacation_data
 from googleVacationApi import  get_today_vacation_data
-
-
 
 def send_slack_message(channel_id, text):
     try:
@@ -40,7 +37,7 @@ def notify_today_vacation_info():
         send_slack_message(channel_id, data)
 
 """
-# 매일 오전 8시에 notify_today_vacation_info 함수 실행
+# 스케줄러 기능 활성화 하는 방법
 schedule.every().day.at("08:00").do(notify_today_vacation_info())
 
 # 스케줄러 실행

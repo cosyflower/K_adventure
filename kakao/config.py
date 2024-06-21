@@ -18,13 +18,19 @@ app_token_id = 'xapp-1-A072N1TECNN-7089950489011-4fa8538d3daed24db4a9195dc7ffe6a
 # test 서버 채널 id
 test_slack_first_channel_id = 'C07264YTB7X'
 test_slack_second_channel_id = 'C0722D0PU22'
+
 ######### Dummy ###########
 # 연차 / 반차 dummy Id
 dummy_vacation_db_id = '1s1x0S4Gqt5mv8jgYyJWhv7GdVy_2Fs-QnlH6_IIcpXk'
+# 연차 / 반차 template Id
+dummy_vacation_template_id = '1V3Er20zNHmpOOtiljJcExiF8Fk5cxsNP7-V8JD7mjZk'
+
+######### Dummy directory - example_docx ########
+dummy_directory_id = '1m2_JBV9zFEHJbnXKjwCc1ZPe2eLljuel'
 
 
 
-######## Past Dummy Files
+######## Real_File_configuration
 
 # kakao_json_key_path = 'zerobot-425701-15f85b16185c.json'
 # db_1_id = '1sjoyLXr9a1ltEnI8GtReMO55FqSPdFbgLJL4f0ER3Rg'

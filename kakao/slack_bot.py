@@ -16,7 +16,7 @@ VACATION_SEQUENCE_TO_REASON, vacation_cancel_list, remained_vacation_list, totda
 
 # Testing for vacation
 from googleVacationApi import append_data, get_real_name_by_user_id, find_data_by_userId, delete_data, get_remained_vacation_by_userId, get_today_vacation_data, \
-    get_today_vacation_data
+    get_today_vacation_data, is_file_exists_in_directory
 from validator import is_valid_date, is_valid_vacation_sequence, is_valid_vacation_reason_sequence, \
 is_valid_email, is_valid_confirm_sequence, is_valid_cancel_sequence, is_valid_vacation_purpose
 from translator import to_specific_date, format_vacation_info, to_cancel_sequence_list, convert_type_value, format_vacation_data
@@ -100,6 +100,13 @@ def handle_message_events(event, say):
     user_input = event['text']
     ### 사용자 명령어 인식 프로세스
     user_input = process_user_input(user_input)
+
+    ## Test Mode 설정
+    if user_input == "테스트":
+        res = is_file_exists_in_directory(config.dummy_directory_id, "연차/반차_2024_file")
+        print(res)
+        return
+    
     ## 입력 초기 
     if user_id not in user_states:
         user_purpose_handler(event, say)

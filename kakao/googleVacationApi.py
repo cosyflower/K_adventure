@@ -139,3 +139,43 @@ def get_today_vacation_data(spreadsheet_id, json_keyfile_path):
             today_vacation_data.append(data)
 
     return today_vacation_data
+
+
+"""
+기능 : 휴가 데이터 정보 중 시작 연도를 확인 - 시작 연도의 파일이 존재하는지 확인 - 존재하지 않으면 해당 파일을 형성하는 함수
+전달 인자: 신청한 휴가 데이터 [신청자 . . . . ]
+반환 : 추가하는데 문제가 없다면 True, 예외가 있다면 예외 사항을 출력하고 False 반환하기 
+"""
+
+
+# 특정 디렉토리 내 파일명이 file_name에 일치하는 파일이 존재하는지 확인한다
+# is_file_exists_in_directory(config.dummy_directory_id, file_name)
+def is_file_exists_in_directory(directory_id, file_name):
+    # Drive API 클라이언트 생성
+    scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+    drive_service = build('drive', 'v3', credentials=ServiceAccountCredentials.from_json_keyfile_name(config.kakao_json_key_path, scope))
+
+    try:
+        # Google Drive API를 사용하여 특정 디렉토리의 파일 목록을 가져옵니다.
+        query = f"'{directory_id}' in parents and name = '{file_name}' and trashed = false"
+        response = drive_service.files().list(q=query, spaces='drive', fields='files(id, name)').execute()
+        
+        files = response.get('files', [])
+        
+        if files:
+            print(f"파일 '{file_name}'이(가) 디렉토리 내에 존재합니다.")
+            return True
+        else:
+            print(f"파일 '{file_name}'이(가) 디렉토리 내에 존재하지 않습니다.")
+            return False
+    
+    except HttpError as error:
+        print(f"An error occurred: {error}")
+        return False
+
+
+
+# def find_vacation_db_by_year(vacation_row_data):
+    #[2] - start_date / [3] - end_date
+
+

@@ -47,7 +47,7 @@ authority_update = ["권한 업데이트해줘"]
 ## 반차 연차 신청 관련 리스트
 vacation_request_list = ["휴가 신청할래", "연차 신청할래", "휴가 신청"]
 vacation_cancel_list = ["휴가 취소할래", "휴가 취소", "휴가 삭제할래", "휴가 삭제"]
-remained_vacation_list = ["남은 휴가", "남은 휴가 알려줘", "휴가 조회"]
+remained_vacation_list = ["남은 휴가", "남은 휴가 알려줘", "남은 휴가 조회"]
 totday_vacation_list = ["금일 휴가자", "금일 휴가", "금일 휴가자 알려줘", "오늘 휴가자", "오늘 휴가자 알려줘"]
 
 ## 반차 연차 번호 매칭
