@@ -17,6 +17,11 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import config
 import json
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload
+import io
+import os
+import shutil
 
 from translator import parse_date
 
@@ -173,9 +178,24 @@ def is_file_exists_in_directory(directory_id, file_name):
         print(f"An error occurred: {error}")
         return False
 
+# 파일을 복사한다
+def copy_gdrive_spreadsheet(template_file_id, new_filename, save_folder_id):
+    """
+    Google Drive의 특정 파일을 템플릿으로 사용하여 복제본을 만들고, 원하는 이름의 파일명으로 변경
+    """
 
+    # Google Drive API 클라이언트 생성
+    scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+    credentials=ServiceAccountCredentials.from_json_keyfile_name(config.kakao_json_key_path, scope)
+    drive_service = build('drive', 'v3', credentials=credentials)
 
-# def find_vacation_db_by_year(vacation_row_data):
-    #[2] - start_date / [3] - end_date
+    # 새 파일 메타데이터 설정
+    file_metadata = {
+        'name': new_filename,
+        'parents': [save_folder_id]
+    }
 
+    # 파일 복사
+    new_file = drive_service.files().copy(fileId=template_file_id, body=file_metadata).execute()
 
+    print(f"File copied to Google Drive with ID: {new_file.get('id')}")

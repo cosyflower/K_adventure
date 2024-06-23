@@ -27,6 +27,7 @@ dummy_vacation_template_id = '1V3Er20zNHmpOOtiljJcExiF8Fk5cxsNP7-V8JD7mjZk'
 
 ######### Dummy directory - example_docx ########
 dummy_directory_id = '1m2_JBV9zFEHJbnXKjwCc1ZPe2eLljuel'
+dummy_vacation_directory_id = '1KnQgIlfH3H-Ow5dQjuweuOrD1tMJc-4c' 
 
 
 

@@ -16,11 +16,12 @@ VACATION_SEQUENCE_TO_REASON, vacation_cancel_list, remained_vacation_list, totda
 
 # Testing for vacation
 from googleVacationApi import append_data, get_real_name_by_user_id, find_data_by_userId, delete_data, get_remained_vacation_by_userId, get_today_vacation_data, \
-    get_today_vacation_data, is_file_exists_in_directory
+    get_today_vacation_data, is_file_exists_in_directory, copy_gdrive_spreadsheet
 from validator import is_valid_date, is_valid_vacation_sequence, is_valid_vacation_reason_sequence, \
 is_valid_email, is_valid_confirm_sequence, is_valid_cancel_sequence, is_valid_vacation_purpose
 from translator import to_specific_date, format_vacation_info, to_cancel_sequence_list, convert_type_value, format_vacation_data
 from notification import notify_today_vacation_info
+from formatting import create_leave_string
 
 # testing for validating on generating docx
 import gspread
@@ -105,9 +106,13 @@ def handle_message_events(event, say):
 
     ## Test Mode 설정
     if user_input == "테스트":
-        res = is_file_exists_in_directory(config.dummy_directory_id, "연차/반차_2024_file")
-        print(res)
-        return
+        # create_leave_string -> 휴가 데이터를 전달해야 하고, 데이터 내 휴가 연도를 파악해야 한다
+        formatted_year = create_leave_string(2024)
+        if is_file_exists_in_directory(config.dummy_vacation_directory_id, formatted_year) is False:
+            print("진입")
+            copy_gdrive_spreadsheet(config.dummy_vacation_template_id, formatted_year, config.dummy_vacation_directory_id)
+            print("완료")
+    return
     
     ## 입력 초기 
     if user_id not in user_states:
