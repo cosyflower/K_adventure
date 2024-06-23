@@ -11,17 +11,14 @@ import config
 import schedule
 import time
 import threading
-from user_commend import docx_generate, full_rest, half_rest, search_db, one_and_one, authority_update, view_all_user_authority_list, view_updated_user_authority_list, view_my_authority, authority_change, vacation_request_list, VACATION_SEQUENCE_TO_TPYE, \
-VACATION_SEQUENCE_TO_REASON, vacation_cancel_list, remained_vacation_list, totday_vacation_list, security_system # 사용자 명령어 DB
+from user_commend import docx_generate, full_rest, half_rest, search_db, one_and_one, authority_update, view_all_user_authority_list, view_updated_user_authority_list, view_my_authority, authority_change, vacation_request_list,  \
+vacation_cancel_list, remained_vacation_list, totday_vacation_list, security_system # 사용자 명령어 DB
 
 # Testing for vacation
-from googleVacationApi import append_data, get_real_name_by_user_id, find_data_by_userId, delete_data, get_remained_vacation_by_userId, get_today_vacation_data, \
-    get_today_vacation_data, is_file_exists_in_directory, copy_gdrive_spreadsheet
-from validator import is_valid_date, is_valid_vacation_sequence, is_valid_vacation_reason_sequence, \
-is_valid_email, is_valid_confirm_sequence, is_valid_cancel_sequence, is_valid_vacation_purpose
-from translator import to_specific_date, format_vacation_info, to_cancel_sequence_list, convert_type_value, format_vacation_data
 from notification import notify_today_vacation_info
-from formatting import create_leave_string
+from formatting import process_user_input
+from googleVacationApi import request_vacation, cancel_vacation, vacation_purpose_handler, get_remained_vacation, \
+get_today_vacation_info
 
 # testing for validating on generating docx
 import gspread
@@ -63,9 +60,6 @@ def check_the_user_purpose(user_input):
         print("chatgpt 사용 + 3원")
         return chatgpt.analyze_user_purpose(user_input)
 
-def process_user_input(user_input):
-    return re.split(r'>\s*', user_input, maxsplit=1)[-1].strip()
-
 app = App(token=config.bot_token_id)
 
 # Scheduler 관련 함수 정의
@@ -90,8 +84,6 @@ user_vacation_info = {}
 # 휴가 취소 프로세스
 cancel_vacation_status = {}
 
-dummy_vacation_db_id = config.dummy_vacation_db_id
-
 @app.event("message")
 def handle_message_events(body, logger):
     # 이벤트로부터 메시지의 내용을 추출하고 로그로 기록합니다.
@@ -104,6 +96,7 @@ def handle_message_events(event, say):
     ### 사용자 명령어 인식 프로세스
     user_input = process_user_input(user_input)
 
+    """
     ## Test Mode 설정
     if user_input == "테스트":
         # create_leave_string -> 휴가 데이터를 전달해야 하고, 데이터 내 휴가 연도를 파악해야 한다
@@ -112,7 +105,7 @@ def handle_message_events(event, say):
             print("진입")
             copy_gdrive_spreadsheet(config.dummy_vacation_template_id, formatted_year, config.dummy_vacation_directory_id)
             print("완료")
-    return
+    """
     
     ## 입력 초기 
     if user_id not in user_states:
@@ -136,11 +129,11 @@ def handle_message_events(event, say):
              authority_update_authority_update_json_file(event, say)
 
         elif user_states[user_id] == 'request_vacation':
-            request_vacation(event, say)
+            request_vacation(event, say, user_states, user_vacation_status, user_vacation_info)
         elif user_states[user_id] == 'cancel_vacation':
-            cancel_vacation(event, say)
+            cancel_vacation(event, say, user_states, cancel_vacation_status)
         elif user_states[user_id] == 'vacation_tracker': # 조회는 1번, 추가는 2번, 삭제는 3번을, 종료를 원하시면 \"종료\"를 입력하세요 (1, 2, 3, 종료)
-            vacation_purpose_handler(event, say)
+            vacation_purpose_handler(event, say, user_states, cancel_vacation_status, user_vacation_info, user_vacation_status)
        
 def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 user_states[] 변경해야 한다 
     user_id = message['user']
@@ -165,7 +158,7 @@ def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 use
     elif purpose == "휴가 취소할래": # 휴가 취소 관련
         say(f"<@{user_id}>님의 휴가 취소 프로세스를 진행합니다. <@{user_id}>님의 휴가 리스트를 출력합니다. 잠시만 기다려주세요.\n")
         user_states[user_id] = 'cancel_vacation'
-        cancel_vacation(message, say)
+        cancel_vacation(message, say, user_states, cancel_vacation_status)
     elif purpose == "남은 휴가":
         say(f"<@{user_id}>님의 잔여 휴가를 조회합니다. 잠시만 기다려주세요.\n")
         get_remained_vacation(message, say)
@@ -481,444 +474,6 @@ def authority_update_authority_update_json_file(message, say):
             user_states[user_id] = 'authority_update_json_file'
             del user_states[user_id]
             
-######################################
-########## 휴가 / 연차 시스템 ############
-# 금일 휴가자 정보 조회하기
-def get_today_vacation_info(message, say):
-    # say(f"금일 휴가자 정보를 조회합니다. 잠시만 기다려주세요.\n")
-    # 휴가자 내역을 모두 조회하고 금일 날짜 데이터만 가지고 온다
-    today_vacation_data = get_today_vacation_data(dummy_vacation_db_id, config.kakao_json_key_path)
-    if len(today_vacation_data) == 0:
-        say(f"금일 휴가자 정보가 존재하지 않습니다. 금일 휴가 조회를 종료합니다")
-        return
-
-    # 정보들을 일정한 형식에 맞게 출력한다
-    formatted_result = format_vacation_data(today_vacation_data)
-        
-    for info in formatted_result:
-        say(f"{info}\n")
-        
-    say(f"금일 휴가 조회를 종료합니다\n")
-# 남은 휴가 조회하기
-def get_remained_vacation(message, say):
-    user_id = message['user']
-    user_input = message['text']
-    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
-
-    remained_vacation = get_remained_vacation_by_userId(dummy_vacation_db_id, user_id)
-    say(f"<@{user_id}>님의 잔여 휴가 정보입니다\n"
-        f"연차 휴가 잔여 일수 : {float(remained_vacation[0])}\n"
-        f"안식 휴가 잔여 일수 : {float(remained_vacation[1])}\n"
-        )
-    
-    say(f"<@{user_id}>님 잔여 휴가 조회를 종료합니다.\n\n")
-    return
-def vacation_purpose_handler(message, say):
-    # 조회는 1번, 추가는 2번, 삭제는 3번을, 종료를 원하시면 \"종료\"를 입력하세요 (1, 2, 3, 종료)
-    user_id = message['user']
-    user_input = message['text']
-    # 1 / 2 / 3 / 종료가 들어가 있는 상황
-    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
-
-    if cleaned_user_input == '종료':
-        say(f"<@{user_id}>님 휴가 신청 프로세스를 종료합니다.\n\n")
-        if user_id in user_states:
-            del user_states[user_id]
-        if user_id in cancel_vacation_status:
-            del cancel_vacation_status[user_id]
-        return # 슬랙 봇은 각 이벤트 별로 독립적으로 작동하기 떄문에 return을 작성해도 다른 이벤트 함수에 영향이 없음.. 이거 알고 있었냐?? 
-
-    if is_valid_vacation_purpose(cleaned_user_input):
-        if cleaned_user_input == '1': # 조회하기 - user_states 변경
-            say(f"<@{user_id}>님 휴가 조회 기능을 실행합니다. 휴가 리스트를 출력합니다\n\n")
-            try:
-                found_data_list = find_data_by_userId(config.dummy_vacation_db_id, 1, user_id, 1)
-            except ValueError as e:
-                say(f"Unvalid sheet_number: {e}")
-    
-            seq = 1
-            for result in found_data_list:
-                say(f"{seq}. {format_vacation_info(result)}")
-                seq += 1
-            
-            say(f"<@{user_id}>님 휴가 관련 프로그램을 종료합니다.\n\n")
-            if user_id in user_states:
-                del user_states[user_id]
-            if user_id in cancel_vacation_status:
-                del cancel_vacation_status[user_id]
-            return 
-        elif cleaned_user_input == '2': # 추가하기 - user_states 변경 / request_vacation_info, request_vacation_status
-            if user_id in user_vacation_info:
-                del user_vacation_info[user_id]
-            if user_id in user_vacation_status:
-                del user_vacation_status[user_id]
-            user_states[user_id] = 'request_vacation'
-            say(f"<@{user_id}>님 휴가 신청을 시작합니다. 휴가 시작 날짜와 시간을 입력해주세요.\n"
-                "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 입력하세요\n"
-                "[예시] 2024-04-04 18:00\n"
-                )
-        elif cleaned_user_input == '3': # 삭제하기 - user_states 변경 / cancel_vacation_status
-            if user_id in cancel_vacation_status:
-                del cancel_vacation_status[user_id]
-            user_states[user_id] = 'cancel_vacation'
-            say(f"<@{user_id}>님 휴가 삭제를 시작합니다.") 
-            cancel_vacation(message, say)
-    else:
-        say(f"<@{user_id}>님 휴가 프로그램 실행중입니다. 잘못된 입력입니다. 1,2,3 중 하나를 입력하세요")
-#### 취소할 휴가 순서 입력받기
-def input_cancel_sequence(message, say):
-    user_id = message['user']
-    user_input = message['text']
-    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
-    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
-    cancel_sequeunce = cleaned_user_input
-
-    # 수가 아닌 경우를 예외처리 해야 한다
-    cancel_sequence_list = to_cancel_sequence_list(cancel_sequeunce) # [1] / [1,2]
-
-    try:
-        found_data_list = find_data_by_userId(config.dummy_vacation_db_id, 1, user_id, 1)
-    except ValueError as e:
-        say(f"Unvalid sheet_number: {e}")
-
-    if is_valid_cancel_sequence(cancel_sequence_list, len(found_data_list)):
-        cancel_vacation_status[user_id] = 'waiting_deleting'
-    else:
-        say(f"<@{user_id}>님의 휴가 취소 프로세스를 진행중입니다.. 잘못된 번호입니다. 다시 입력해주세요.")
-#### 휴가 취소 ####
-def cancel_vacation(message, say):
-    user_id = message['user']
-    user_input = message['text']
-    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
-    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
-
-    if cleaned_user_input == '종료':
-        say(f"<@{user_id}>님 휴가 신청 프로세스를 종료합니다.\n\n")
-        if user_id in user_states:
-            del user_states[user_id]
-        if user_id in cancel_vacation_status:
-            del cancel_vacation_status[user_id]
-        return # 슬랙 봇은 각 이벤트 별로 독립적으로 작동하기 떄문에 return을 작성해도 다른 이벤트 함수에 영향이 없음.. 이거 알고 있었냐?? 
-    
-    # 먼저 휴가를 리스트업 한다 
-    # 시트 번호가 적절하지 않은 경우 예외 처리를 진행한다
-    try:
-        found_data_list = find_data_by_userId(config.dummy_vacation_db_id, 1, user_id, 1)
-    except ValueError as e:
-        say(f"Unvalid sheet_number: {e}")
-        return
-
-    if user_id not in cancel_vacation_status:
-        seq = 1 
-        say(f"<@{user_id}>의 휴가 삭제를 진행중입니다. <@{user_id}>의 휴가 신청 내역입니다. 취소할 휴가 번호를 입력하세요.") # 문구 추가
-        for result in found_data_list:
-            say(f"{seq}. {format_vacation_info(result)}")
-            seq += 1
-        cancel_vacation_status[user_id] = 'waiting_cancel_sequence'
-        return
-    
-    if cancel_vacation_status[user_id] == 'waiting_cancel_sequence':
-        input_cancel_sequence(message, say)
-    
-    if cancel_vacation_status[user_id] == 'waiting_deleting':
-        # 1 / 1, 2 / 1,2 -> [] 리스트 형태로 변환해주고 - 변환하면서 예외처리 진행 - 선택한 휴가 맞는지 한번 더 출력
-        ready_for_delete_list = cleaned_user_input
-        cancel_sequence_list = to_cancel_sequence_list(ready_for_delete_list)
-        say(f"<@{user_id}>의 휴가 삭제를 진행중입니다. 잠시만 기다려주세요.")
-        for num in cancel_sequence_list:
-            deletion_occured = delete_data(config.dummy_vacation_db_id, 1, found_data_list[num-1])
-        # 삭제 완료 안내문 출력
-        say(f"<@{user_id}>의 휴가 삭제를 진행중입니다. 휴가 삭제를 완료했습니다.")
-        # 조회, 추가, 취소 기능을 기다리는 중이다
-        del cancel_vacation_status[user_id]
-        user_states[user_id] = 'vacation_tracker'
-        say(f"<@{user_id}>님의 휴가 프로그램 실행중입니다. 조회는 1번, 추가는 2번, 삭제는 3번을, 종료를 원하시면 \"종료\"를 입력하세요\n")
-        # 휴가 추가는 1, 취소는 2를 누르도록 진행한다
-##### 휴가 종류를 입력받는다
-def input_vacation_type(message, say):
-    user_id = message['user']
-    user_input = message['text']
-    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
-    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
-    vacation_sequence = cleaned_user_input
-
-    if is_valid_vacation_sequence(vacation_sequence):
-        vacation_type = VACATION_SEQUENCE_TO_TPYE[int(vacation_sequence)]
-        user_vacation_info[user_id].append(vacation_type) # 변환 모듈
-        say(f"<@{user_id}>님 휴가 신청 진행중입니다. 신청한 휴가는 {vacation_type}입니다.\n\n")
-        user_vacation_status[user_id] = "waiting_vacation_reason"
-    else:
-        say(f"<@{user_id}>님 휴가 신청 진행중입니다. 잘못된 휴가 종류입니다. 1 - 5번 사이의 번호를 입력하세요\n\n")
-#### 휴가 사유를 입력받는다
-def input_vacation_reason(message, say):
-    user_id = message['user']
-    user_input = message['text']
-    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
-    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
-    vacation_reason_sequence = cleaned_user_input
-
-    # 예외 처리 관련
-    if is_valid_vacation_reason_sequence(vacation_reason_sequence):
-        vacation_reason_type = VACATION_SEQUENCE_TO_REASON[int(vacation_reason_sequence)]
-        user_vacation_info[user_id].append(vacation_reason_type)
-        say(f"<@{user_id}>님 휴가 신청 진행중입니다. {vacation_reason_type}를 신청했습니다.\n\n")
-        if vacation_reason_type in ["경조휴가", "특별휴가", "출산휴가"]:
-            user_vacation_status[user_id] = "waiting_vacation_specific_reason"
-        else:
-            user_vacation_info[user_id].append("") # 휴가 상세 자유를 공백으로 추가해둔다
-            user_vacation_status[user_id] = "waiting_vacation_email"
-    else:
-        say(f"<@{user_id}>님 휴가 신청 진행중입니다. 잘못된 휴가 사유입니다. 1 - 8번 사이의 번호를 입력하세요\n\n")
-#### 휴가 상세 사유 입력받기
-def input_vacation_specific_reason(message, say):
-    user_id = message['user']
-    user_input = message['text']
-    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
-    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
-    vacation_specific_reason = cleaned_user_input
-
-    user_vacation_info[user_id].append(vacation_specific_reason)
-    user_vacation_status[user_id] = "waiting_vacation_email"
-#### 휴가 개인 이메일 입력받기
-def input_vacation_email(message, say):
-    user_id = message['user']
-    user_input = message['text']
-    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
-    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
-    email = cleaned_user_input
-    # 이메일에 '!' 문자가 있는지 확인
-    if '!' not in email:
-        email = email.split('|')[1]
-        # 만약 꺾쇠 괄호(<, >)도 제거하고 싶다면 strip 메서드를 사용할 수 있습니다.
-        email = email.strip('>')
-
-    if is_valid_email(email):
-        user_vacation_info[user_id].append(email) # 변환 모듈
-        say(f"<@{user_id}>님 휴가 신청 진행중입니다. <@{user_id}>님의 휴가 신청 이메일은 {email} 입니다.\n\n")
-        user_vacation_status[user_id] = "pre-confirmed"
-    else:
-        say(f"<@{user_id}>님 휴가 신청 진행중입니다. <{email}>올바르지 않은 이메일 형식입니다. 다시 입력하세요\n\n")
-def is_confirmed(confirm_sequence):
-    if(confirm_sequence == '0'):
-        return True
-    
-    return False
-def checking_final_confirm(message, say):
-    user_id = message['user']
-    user_input = message['text']
-    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
-    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
-    confirm_sequence = cleaned_user_input
-
-    # 유요한 입력인지 확인
-    if is_valid_confirm_sequence(confirm_sequence):
-        if is_confirmed(confirm_sequence):
-            user_vacation_status[user_id] = 'confirmed'
-        else:
-            say(f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 신청 정보를 재입력합니다. 휴가 시작 날짜를 알려주세요. 입력 형식은 YYYY-MM-DD 입니다.\n\n")
-            del user_vacation_status[user_id]
-            del user_vacation_info[user_id]
-    else:
-        say(f"<@{user_id}>님 휴가 신청 진행중입니다. <{confirm_sequence}> 잘못된 입력입니다. 0 혹은 1을 입력하세요(0: 저장, 1: 수정)\n\n")
-    # 0번이면 DB 반영하는 단계로 이어지도록 (상태 변경해야 한다) + info 정보 wrapping 해서 DB에 반영해야 한다
-    # 1번이면 user_vacation_info, user_vacation_status 해당 인덱스 정보 삭제하기
-######### 휴가/연차 신청하기 #######
-def request_vacation(message, say):
-    user_id = message['user']
-    user_input = message['text']
-    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
-    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
-
-    if cleaned_user_input == '종료':
-        say(f"<@{user_id}>님 휴가 신청 프로세스를 종료합니다.\n\n")
-        if user_id in user_states:
-            del user_states[user_id]
-        if user_id in user_vacation_info:
-            del user_vacation_info[user_id]
-        if user_id in user_vacation_status:
-            del user_vacation_status[user_id]
-        return # 슬랙 봇은 각 이벤트 별로 독립적으로 작동하기 떄문에 return을 작성해도 다른 이벤트 함수에 영향이 없음.. 이거 알고 있었냐?? 
-
-    # waiting_ : 값 입력을 기다리는 상황 // checking_ : 입력받는 것에 오류가 있는지 확인
-    if user_id not in user_vacation_status and cleaned_user_input != "종료":
-        user_vacation_info[user_id] = []
-        user_vacation_status[user_id] = 'requesting'
-        start_date = process_user_input(cleaned_user_input)
-        if is_valid_date(start_date):
-            user_vacation_info[user_id].append(start_date)
-            say(f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종료 날짜와 시간을 입력해주세요.\n"
-                "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 입력하세요\n"
-                "[예시] 2024-04-04 18:00\n"
-                )
-        else:
-            say("잘못된 형식입니다. 휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로 다시 입력해주세요.")
-            user_vacation_status[user_id] = 'pending'
-    elif user_vacation_status[user_id] == 'pending': # 다시 시작 날짜부터 받는다 
-        start_date = process_user_input(cleaned_user_input)
-        if is_valid_date(start_date):
-            user_vacation_info[user_id].append(start_date)
-            say(f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종료 날짜와 시간을 입력해주세요.\n"
-                "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 작성해주세요\n"
-                "[예시] 2024-01-01 19:00\n"
-                )
-            user_vacation_status[user_id] = 'requesting'
-        else:
-            say(f"<@{user_id}>님 휴가 시작 날짜와 시간을 다시 입력해주세요 YYYY-MM-DD HH:MM 형태로 입력하세요 \n\n")
-    elif user_vacation_status[user_id] == 'requesting': # 시작 날짜 문제가 없는 상황 - 종료 날짜를 입력받는다
-        end_date = process_user_input(cleaned_user_input)
-        if is_valid_date(end_date, comparison_date_str=user_vacation_info[user_id][0]):
-            user_vacation_info[user_id].append(end_date)
-            start_date = user_vacation_info[user_id][0]
-            end_date = user_vacation_info[user_id][1]
-            say(f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종류를 선택하세요\n\n")
-            user_vacation_status[user_id] = 'waiting_vacation_type'
-        else:
-            say("잘못된 형식입니다. 휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로 다시 입력해주세요.")
-            user_vacation_info[user_id] = []
-            user_vacation_status[user_id] = 'pending'
-
-    # 휴가 종류 선택하기
-    if user_vacation_status[user_id] == 'checking_vacation_type':
-        input_vacation_type(message, say)
-    
-    if user_vacation_status[user_id] == 'waiting_vacation_type':
-        say("휴가 종류에는 5가지로 숫자로 1 - 5번 사이의 수를 입력해주세요\n"
-            "1. 연차\n"
-            "2. 반차(오전)\n"
-            "3. 반차(오후)\n"
-            "4. 반반차(오전)\n"
-            "5. 반반차(오후)\n"
-            )
-        user_vacation_status[user_id] = 'checking_vacation_type'
-
-    # 휴가 사유 선택하기
-    if user_vacation_status[user_id] == 'checking_vacation_reason':
-        input_vacation_reason(message, say)
-
-    if user_vacation_status[user_id] == "waiting_vacation_reason":
-        # 휴가 이유 선택하기
-        say("휴가 사유에는 8가지로 숫자로 1 - 8번 사이의 수를 입력해주세요\n"
-            "1. 개인휴가\n"
-            "2. 경조휴가\n"
-            "3. 특별휴가\n"
-            "4. 예비군,민방위휴가\n"
-            "5. 보건휴가\n"
-            "6. 안식휴가\n"
-            "7. 출산휴가\n"
-            "8. 기타휴가\n"
-            )
-        user_vacation_status[user_id] = 'checking_vacation_reason'
-
-
-    ### 상세사유 입력하는 경우 그리고 입력하지 않는 경우 구분해서 입력해야 한다
-    if user_vacation_status[user_id] == "checking_vacation_specific_reason":
-        input_vacation_specific_reason(message, say)
-
-    if user_vacation_status[user_id] == "waiting_vacation_specific_reason":
-        # 상세 사유 입력받기
-        say(f"<@{user_id}>님 휴가 신청 진행중입니다. 선택하신 {user_vacation_info[user_id][-1]}의 휴가 상세 사유를 작성해주세요")
-        user_vacation_status[user_id] = "checking_vacation_specific_reason"
-
-    # 이메일 입력 
-    if user_vacation_status[user_id] == "checking_vacation_email":
-        input_vacation_email(message, say)
-    if user_vacation_status[user_id] == "waiting_vacation_email":
-        # email 입력받기
-        say(f"<@{user_id}>님 휴가 신청 진행중입니다. <@{user_id}>의 개인 이메일을 작성해주세요.\n"
-            "* 유의 * 이메일 아이디 내 느낌표(!)가 존재해서는 안 됩니다."
-            )
-        user_vacation_status[user_id] = "checking_vacation_email"
-    
-    if user_vacation_status[user_id] == "waiting_final_confirm":
-        checking_final_confirm(message, say)
-    
-    if user_id in user_vacation_info and user_vacation_status[user_id] == "pre-confirmed":
-        say(f"<@{user_id}>의 휴가 신청 정보입니다.")
-        for a, value in enumerate(user_vacation_info[user_id]):
-            # 저장된 정보 출력 
-            # user_states, user_vacation_info, user_vacation_status 로 상태를 지속적으로 확인하는 중으로 생각하기
-            say(f"{value}\n")
-        say(f"<@{user_id}>의 휴가 신청을 완료하려면 0을, 수정을 원하면 1을 입력하세요.")
-        user_vacation_status[user_id] = "waiting_final_confirm"
-
-    if user_id in user_vacation_info and user_vacation_status[user_id] == "confirmed":
-        # DB에 저장한다
-        # user_vacation_info[user_id] 안에 모두 담겨져있는 상황 : 시작 - 종료 - 종류 - 사유 - 상세 사유 - 이메일 
-        new_row_data = []
-        current_time = datetime.datetime.now().strftime('%Y. %m. %d %p %I:%M:%S').replace('AM', '오전').replace('PM', '오후').lstrip("'")
-        # 시간을 넣어야 한다
-        start_date_formatted = to_specific_date(user_vacation_info[user_id][0]).lstrip("'")
-        end_date_formatted = to_specific_date(user_vacation_info[user_id][1]).lstrip("'")
-        type = user_vacation_info[user_id][2]
-        reason = user_vacation_info[user_id][3]
-        specific_reason = user_vacation_info[user_id][4]
-        email = user_vacation_info[user_id][5]
-
-        new_row_data.extend([
-            current_time,
-            get_real_name_by_user_id(user_id), # 저장시 ID로 저장 - uesrs_info에서 찾아서 대신 넣어야 한다 (있는 경우 없는 경우 생각하기)
-            start_date_formatted,
-            end_date_formatted,
-            type,
-            reason,
-            specific_reason,
-            email
-        ])
-
-        # DB 반영하기 전, 개인휴가 안식휴가에 대해서 if 조건을 추가해야 한다
-        # 개인휴가 혹은 안식 휴가라면 - 잔여 휴가 정보를 가지고 온다
-        # 선택한 휴가 종류 연차면 1, 반차면 0.5, 반반차면 0.25로 구분
-        # 잔여 휴가 < 휴가 종류 인 경우 신청 불가 사유를 알려주고  종료
-        # 종료 시 아래의 del 가지고 오고 return 할 것
-        remained_vacation = get_remained_vacation_by_userId(dummy_vacation_db_id, user_id)
-        # type -> 수로 변경해야 함
-        converted_value = convert_type_value(type)
-        if reason == "개인휴가" and float(remained_vacation[0]) < converted_value:
-            say(f"<@{user_id}>님의 개인휴가 신청이 불가합니다. 개인휴가의 잔여 일수를 확인하세요.\n")
-            say(f"<@{user_id}>님의 휴가 신청을 종료합니다.")
-
-            del user_states[user_id]
-            del user_vacation_info[user_id]
-            del user_vacation_status[user_id]
-            return
-        if reason == "안식휴가" and float(remained_vacation[1]) < converted_value:
-            say(f"<@{user_id}>의 안식휴가 신청이 불가합니다. 안식휴가의 잔여 일수를 확인하세요.\n")
-            say(f"<@{user_id}>님의 휴가 신청을 종료합니다.")
-
-            del user_states[user_id]
-            del user_vacation_info[user_id]
-            del user_vacation_status[user_id]
-            return
-        
-        # 기존 휴가와 동일한 날짜면 반려
-        
-        # DB에 반영한다 
-        is_stored = False
-        while is_stored is False:
-            try:
-                say(f"<@{user_id}>의 휴가 신청을 처리중입니다.")
-                append_data(config.dummy_vacation_db_id, 1, new_row_data)
-                is_stored =True
-            except gspread.exceptions.APIError as e:
-                say(f"APIError occurred: {e}")
-            except gspread.exceptions.GSpreadException as e:
-                say(f"GSpreadException occurred: {e}")
-            except FileNotFoundError as e:
-                say(f"File not found: {e}")
-            except ValueError as e:
-                say(f"Unvalid sheet_number: {e}")
-            except Exception as e:
-                say(f"An unexpected error occurred: {e}")
-        
-        say(f"<@{user_id}>의 휴가 신청을 완료합니다. 휴가 / 연차 서비스를 종료합니다.\n")
-        # 신청을 마무리하면 관련 모든 정보를 삭제한다
-        del user_states[user_id]
-        del user_vacation_info[user_id]
-        del user_vacation_status[user_id]
-        return
-    
-
-
 if __name__ == "__main__":
     # 스케줄러 실행을 위한 스레드 시작
     scheduler_thread = threading.Thread(target=run_scheduler)
