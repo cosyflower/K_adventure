@@ -371,8 +371,11 @@ def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, 
             user_states[user_id] = 'cancel_vacation'
             say(f"<@{user_id}>님 휴가 삭제를 시작합니다.") 
             cancel_vacation(message, say, user_states, cancel_vacation_status)
+        elif cleaned_user_input == '4': # 남은 휴가 조회해줘
+            say(f"<@{user_id}>님의 잔여 휴가를 조회합니다. 잠시만 기다려주세요.\n")
+            get_remained_vacation(message, say)
     else:
-        say(f"<@{user_id}>님 휴가 프로그램 실행중입니다. 잘못된 입력입니다. 1,2,3 중 하나를 입력하세요")
+        say(f"<@{user_id}>님 휴가 프로그램 실행중입니다. 잘못된 입력입니다. 1,2,3,4 중 하나를 입력하세요")
 
 #### 휴가 취소 ####
 def cancel_vacation(message, say, user_states, cancel_vacation_status):

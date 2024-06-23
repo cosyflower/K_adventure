@@ -97,7 +97,7 @@ def is_valid_vacation_purpose(user_input):
         return False
     
     # 1, 2, 3 중 하나인지 확인
-    if number in [1, 2, 3]:
+    if number in [1, 2, 3, 4]:
         return True
     else:
         return False

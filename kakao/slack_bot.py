@@ -12,7 +12,7 @@ import schedule
 import time
 import threading
 from user_commend import docx_generate, full_rest, half_rest, search_db, one_and_one, authority_update, view_all_user_authority_list, view_updated_user_authority_list, view_my_authority, authority_change, vacation_request_list,  \
-vacation_cancel_list, remained_vacation_list, totday_vacation_list, security_system # 사용자 명령어 DB
+security_system, vacation_system_list # 사용자 명령어 DB
 
 # Testing for vacation
 from notification import notify_today_vacation_info
@@ -46,14 +46,16 @@ def check_the_user_purpose(user_input):
         return view_my_authority[0]
     elif user_input in authority_change:
         return authority_change[0]
-    elif user_input in vacation_request_list: # 휴가 신청 키워드 포함 - 휴가 신청할래로 반환
-        return vacation_request_list[0]
-    elif user_input in vacation_cancel_list: # 휴가 취소 키워드 포함 - 휴가 취소할래로 반환
-        return vacation_cancel_list[0]
-    elif user_input in remained_vacation_list:
-        return remained_vacation_list[0]
-    elif user_input in totday_vacation_list:
-        return totday_vacation_list[0]
+    elif user_input in vacation_system_list:
+        return vacation_system_list[0]
+    # elif user_input in vacation_request_list: # 휴가 신청 키워드 포함 - 휴가 신청할래로 반환
+    #     return vacation_request_list[0]
+    # elif user_input in vacation_cancel_list: # 휴가 취소 키워드 포함 - 휴가 취소할래로 반환
+    #     return vacation_cancel_list[0]
+    # elif user_input in remained_vacation_list:
+    #     return remained_vacation_list[0]
+    # elif user_input in totday_vacation_list:
+    #     return totday_vacation_list[0]
     elif user_input in security_system:
         return security_system[0]
     else:
@@ -95,17 +97,6 @@ def handle_message_events(event, say):
     user_input = event['text']
     ### 사용자 명령어 인식 프로세스
     user_input = process_user_input(user_input)
-
-    """
-    ## Test Mode 설정
-    if user_input == "테스트":
-        # create_leave_string -> 휴가 데이터를 전달해야 하고, 데이터 내 휴가 연도를 파악해야 한다
-        formatted_year = create_leave_string(2024)
-        if is_file_exists_in_directory(config.dummy_vacation_directory_id, formatted_year) is False:
-            print("진입")
-            copy_gdrive_spreadsheet(config.dummy_vacation_template_id, formatted_year, config.dummy_vacation_directory_id)
-            print("완료")
-    """
     
     ## 입력 초기 
     if user_id not in user_states:
@@ -127,13 +118,15 @@ def handle_message_events(event, say):
             authority_update_authority_category(event, say)
         elif user_states[user_id] == 'authority_update_json_file':
              authority_update_authority_update_json_file(event, say)
-
-        elif user_states[user_id] == 'request_vacation':
-            request_vacation(event, say, user_states, user_vacation_status, user_vacation_info)
-        elif user_states[user_id] == 'cancel_vacation':
-            cancel_vacation(event, say, user_states, cancel_vacation_status)
-        elif user_states[user_id] == 'vacation_tracker': # 조회는 1번, 추가는 2번, 삭제는 3번을, 종료를 원하시면 \"종료\"를 입력하세요 (1, 2, 3, 종료)
+        
+        elif user_states[user_id] == 'vacation_purpose_handler':
             vacation_purpose_handler(event, say, user_states, cancel_vacation_status, user_vacation_info, user_vacation_status)
+        # elif user_states[user_id] == 'request_vacation':
+        #     request_vacation(event, say, user_states, user_vacation_status, user_vacation_info)
+        # elif user_states[user_id] == 'cancel_vacation':
+        #     cancel_vacation(event, say, user_states, cancel_vacation_status)
+        # elif user_states[user_id] == 'vacation_tracker': # 조회는 1번, 추가는 2번, 삭제는 3번을, 종료를 원하시면 \"종료\"를 입력하세요 (1, 2, 3, 종료)
+        #     vacation_purpose_handler(event, say, user_states, cancel_vacation_status, user_vacation_info, user_vacation_status)
        
 def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 user_states[] 변경해야 한다 
     user_id = message['user']
@@ -145,26 +138,40 @@ def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 use
         say(f"<@{user_id}> 문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
         user_states[user_id] = 'docx_generating_waiting_company_name'
     elif purpose == "보안시스템 작동해줘":
-        say(f"<@{user_id}> 보안시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n1. 전체 사용자 권한 조회(관리자 전용)\n2. 권한이 변경된 사용자 조회(관리자 전용)\n3. 권한 업데이트(관리자 전용)\n4. 신규 사용자 권한 배정\n5. 내 권한 조회\n(종료를 원하시면 '종료'를 입력해주세요)")
-        user_states[user_id] = 'security_system_waiting_function_number'
-
-    elif purpose == "휴가 신청할래": # 휴가 신청 관련 -> 추후 휴가 신청할래로 변경
-        say(f"<@{user_id}>님의 휴가 신청 프로세스를 진행합니다. 휴가 시작 날짜와 시간을 입력해주세요\n"
-            "날짜는 YYYY-MM-DD 형태로 작성해주세요. 시간은 HH:MM 형태로 작성해주세요.\n"
-            "[예시 1] 2024-04-04 09:00\n"
-            "[예시 2] 2024-04-04 09:00\n"
+        say(f"<@{user_id}> 보안시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
+            "1. 전체 사용자 권한 조회(관리자 전용)\n"
+            "2. 권한이 변경된 사용자 조회(관리자 전용)\n"
+            "3. 권한 업데이트(관리자 전용)\n"
+            "4. 신규 사용자 권한 배정\n"
+            "5. 내 권한 조회\n(종료를 원하시면 '종료'를 입력해주세요)"
             )
-        user_states[user_id] = 'request_vacation'
-    elif purpose == "휴가 취소할래": # 휴가 취소 관련
-        say(f"<@{user_id}>님의 휴가 취소 프로세스를 진행합니다. <@{user_id}>님의 휴가 리스트를 출력합니다. 잠시만 기다려주세요.\n")
-        user_states[user_id] = 'cancel_vacation'
-        cancel_vacation(message, say, user_states, cancel_vacation_status)
-    elif purpose == "남은 휴가":
-        say(f"<@{user_id}>님의 잔여 휴가를 조회합니다. 잠시만 기다려주세요.\n")
-        get_remained_vacation(message, say)
-    elif purpose == "금일 휴가자":
-        say(f"금일 휴가자 정보를 조회합니다. 잠시만 기다려주세요.\n")
-        get_today_vacation_info(message, say)
+        user_states[user_id] = 'security_system_waiting_function_number'
+    elif purpose == "휴가시스템 작동해줘":
+        say(f"<@{user_id}> 휴가시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
+            "1. 신청된 휴가 조회\n"
+            "2. 신규 휴가 신청\n"
+            "3. 기존 휴가 삭제\n"
+            "4. 남은 휴가 일수 조회\n"
+            "(종료를 원하시면 '종료'를 입력해주세요)"
+            )
+        user_states[user_id] = 'vacation_purpose_handler'
+    # elif purpose == "휴가 신청할래": # 휴가 신청 관련 -> 추후 휴가 신청할래로 변경
+    #     say(f"<@{user_id}>님의 휴가 신청 프로세스를 진행합니다. 휴가 시작 날짜와 시간을 입력해주세요\n"
+    #         "날짜는 YYYY-MM-DD 형태로 작성해주세요. 시간은 HH:MM 형태로 작성해주세요.\n"
+    #         "[예시 1] 2024-04-04 09:00\n"
+    #         "[예시 2] 2024-04-04 09:00\n"
+    #         )
+    #     user_states[user_id] = 'request_vacation'
+    # elif purpose == "휴가 취소할래": # 휴가 취소 관련
+    #     say(f"<@{user_id}>님의 휴가 취소 프로세스를 진행합니다. <@{user_id}>님의 휴가 리스트를 출력합니다. 잠시만 기다려주세요.\n")
+    #     user_states[user_id] = 'cancel_vacation'
+    #     cancel_vacation(message, say, user_states, cancel_vacation_status)
+    # elif purpose == "남은 휴가":
+    #     say(f"<@{user_id}>님의 잔여 휴가를 조회합니다. 잠시만 기다려주세요.\n")
+    #     get_remained_vacation(message, say)
+    # elif purpose == "금일 휴가자":
+    #     say(f"금일 휴가자 정보를 조회합니다. 잠시만 기다려주세요.\n")
+    #     get_today_vacation_info(message, say)
     else:
         say(f"<@{user_id}> 없는 기능입니다. 다시 입력해주세요")
 
