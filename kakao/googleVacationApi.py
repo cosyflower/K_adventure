@@ -290,7 +290,6 @@ def copy_gdrive_spreadsheet(template_file_id, new_filename, save_folder_id):
 ### slack_bot 관련 함수
 # 금일 휴가자 정보 조회하기
 def get_today_vacation_info(message, say):
-    # say(f"금일 휴가자 정보를 조회합니다. 잠시만 기다려주세요.\n")
     # 휴가자 내역을 모두 조회하고 금일 날짜 데이터만 가지고 온다
     today_vacation_data = get_today_vacation_data(config.dummy_vacation_db_id, config.kakao_json_key_path)
     if len(today_vacation_data) == 0:
@@ -309,7 +308,6 @@ def get_today_vacation_info(message, say):
 def get_remained_vacation(message, say):
     user_id = message['user']
     user_input = message['text']
-    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
 
     remained_vacation = get_remained_vacation_by_userId(config.dummy_vacation_db_id, user_id)
     say(f"<@{user_id}>님의 잔여 휴가 정보입니다\n"
@@ -322,19 +320,18 @@ def get_remained_vacation(message, say):
 
 # 조회는 1번, 추가는 2번, 삭제는 3번을, 종료를 원하시면 \"종료\"를 입력하세요 (1, 2, 3, 종료)
 def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, user_vacation_info, user_vacation_status):
-    
     user_id = message['user']
     user_input = message['text']
     # 1 / 2 / 3 / 종료가 들어가 있는 상황
     cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
 
     if cleaned_user_input == '종료':
-        say(f"<@{user_id}>님 휴가 신청 프로세스를 종료합니다.\n\n")
+        say(f"<@{user_id}>님 휴가 시스템을 종료합니다.\n\n")
         if user_id in user_states:
             del user_states[user_id]
         if user_id in cancel_vacation_status:
             del cancel_vacation_status[user_id]
-        return # 슬랙 봇은 각 이벤트 별로 독립적으로 작동하기 떄문에 return을 작성해도 다른 이벤트 함수에 영향이 없음.. 이거 알고 있었냐?? 
+        return
 
     if is_valid_vacation_purpose(cleaned_user_input):
         if cleaned_user_input == '1': # 조회하기 - user_states 변경
@@ -390,7 +387,7 @@ def cancel_vacation(message, say, user_states, cancel_vacation_status):
             del user_states[user_id]
         if user_id in cancel_vacation_status:
             del cancel_vacation_status[user_id]
-        return # 슬랙 봇은 각 이벤트 별로 독립적으로 작동하기 떄문에 return을 작성해도 다른 이벤트 함수에 영향이 없음.. 이거 알고 있었냐?? 
+        return 
     
     # 먼저 휴가를 리스트업 한다 
     # 시트 번호가 적절하지 않은 경우 예외 처리를 진행한다
@@ -402,7 +399,9 @@ def cancel_vacation(message, say, user_states, cancel_vacation_status):
 
     if user_id not in cancel_vacation_status:
         seq = 1 
-        say(f"<@{user_id}>의 휴가 삭제를 진행중입니다. <@{user_id}>의 휴가 신청 내역입니다. 취소할 휴가 번호를 입력하세요.") # 문구 추가
+        say(f"<@{user_id}>의 휴가 삭제를 진행중입니다. <@{user_id}>의 휴가 신청 내역입니다. 취소할 휴가 번호를 입력하세요.\n"
+            "종료를 원하시면 \'종료\'를 입력해주세요"
+            ) # 문구 추가
         for result in found_data_list:
             say(f"{seq}. {format_vacation_info(result)}")
             seq += 1
@@ -556,7 +555,7 @@ def request_vacation(message, say, user_states, user_vacation_status, user_vacat
             del user_vacation_info[user_id]
         if user_id in user_vacation_status:
             del user_vacation_status[user_id]
-        return # 슬랙 봇은 각 이벤트 별로 독립적으로 작동하기 떄문에 return을 작성해도 다른 이벤트 함수에 영향이 없음.. 이거 알고 있었냐?? 
+        return
 
     # waiting_ : 값 입력을 기다리는 상황 // checking_ : 입력받는 것에 오류가 있는지 확인
     if user_id not in user_vacation_status and cleaned_user_input != "종료":
