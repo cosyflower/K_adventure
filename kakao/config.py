@@ -37,7 +37,6 @@ dummy_directory_id = '1m2_JBV9zFEHJbnXKjwCc1ZPe2eLljuel'
 dummy_vacation_directory_id = '1KnQgIlfH3H-Ow5dQjuweuOrD1tMJc-4c' 
 
 
-
 ######## Real_File_configuration
 
 # kakao_json_key_path = 'zerobot-425701-15f85b16185c.json'
