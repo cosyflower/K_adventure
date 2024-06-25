@@ -1,6 +1,8 @@
 ## 보안 시스템 ##
-# 1. 채널 아이디
-# 2. 최종 관리자 아이디
+advisor_id = "U072MMSHFGR"
+management_channel_id = "C0722D0PU22"
+executives_channel_id = "C0722D0PU22"
+intern_channel_id = "C0722D0PU22"
 
 ### 문서 4종 ####
 kakao_json_key_path = 'kakao-test-422905-9ed51f908a0f.json'

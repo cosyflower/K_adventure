@@ -5,7 +5,6 @@ import googleapi
 import chatgpt
 import re
 import time
-import get_slack_user_info
 import json
 import config
 import schedule
@@ -16,7 +15,7 @@ security_system, vacation_system_list # 사용자 명령어 DB
 
 from document4create import docx_generating_company_name_handler, docx_generating_inv_choice_handler, docx_generating_docx_category_handler
 
-from security_system import security_system_user_function_handler, security_system_authority_category_handler, security_system_authority_update_json_file_handler, security_system_advisor_authority_make_handler, security_system_advisor_authority_delete_handler, get_user_authority, is_fake_advisor, is_real_advisor
+from security_system import security_system_user_function_handler, security_system_authority_category_handler, security_system_authority_update_json_file_handler, security_system_advisor_authority_make_handler, security_system_advisor_authority_delete_handler, get_user_authority, is_fake_advisor, is_real_advisor, update_authority
 
 # Testing for vacation
 from notification import notify_today_vacation_info
@@ -180,6 +179,7 @@ def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 use
         say(f"<@{user_id}> 없는 기능입니다. 다시 입력해주세요")
 
 if __name__ == "__main__":
+    update_authority()
     # 스케줄러 실행을 위한 스레드 시작
     scheduler_thread = threading.Thread(target=run_scheduler)
     scheduler_thread.start()
