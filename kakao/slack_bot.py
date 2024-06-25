@@ -16,7 +16,7 @@ security_system, vacation_system_list # 사용자 명령어 DB
 
 from document4create import docx_generating_company_name_handler, docx_generating_inv_choice_handler, docx_generating_docx_category_handler
 
-from security_system import security_system_user_function_handler, security_system_authority_category_handler, security_system_authority_update_json_file_handler, security_system_advisor_authority_make_handler, security_system_advisor_authority_delete_handler
+from security_system import security_system_user_function_handler, security_system_authority_category_handler, security_system_authority_update_json_file_handler, security_system_advisor_authority_make_handler, security_system_advisor_authority_delete_handler, get_user_authority, is_fake_advisor, is_real_advisor
 
 # Testing for vacation
 from notification import notify_today_vacation_info
@@ -142,29 +142,40 @@ def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 use
     user_input = process_user_input(user_input) ### 명령어 입력을 token으로 구분하고 
     purpose = check_the_user_purpose(user_input) ### 구분된 토큰을 활용해서 원하는 목적을 진행한다 - return 원하는 기능명
     if purpose == "문서 4종 생성해줘":
-        say(f"<@{user_id}> 문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
-        user_states[user_id] = 'docx_generating_waiting_company_name'
+        if get_user_authority(user_id) < 3:
+            say(f"<@{user_id}> 문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
+            user_states[user_id] = 'docx_generating_waiting_company_name'
+        else:
+            say(f"<@{user_id}> 권한이 없습니다.")
     elif purpose == "보안시스템 작동해줘":
-        say(f"<@{user_id}> 보안시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
-            "1. 전체 사용자 권한 조회\n"
-            "2. 신규 사용자 권한 배정\n"
-            "3. 내 권한 조회\n"
-            "4. 권한이 변경된 사용자 조회([임시]관리자 전용)\n"
-            "5. 권한 업데이트([임시]관리자 전용)\n"
-            "6. 임시 관리자 배정(관리자 전용)\n"
-            "7. 임시 관리자 목록 조회(관리자 전용)\n"
-            "8. 임시 관리자 회수(관리자 전용)\n(종료를 원하시면 '종료'를 입력해주세요)"
-            )
-        user_states[user_id] = 'security_system_waiting_function_number'
+        if get_user_authority(user_id) < 4:
+            say(f"<@{user_id}> 문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
+            user_states[user_id] = 'docx_generating_waiting_company_name'
+            say(f"<@{user_id}> 보안시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
+                "1. 전체 사용자 권한 조회\n"
+                "2. 신규 사용자 권한 배정\n"
+                "3. 내 권한 조회\n"
+                "4. 권한이 변경된 사용자 조회([임시]관리자 전용)\n"
+                "5. 권한 업데이트([임시]관리자 전용)\n"
+                "6. 임시 관리자 배정(관리자 전용)\n"
+                "7. 임시 관리자 목록 조회(관리자 전용)\n"
+                "8. 임시 관리자 회수(관리자 전용)\n(종료를 원하시면 '종료'를 입력해주세요)"
+                )
+            user_states[user_id] = 'security_system_waiting_function_number'
+        else:
+            say(f"<@{user_id}> 권한이 없습니다.")
     elif purpose == "휴가시스템 작동해줘":
-        say(f"<@{user_id}> 휴가시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
-            "1. 신청된 휴가 조회\n"
-            "2. 신규 휴가 신청\n"
-            "3. 기존 휴가 삭제\n"
-            "4. 남은 휴가 일수 조회\n"
-            "(종료를 원하시면 '종료'를 입력해주세요)"
-            )
-        user_states[user_id] = 'vacation_purpose_handler'
+        if get_user_authority(user_id) < 4:
+            say(f"<@{user_id}> 휴가시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
+                "1. 신청된 휴가 조회\n"
+                "2. 신규 휴가 신청\n"
+                "3. 기존 휴가 삭제\n"
+                "4. 남은 휴가 일수 조회\n"
+                "(종료를 원하시면 '종료'를 입력해주세요)"
+                )
+            user_states[user_id] = 'vacation_purpose_handler'
+        else:
+            say(f"<@{user_id}> 권한이 없습니다.")
     else:
         say(f"<@{user_id}> 없는 기능입니다. 다시 입력해주세요")
 

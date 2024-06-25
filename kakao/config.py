@@ -1,3 +1,8 @@
+## 보안 시스템 ##
+# 1. 채널 아이디
+# 2. 최종 관리자 아이디
+
+### 문서 4종 ####
 kakao_json_key_path = 'kakao-test-422905-9ed51f908a0f.json'
 db_1_id = '1z0sPy8gau8AtfiX1iCstJbV25B9MN0x7TndIt308qgg'
 db_2_id = ''
