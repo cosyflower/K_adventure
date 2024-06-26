@@ -10,8 +10,7 @@ import config
 import schedule
 import time
 import threading
-from user_commend import docx_generate, full_rest, half_rest, search_db, one_and_one, authority_update, view_all_user_authority_list, view_updated_user_authority_list, view_my_authority, authority_change, vacation_request_list,  \
-security_system, vacation_system_list, CALL_SLACK_BOT # 사용자 명령어 DB
+from user_commend import docx_generate, security_system, vacation_system_list, CALL_SLACK_BOT, term_deposit_rotation_list # 사용자 명령어 DB
 
 from document4create import docx_generating_company_name_handler, docx_generating_inv_choice_handler, docx_generating_docx_category_handler
 
@@ -37,28 +36,14 @@ import datetime
 def check_the_user_purpose(user_input):
     if user_input in docx_generate:
         return docx_generate[0]
-    elif user_input in full_rest:
-        return full_rest[0]
-    elif user_input in half_rest:
-        return half_rest[0]
-    elif user_input in search_db:
-        return search_db[0]
-    elif user_input in one_and_one:
-        return one_and_one[0]
-    elif user_input in authority_update:
-        return authority_update[0]
-    elif user_input in view_all_user_authority_list:
-        return view_all_user_authority_list[0]
-    elif user_input in view_updated_user_authority_list:
-        return view_updated_user_authority_list[0]
-    elif user_input in view_my_authority:
-        return view_my_authority[0]
-    elif user_input in authority_change:
-        return authority_change[0]
     elif user_input in vacation_system_list:
         return vacation_system_list[0]
     elif user_input in security_system:
         return security_system[0]
+    elif user_input in CALL_SLACK_BOT:
+        return CALL_SLACK_BOT[0]
+    elif user_input in term_deposit_rotation_list:
+        return term_deposit_rotation_list[0]
     else:
         print("chatgpt 사용 + 3원")
         return chatgpt.analyze_user_purpose(user_input)
