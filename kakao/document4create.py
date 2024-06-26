@@ -8,6 +8,12 @@ def docx_generating_company_name_handler(message, say, user_states, inv_list_inf
     user_id = message['user']
     user_input = message['text']
     user_input = process_user_input(user_input)
+
+    if user_input == '종료':
+        say(f"<@{user_id}> 종료합니다.")
+        del user_states[user_id]
+        return
+
     # 모든 기업 이름을 가지고 오는 구간
     try:
         say("스프레드시트에 등록된 기업명 정보를 로드중입니다.\n")
@@ -37,28 +43,24 @@ def docx_generating_company_name_handler(message, say, user_states, inv_list_inf
         # all_company_names, all_company_names_full = [], []
         del user_states[user_id]
         return
-
-    if user_input == '종료':
-        say(f"<@{user_id}> 종료합니다.")
-        del user_states[user_id]
+    
+    if user_input in (all_company_names + all_company_names_full):
+        company_name = user_input
     else:
-        if user_input in (all_company_names + all_company_names_full):
-            company_name = user_input
-        else:
-            company_name = chatgpt.analyze_company_name(all_company_names,user_input)
-            print("chatgpt 사용 + 10원")
-        if company_name in (all_company_names + all_company_names_full):
-            inv_list = googleapi.get_inv_list_and_date(company_name)
-            choice = ""
-            for i,data in enumerate(inv_list):
-                choice = choice + f"\n{i+1}. {data}"
-            choice = f"\n0. '{company_name}' 회사를 입력하신게 아닌가요?" + choice
-            say(f"<@{user_id}> <{company_name}>의 INV ID를 선택해주세요(번호만 입력해주세요){choice}\n(종료를 원하시면 '종료'를 입력해주세요)")
-            user_states[user_id] = 'docx_generating_waiting_inv_choice'
-            inv_list_info[user_id] = inv_list
-        else:
-            say(f"<@{user_id}> 입력하신 회사명이 존재하지 않습니다. 회사명을 다시 입력해주세요.\n(종료를 원하시면 '종료'를 입력해주세요)")
-            user_states[user_id] = 'docx_generating_waiting_company_name'
+        company_name = chatgpt.analyze_company_name(all_company_names,user_input)
+        print("chatgpt 사용 + 10원")
+    if company_name in (all_company_names + all_company_names_full):
+        inv_list = googleapi.get_inv_list_and_date(company_name)
+        choice = ""
+        for i,data in enumerate(inv_list):
+            choice = choice + f"\n{i+1}. {data}"
+        choice = f"\n0. '{company_name}' 회사를 입력하신게 아닌가요?" + choice
+        say(f"<@{user_id}> <{company_name}>의 INV ID를 선택해주세요(번호만 입력해주세요){choice}\n(종료를 원하시면 '종료'를 입력해주세요)")
+        user_states[user_id] = 'docx_generating_waiting_inv_choice'
+        inv_list_info[user_id] = inv_list
+    else:
+        say(f"<@{user_id}> 입력하신 회사명이 존재하지 않습니다. 회사명을 다시 입력해주세요.\n(종료를 원하시면 '종료'를 입력해주세요)")
+        user_states[user_id] = 'docx_generating_waiting_company_name'
 
 def docx_generating_inv_choice_handler(message, say, user_states, inv_list_info, inv_info):
     user_id = message['user']

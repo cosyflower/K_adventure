@@ -87,7 +87,7 @@ def is_valid_cancel_sequence(cancel_sequeunce_list, candidate):
 
 def is_valid_vacation_purpose(user_input):
     # 수인지 확인
-    # 1,2,3 중 하나인지 확인
+    # 1,2,3,4중 하나인지 확인
     # 모두 만족하면 True, 하나라도 만족하지 못하면 False를 반환한다
     try:
         # 입력이 수인지 확인
@@ -96,8 +96,34 @@ def is_valid_vacation_purpose(user_input):
         # 입력이 수가 아닌 경우
         return False
     
-    # 1, 2, 3 중 하나인지 확인
+    # 1, 2, 3, 4중 하나인지 확인
     if number in [1, 2, 3, 4]:
         return True
     else:
         return False
+    
+def is_valid_user_purpose(user_input):
+    # 수인지 확인
+    # 모두 만족하면 True, 하나라도 만족하지 못하면 False를 반환한다
+    try:
+        # 입력이 수인지 확인
+        number = int(user_input)
+    except ValueError:
+        # 입력이 수가 아닌 경우
+        return False
+    
+    # 1, 2, 3, 4, 5, 6 중 하나인지 확인
+    if number in [1, 2, 3, 4, 5, 6, 7]:
+        return True
+    else:
+        return False
+
+def is_number(input_string):
+    # 정규식 패턴: ^-?\d+(\.\d+)?$
+    # ^        : 문자열의 시작
+    # -?       : 음수일 수 있으므로 '-'가 0번 또는 1번 올 수 있음
+    # \d+      : 하나 이상의 숫자
+    # (\.\d+)? : 소수점을 기준으로 그 뒤에 하나 이상의 숫자가 올 수 있음
+    # $        : 문자열의 끝
+    pattern = r'^-?\d+(\.\d+)?$'
+    return re.match(pattern, input_string)
