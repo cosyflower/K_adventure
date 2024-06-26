@@ -126,10 +126,11 @@ def handle_message_events(event, say):
             "6. 검색\n"
             "7. 1on1\n"
         )
+        user_states[user_id] = 'waiting_only_number'
         return
 
     ## 입력 초기 
-    if user_id not in user_states:
+    if user_id not in user_states or user_states[user_id] == 'waiting_only_number':
         user_purpose_handler(event, say) # 안내 문구 출력 - 알맞은 user_states[user_id] 배정하는 역할
         user_input_info[user_id] = user_input
     else: # 슬랙봇을 실행한 상황에 user_states[user_id]를 부여받은 상황일 때 진행
@@ -167,7 +168,7 @@ def user_purpose_handler(message, say): ### 1번 - 명령어를 인식하고 use
     # 기존에는 토큰을 기준으로 기능 실행 - 이제는 번호로도 실행이 가능해야 하기에..
 
     # 번호가 입력된 경우라면 
-    if is_number(user_input):
+    if is_number(user_input) and user_id in user_states:
         purpose = input_number_to_purpose(user_input)
         if purpose == "오류":
             say("잘못된 숫자를 입력했습니다. 다시 입력해주세요.\n")
