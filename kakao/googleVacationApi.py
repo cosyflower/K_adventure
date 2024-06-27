@@ -375,7 +375,7 @@ def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, 
         say(f"<@{user_id}>님 휴가 프로그램 실행중입니다. 잘못된 입력입니다. 1,2,3,4 중 하나를 입력하세요")
 
 #### 휴가 취소 ####
-def cancel_vacation(message, say, user_states, cancel_vacation_status):
+def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
     user_id = message['user']
     user_input = message['text']
     # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
@@ -541,7 +541,7 @@ def input_cancel_sequence(message, say, cancel_vacation_status):
         say(f"<@{user_id}>님의 휴가 취소 프로세스를 진행중입니다.. 잘못된 번호입니다. 다시 입력해주세요.")
 
 ######### 휴가/연차 신청하기 #######
-def request_vacation(message, say, user_states, user_vacation_status, user_vacation_info):
+def request_vacation_handler(message, say, user_states, user_vacation_status, user_vacation_info):
     user_id = message['user']
     user_input = message['text']
     # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
