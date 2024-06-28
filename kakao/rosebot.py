@@ -51,8 +51,16 @@ def rose_bot_handler(message, say, user_states):
                     say(f"<@{user_id}> 권한이 없습니다.")
                     del user_states[user_id]
             elif user_input == "4": ## 정기예금 회전 시스템
-                say(f"<@{user_id}> 공사중입니다.\n")
-                del user_states[user_id]
+                if get_user_authority(user_id) < 3:
+                    say("정기예금 회전 시스템을 작동합니다. 종료를 원한다면 \'종료\'를 입력해주세요\n"
+                    "1. 질문하기(일반모델)(약 1원)\n"
+                    "2. 질문하기(상위모델)(약 10원)\n"
+                    "3. 최종 만기일이 다가온 정기예금 상품조회\n"
+                        )
+                    user_states[user_id] = 'deposit_rotation_waiting_only_number'
+                else:
+                    say(f"<@{user_id}> 권한이 없습니다.")
+                    del user_states[user_id]
             elif user_input == "5": ## 회수 상황판
                 say(f"<@{user_id}> 공사중입니다.\n")
                 del user_states[user_id]

@@ -1,3 +1,6 @@
+## 정기예금 회전시스템 ##
+deposit_id = '1Q9G080RRAgaaIYYPXCyxB_R83AGP8NGJgpMMUNHhD3I'
+
 ## 보안 시스템 ##
 advisor_id = "U072MMSHFGR"
 management_channel_id = "C0722D0PU22"
@@ -9,7 +12,7 @@ kakao_json_key_path = 'kakao-test-422905-9ed51f908a0f.json'
 db_1_id = '1z0sPy8gau8AtfiX1iCstJbV25B9MN0x7TndIt308qgg'
 db_2_id = ''
 db_3_id = '1asYstSgkAwEaJpPEwFxgEhskJ_B4OhDNAIam3BY4aTk'
-db_4_id = '1ZyZWo1IwwKrtqs6JHx-eoWPcMagNtHKtz1ZKUxWVES0'
+db_4_id = '1ZyZWo1IwwKrtqs6JHx-eoWPcMagNtHKtz1ZKUxWVES0s'
 db_5_id = ''
 db_6_id = ''
 db_7_id = '1Ec8rP-lf958aac9iuwuR4iFJARTPX-b6BcmgLvuQtqU'

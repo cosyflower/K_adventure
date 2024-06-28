@@ -17,7 +17,7 @@ from document4create import docx_generating_company_name_handler, docx_generatin
 from security_system import security_system_user_function_handler, security_system_authority_category_handler, security_system_authority_update_json_file_handler, security_system_advisor_authority_make_handler, security_system_advisor_authority_delete_handler, get_user_authority, is_fake_advisor, is_real_advisor, update_authority
 
 from rosebot import rose_bot_handler
-from term_deposit_rotation import deposit_rotation_system_handler
+from term_deposit_rotation import deposit_rotation_system_handler, deposit_rotation_system_low_model_handler, deposit_rotation_system_high_model_handler
 # Testing for vacation
 from notification import notify_today_vacation_info
 from formatting import process_user_input
@@ -127,13 +127,16 @@ def handle_message_events(event, say):
         ######################### 정기예금 회전 시스템 ###################################
         elif user_states[user_id] == 'deposit_rotation_waiting_only_number':
             deposit_rotation_system_handler(event, say, user_states)
+        elif user_states[user_id] == 'deposit_rotation_waiting_low_chatgpt_input':
+            deposit_rotation_system_low_model_handler(event, say, user_states)
+        elif user_states[user_id] == 'deposit_rotation_waiting_high_chatgpt_input':
+            deposit_rotation_system_high_model_handler(event, say, user_states)
 
 
 def user_purpose_handler(message, say):
     user_id = message['user']
     user_input = message['text']
     user_input = process_user_input(user_input)
-
     purpose = check_the_user_purpose(user_input)
 
     if purpose == "문서 4종 생성해줘":
@@ -181,12 +184,15 @@ def user_purpose_handler(message, say):
         )
         user_states[user_id] = 'rosebot_waiting_only_number'
     elif purpose == "정기예금 회전시스템":
-        say("정기예금 회전 시스템을 작동합니다. 종료를 원한다면 \'종료\'를 입력해주세요\n"
-                "1. 질문하기(일반모델)(약 1원)\n"
-                "2. 질문하기(상위모델)(약 10원)\n"
-                "3. 최종 만기일이 다가온 정기예금 상품조회\n"
-            )
-        user_states[user_id] = 'deposit_rotation_waiting_only_number'
+        if get_user_authority(user_id) < 3:
+            say("정기예금 회전 시스템을 작동합니다. 종료를 원한다면 \'종료\'를 입력해주세요\n"
+                    "1. 질문하기(일반모델)(약 1원)\n"
+                    "2. 질문하기(상위모델)(약 10원)\n"
+                    "3. 최종 만기일이 다가온 정기예금 상품조회\n"
+                )
+            user_states[user_id] = 'deposit_rotation_waiting_only_number'
+        else:
+            say(f"<@{user_id}> 권한이 없습니다.")
     else:
         say(f"<@{user_id}> 없는 기능입니다. 다시 입력해주세요")
 
