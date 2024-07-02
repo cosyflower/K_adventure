@@ -12,7 +12,7 @@ import time
 import threading
 from user_commend import docx_generate, security_system, vacation_system_list, call_slack_bot, term_deposit_rotation_list # 사용자 명령어 DB
 
-from document4create import docx_generating_company_name_handler, docx_generating_inv_choice_handler, docx_generating_docx_category_handler
+from document4create import docx_generating_company_name_handler, docx_generating_inv_choice_handler #, docx_generating_docx_category_handler
 
 from security_system import security_system_user_function_handler, security_system_authority_category_handler, security_system_authority_update_json_file_handler, security_system_advisor_authority_make_handler, security_system_advisor_authority_delete_handler, get_user_authority, is_fake_advisor, is_real_advisor, update_authority
 
