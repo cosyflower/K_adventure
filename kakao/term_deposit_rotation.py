@@ -49,15 +49,15 @@ def deposit_rotation_system_handler(message, say, user_states):
                     "(종료를 원하시면 '종료'를 입력해주세요)\n"
                     )
                 user_states[user_id] = 'deposit_rotation_waiting_high_chatgpt_input'
-            elif user_input == "3": # 최종 만기일이 다가온 정기예금 상품조회
-                within_three_months, earliest_three = extract_near_deposit_info()
-                say(f"<@{user_id}> 만기일이 3개월 이내로 남은 정보:\n"
-                    f"{within_three_months}\n"
-                    f"<@{user_id}>만기일이 가장 빠른 3개의 정보:\n"
-                    f"{earliest_three}\n"
-                    "조회가 끝났습니다.\n"
-                    )
-                del user_states[user_id]
+            # elif user_input == "3": # 최종 만기일이 다가온 정기예금 상품조회
+            #     within_three_months, earliest_three = extract_near_deposit_info()
+            #     say(f"<@{user_id}> 만기일이 3개월 이내로 남은 정보:\n"
+            #         f"{within_three_months}\n"
+            #         f"<@{user_id}>만기일이 가장 빠른 3개의 정보:\n"
+            #         f"{earliest_three}\n"
+            #         "조회가 끝났습니다.\n"
+            #         )
+            #     del user_states[user_id]
             else:
                 say(f"<@{user_id}> 잘못된 숫자를 입력했습니다. 다시 입력해주세요.\n")
                 user_states[user_id] = 'deposit_rotation_waiting_only_number'
@@ -74,6 +74,7 @@ def deposit_rotation_system_low_model_handler(message, say, user_states):
         say(f"<@{user_id}> 정기예금 회전 시스템을 종료합니다.\n")
         del user_states[user_id]
     else:
+        say(f"<@{user_id}> 답변을 준비중입니다...\n")
         answer = qna_chatgpt_low_model(user_input)
         say(f"<@{user_id}> {answer}\n 답변이 완료되었습니다.")
         del user_states[user_id]
@@ -86,6 +87,7 @@ def deposit_rotation_system_high_model_handler(message, say, user_states):
         say(f"<@{user_id}> 정기예금 회전 시스템을 종료합니다.\n")
         del user_states[user_id]
     else:
+        say(f"<@{user_id}> 답변을 준비중입니다...\n")
         answer = qna_chatgpt_high_model(user_input)
         say(f"<@{user_id}> {answer}\n 답변이 완료되었습니다.")
         del user_states[user_id]
@@ -126,29 +128,46 @@ def qna_chatgpt_high_model(user_input):
     output = response.choices[0].message.content
     return output
 
-def extract_near_deposit_info():
+def extract_deposit_df():
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
     creds = ServiceAccountCredentials.from_json_keyfile_name('kakao-test-422905-9ed51f908a0f.json', scope)
     client = gspread.authorize(creds)
     spreadsheet_id = deposit_id
     spreadsheet = client.open_by_key(spreadsheet_id)
-    worksheet = spreadsheet.sheet1
-    data = worksheet.get_all_values()
-    df = pd.DataFrame(data)
-    columns = df.iloc[0].tolist()
-    df = df[1:]
-    df.columns = columns
-    df = drop_empty_rows(df)
-    df = fill_missing_values(df)
-    df = replace_nan_with_empty_string(df)
-    df['만기일'] = pd.to_datetime(df['만기일'])
+    final_df = pd.DataFrame()
+    # Iterate through all the sheets in the spreadsheet
+    for sheet in spreadsheet.worksheets():
+        sheet_name = sheet.title
+        if sheet_name.startswith('##'):
+            # Get all values from the sheet
+            data = sheet.get_all_values()
+            df = pd.DataFrame(data)
+            
+            # Extract column names and set them
+            columns = df.iloc[0].tolist()
+            df = df[1:]
+            df.columns = columns
+            df = drop_empty_rows(df)
+            df = fill_missing_values(df)
+            df = replace_nan_with_empty_string(df)
+            # Add a new column for the sheet name (without '##')
+            df['시트명'] = sheet_name[2:]
+            
+            # Append to the final DataFrame
+            final_df = pd.concat([final_df, df], ignore_index=True)
+    current_time = datetime.now()
+    final_df['신규일'] = pd.to_datetime(final_df['신규일'])
+    final_df['만기일'] = pd.to_datetime(final_df['만기일'])
+    final_df = final_df[(final_df['신규일'] <= current_time) & (final_df['만기일'] >= current_time)]
+    final_df['신규일'] = final_df['신규일'].dt.strftime('%Y-%m-%d')
+    final_df['만기일'] = final_df['만기일'].dt.strftime('%Y-%m-%d')
+    # final_df['만기일'] = pd.to_datetime(final_df['만기일'])
+    # current_date = datetime.now()
+    # three_months_later = current_date + timedelta(days=90)
 
-    current_date = datetime.now()
-    three_months_later = current_date + timedelta(days=90)
-
-    within_three_months = df[df['만기일'] <= three_months_later]
-    earliest_three = df.nsmallest(3, '만기일')
-    return within_three_months, earliest_three
+    # within_three_months = final_df[final_df['만기일'] <= three_months_later]
+    # earliest_three = final_df.nsmallest(3, '만기일')
+    return final_df
 
 def deposit_data_to_json():
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -156,16 +175,33 @@ def deposit_data_to_json():
     client = gspread.authorize(creds)
     spreadsheet_id = deposit_id
     spreadsheet = client.open_by_key(spreadsheet_id)
-    worksheet = spreadsheet.sheet1
-    data = worksheet.get_all_values()
-    df = pd.DataFrame(data)
-    columns = df.iloc[0].tolist()
-    df = df[1:]
-    df.columns = columns
-    df = drop_empty_rows(df)
-    df = fill_missing_values(df)
-    df = replace_nan_with_empty_string(df)
-    return convert_to_json(df)
+    final_df = pd.DataFrame()
+    for sheet in spreadsheet.worksheets():
+        sheet_name = sheet.title
+        if sheet_name.startswith('##'):
+            # Get all values from the sheet
+            data = sheet.get_all_values()
+            df = pd.DataFrame(data)
+            
+            # Extract column names and set them
+            columns = df.iloc[0].tolist()
+            df = df[1:]
+            df.columns = columns
+            df = drop_empty_rows(df)
+            df = fill_missing_values(df)
+            df = replace_nan_with_empty_string(df)
+            # Add a new column for the sheet name (without '##')
+            df['시트명'] = sheet_name[2:]
+            
+            # Append to the final DataFrame
+            final_df = pd.concat([final_df, df], ignore_index=True)
+    current_time = datetime.now()
+    final_df['신규일'] = pd.to_datetime(final_df['신규일'])
+    final_df['만기일'] = pd.to_datetime(final_df['만기일'])
+    final_df = final_df[(final_df['신규일'] <= current_time) & (final_df['만기일'] >= current_time) & (~final_df.apply(lambda row: row.astype(str).str.contains('해지').any(), axis=1))]
+    final_df['신규일'] = final_df['신규일'].dt.strftime('%Y-%m-%d')
+    final_df['만기일'] = final_df['만기일'].dt.strftime('%Y-%m-%d')
+    return convert_to_json(final_df)
 
 def replace_nan_with_empty_string(df):
     return df.replace(np.nan, "", inplace=False)
@@ -175,12 +211,16 @@ def drop_empty_rows(df):
     return df.dropna(how='all')
 
 def fill_missing_values(df):
-    df.fillna(method='ffill', inplace=True)
+    df["금융기관"] = df["금융기관"].fillna(method='ffill')
+    df["거래지점"] = df["거래지점"].fillna(method='ffill')
+    df["종류"] = df["종류"].fillna(method='ffill')
+    df["계좌번호"] = df["계좌번호"].fillna(method='ffill')
+    df["최초금액"] = df["최초금액"].fillna(method='ffill')
     return df
 
 def convert_to_json(df):
     records = []
-    grouped = df.groupby(['거래지점', '종류', '계좌번호', '최초금액', '기타'])
+    grouped = df.groupby(['거래지점', '종류', '계좌번호', '최초금액','시트명'])
 
     for name, group in grouped:
         금융기관 = group.iloc[0]['금융기관']
@@ -188,28 +228,32 @@ def convert_to_json(df):
         종류 = name[1]
         계좌번호 = name[2]
         최초금액 = name[3]
-        기타 = name[4]
+        시트명 = name[4]
         
-        날짜 = []
+        data = []
         for _, row in group.iterrows():
-            날짜.append({
+            data.append({
                 "신규일": row["신규일"],
                 "만기일": row["만기일"],
-                "금리": row["금리"]
+                "금리": row["금리"],
+                "해지원금": row["해지 원금"],
+                "해지이자": row["해지 이자"],
+                "기타": row["기타"]
             })
         
         record = {
+            "시트명": 시트명,
             "금융기관": 금융기관,
             "거래지점": 거래지점,
             "종류": 종류,
             "계좌번호": 계좌번호,
             "최초금액": 최초금액,
-            "기타": 기타,
-            "날짜": 날짜
+            "예금정보": data
         }
         records.append(record)
-    return json.dumps(records, ensure_ascii=False)
-    # return json.dumps(records, indent=4,ensure_ascii=False)
+    # return json.dumps(records, ensure_ascii=False)
+    return json.dumps(records, indent=4,ensure_ascii=False)
 
 if __name__ == "__main__":
-    extract_near_deposit_info()
+    print(deposit_data_to_json())
+    print(extract_deposit_df())
