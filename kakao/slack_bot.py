@@ -23,8 +23,7 @@ from term_deposit_rotation import deposit_rotation_system_handler, deposit_rotat
 # Testing for vacation
 from notification import notify_today_vacation_info, notify_deposit_info
 from formatting import process_user_input
-from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler, get_remained_vacation
-
+from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler
 from directMessageApi import send_direct_message_to_user
 
 # slack bot system

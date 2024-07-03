@@ -104,7 +104,7 @@ def append_data(spreadsheet_id, new_row_data):
     
     # Google Sheets API 클라이언트 생성
     service = build('sheets', 'v4', credentials=credentials)
-    sheet = service.spreadsheets(supportsAllDrives=True)
+    sheet = service.spreadsheets()
     
     # 첫 번째 시트의 이름을 가져옴
     sheet_metadata = sheet.get(spreadsheetId=spreadsheet_id).execute()
@@ -290,11 +290,12 @@ def copy_gdrive_spreadsheet(template_file_id, new_filename, save_folder_id):
 
 
 # 남은 휴가 조회하기
-def get_remained_vacation(message, say):
+def get_remained_vacation(message, say, user_states,  user_vacation_info, user_vacation_status):
     user_id = message['user']
     user_input = message['text']
     
-    search_file_name = create_leave_string(get_current_year)
+    search_file_name = create_leave_string(get_current_year())
+    print(search_file_name)
     spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
     
     if spreadsheet_id == None:
@@ -314,6 +315,13 @@ def get_remained_vacation(message, say):
     
     msg = (f"<@{user_id}>님 잔여 휴가 조회를 종료합니다.\n\n")
     send_direct_message_to_user(user_id, msg)
+
+    if user_id in user_states:
+        del user_states[user_id]
+    if user_id in user_vacation_info:
+        del user_vacation_info[user_id]
+    if user_id in user_vacation_status:
+        del user_vacation_status[user_id]
     return
 
 # 조회는 1번, 추가는 2번, 삭제는 3번을, 종료를 원하시면 \"종료\"를 입력하세요 (1, 2, 3, 종료)
@@ -337,7 +345,7 @@ def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, 
             msg = (f"<@{user_id}>님 휴가 조회 기능을 실행합니다. 휴가 리스트를 출력합니다\n\n")
             send_direct_message_to_user(user_id, msg)
             try:
-                search_file_name = create_leave_string(get_current_year)
+                search_file_name = create_leave_string(get_current_year())
                 spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
                 
                 if spreadsheet_id == None:
@@ -390,7 +398,7 @@ def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, 
         elif cleaned_user_input == '4': # 남은 휴가 조회해줘
             msg = (f"<@{user_id}>님의 잔여 휴가를 조회합니다. 잠시만 기다려주세요.\n")
             send_direct_message_to_user(user_id, msg)
-            get_remained_vacation(message, say)
+            get_remained_vacation(message, say, user_states, user_vacation_info, user_vacation_status)
     else:
         msg = (f"<@{user_id}>님 휴가 프로그램 실행중입니다. 잘못된 입력입니다. 1,2,3,4 중 하나를 입력하세요")
         send_direct_message_to_user(user_id, msg)
@@ -402,7 +410,7 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
     # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
     cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
 
-    search_file_name = create_leave_string(get_current_year)
+    search_file_name = create_leave_string(get_current_year())
     spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
 
     if spreadsheet_id == None:
@@ -464,8 +472,9 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
         send_direct_message_to_user(user_id, msg)
         # 조회, 추가, 취소 기능을 기다리는 중이다
         del cancel_vacation_status[user_id]
-        user_states[user_id] = 'vacation_tracker'
-        msg = (f"<@{user_id}>님의 휴가 프로그램 실행중입니다. 조회는 1번, 추가는 2번, 삭제는 3번을, 종료를 원하시면 \"종료\"를 입력하세요\n")
+        del user_states[user_id]
+        # user_states[user_id] = 'vacation_tracker'
+        # msg = (f"<@{user_id}>님의 휴가 프로그램 실행중입니다. 조회는 1번, 추가는 2번, 삭제는 3번을, 종료를 원하시면 \"종료\"를 입력하세요\n")
         send_direct_message_to_user(user_id, msg)
         # 휴가 추가는 1, 취소는 2를 누르도록 진행한다
 
