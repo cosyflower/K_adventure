@@ -19,7 +19,7 @@ from security_system import security_system_user_function_handler, security_syst
 from rosebot import rose_bot_handler
 from term_deposit_rotation import deposit_rotation_system_handler, deposit_rotation_system_low_model_handler, deposit_rotation_system_high_model_handler
 # Testing for vacation
-from notification import notify_today_vacation_info
+from notification import notify_today_vacation_info, notify_deposit_info
 from formatting import process_user_input
 from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler, get_remained_vacation, \
 get_today_vacation_info
@@ -56,7 +56,7 @@ app = App(token=config.bot_token_id)
 # Scheduler 관련 함수 정의
 # 매일 오전 8시에 notify_today_vacation_info 함수 실행
 schedule.every().day.at("08:00").do(notify_today_vacation_info)
-
+schedule.every().day.at("08:00").do(notify_deposit_info)
 # 스케줄러 실행 함수
 def run_scheduler():
     while True:

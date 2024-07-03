@@ -49,15 +49,6 @@ def deposit_rotation_system_handler(message, say, user_states):
                     "(종료를 원하시면 '종료'를 입력해주세요)\n"
                     )
                 user_states[user_id] = 'deposit_rotation_waiting_high_chatgpt_input'
-            # elif user_input == "3": # 최종 만기일이 다가온 정기예금 상품조회
-            #     within_three_months, earliest_three = extract_near_deposit_info()
-            #     say(f"<@{user_id}> 만기일이 3개월 이내로 남은 정보:\n"
-            #         f"{within_three_months}\n"
-            #         f"<@{user_id}>만기일이 가장 빠른 3개의 정보:\n"
-            #         f"{earliest_three}\n"
-            #         "조회가 끝났습니다.\n"
-            #         )
-            #     del user_states[user_id]
             else:
                 say(f"<@{user_id}> 잘못된 숫자를 입력했습니다. 다시 입력해주세요.\n")
                 user_states[user_id] = 'deposit_rotation_waiting_only_number'

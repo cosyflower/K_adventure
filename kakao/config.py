@@ -1,6 +1,9 @@
 ## 정기예금 회전시스템 ##
 deposit_id = '1Q9G080RRAgaaIYYPXCyxB_R83AGP8NGJgpMMUNHhD3I'
-
+deposit_channel_id = 'C07264YTB7X'
+deposity_user1_id = "U072MMSHFGR"
+deposity_user2_id = "U072MMSHFGR"
+deposity_user3_id = "U072MMSHFGR"
 ## 보안 시스템 ##
 advisor_id = "U072MMSHFGR"
 management_channel_id = "C0722D0PU22"
