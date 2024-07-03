@@ -334,10 +334,11 @@ def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, 
     if cleaned_user_input == '종료':
         msg = (f"<@{user_id}>님 휴가 시스템을 종료합니다.\n\n")
         send_direct_message_to_user(user_id, msg)
-        if user_id in user_states:
-            del user_states[user_id]
-        if user_id in cancel_vacation_status:
-            del cancel_vacation_status[user_id]
+        # if user_id in user_states:
+        del user_states[user_id]
+        send_direct_message_to_user(user_id, "user_states[user_id] deleted!\n")
+        # if user_id in cancel_vacation_status:
+        # del cancel_vacation_status[user_id]
         return
 
     if is_valid_vacation_purpose(cleaned_user_input):

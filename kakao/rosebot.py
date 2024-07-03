@@ -10,10 +10,12 @@ def rose_bot_handler(message, say, user_states):
     user_id = message['user']
     user_input = message['text']
     user_input = process_user_input(user_input)
+
     if user_input == '종료':
         msg = (f"<@{user_id}> 로제봇 시스템을 종료합니다.\n")
         send_direct_message_to_user(user_id, msg)
         del user_states[user_id]
+        return
     else:
         if user_input.isdigit():
             if user_input == "1": ## 휴가신청시스템
@@ -91,3 +93,4 @@ def rose_bot_handler(message, say, user_states):
             msg = (f"<@{user_id}> 숫자만 입력해주세요. 다시 입력해주세요.")
             send_direct_message_to_user(user_id, msg)
             user_states[user_id] = 'rosebot_waiting_only_number'
+            return
