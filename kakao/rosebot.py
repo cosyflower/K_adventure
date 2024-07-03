@@ -4,32 +4,36 @@ import gspread
 import chatgpt
 import json
 from security_system import get_user_authority
+from directMessageApi import send_direct_message_to_user
 
 def rose_bot_handler(message, say, user_states):
     user_id = message['user']
     user_input = message['text']
     user_input = process_user_input(user_input)
     if user_input == '종료':
-        say(f"<@{user_id}> 로제봇 시스템을 종료합니다.\n")
+        msg = (f"<@{user_id}> 로제봇 시스템을 종료합니다.\n")
+        send_direct_message_to_user(user_id, msg)
         del user_states[user_id]
     else:
         if user_input.isdigit():
             if user_input == "1": ## 휴가신청시스템
                 if get_user_authority(user_id) < 4:
-                    say(f"<@{user_id}> 휴가시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
+                    msg = (f"<@{user_id}> 휴가시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
                         "1. 신청된 휴가 조회\n"
                         "2. 신규 휴가 신청\n"
                         "3. 기존 휴가 삭제\n"
                         "4. 남은 휴가 일수 조회\n"
                         "(종료를 원하시면 '종료'를 입력해주세요)"
                         )
+                    send_direct_message_to_user(user_id, msg)
                     user_states[user_id] = 'vacation_purpose_handler'
                 else:
-                    say(f"<@{user_id}> 권한이 없습니다.")
+                    msg = (f"<@{user_id}> 권한이 없습니다.")
+                    send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "2": ## 보안시스템
                 if get_user_authority(user_id) < 4:
-                    say(f"<@{user_id}> 보안시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
+                    msg = (f"<@{user_id}> 보안시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
                         "1. 전체 사용자 권한 조회\n"
                         "2. 신규 사용자 권한 배정\n"
                         "3. 내 권한 조회\n"
@@ -39,40 +43,51 @@ def rose_bot_handler(message, say, user_states):
                         "7. 임시 관리자 목록 조회(관리자 전용)\n"
                         "8. 임시 관리자 회수(관리자 전용)\n(종료를 원하시면 '종료'를 입력해주세요)"
                         )
+                    send_direct_message_to_user(user_id, msg)
                     user_states[user_id] = 'security_system_waiting_function_number'
                 else:
-                    say(f"<@{user_id}> 권한이 없습니다.")
+                    msg = (f"<@{user_id}> 권한이 없습니다.")
+                    send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "3": ## 문서 4종 생성
                 if get_user_authority(user_id) < 3:
-                    say(f"<@{user_id}> 문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
+                    msg = (f"<@{user_id}> 문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
+                    send_direct_message_to_user(user_id, msg)
                     user_states[user_id] = 'docx_generating_waiting_company_name'
                 else:
-                    say(f"<@{user_id}> 권한이 없습니다.")
+                    msg = (f"<@{user_id}> 권한이 없습니다.")
+                    send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "4": ## 정기예금 회전 시스템
                 if get_user_authority(user_id) < 3:
-                    say("정기예금 회전 시스템을 작동합니다. 종료를 원한다면 \'종료\'를 입력해주세요\n"
+                    msg = ("정기예금 회전 시스템을 작동합니다. 종료를 원한다면 \'종료\'를 입력해주세요\n"
                     "1. 질문하기(일반모델)(약 1원)\n"
                     "2. 질문하기(상위모델)(약 10원)\n"
                     # "3. 최종 만기일이 다가온 정기예금 상품조회\n"
                         )
+                    send_direct_message_to_user(user_id, msg)
                     user_states[user_id] = 'deposit_rotation_waiting_only_number'
                 else:
-                    say(f"<@{user_id}> 권한이 없습니다.")
+                    msg = (f"<@{user_id}> 권한이 없습니다.")
+                    send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "5": ## 회수 상황판
-                say(f"<@{user_id}> 공사중입니다.\n")
+                msg = (f"<@{user_id}> 공사중입니다.\n")
+                send_direct_message_to_user(user_id, msg)
                 del user_states[user_id]
             elif user_input == "6": ## 검색
-                say(f"<@{user_id}> 공사중입니다.\n")
+                msg = (f"<@{user_id}> 공사중입니다.\n")
+                send_direct_message_to_user(user_id, msg)
                 del user_states[user_id]
             elif user_input == "7": ## 1on1
-                say(f"<@{user_id}> 공사중입니다.\n")
+                msg = (f"<@{user_id}> 공사중입니다.\n")
+                send_direct_message_to_user(user_id, msg)
                 del user_states[user_id]
             else:
-                say(f"<@{user_id}> 잘못된 숫자를 입력했습니다. 다시 입력해주세요.\n")
+                msg = (f"<@{user_id}> 잘못된 숫자를 입력했습니다. 다시 입력해주세요.\n")
+                send_direct_message_to_user(user_id, msg)
                 user_states[user_id] = 'rosebot_waiting_only_number'
         else:
-            say(f"<@{user_id}> 숫자만 입력해주세요. 다시 입력해주세요.")
+            msg = (f"<@{user_id}> 숫자만 입력해주세요. 다시 입력해주세요.")
+            send_direct_message_to_user(user_id, msg)
             user_states[user_id] = 'rosebot_waiting_only_number'

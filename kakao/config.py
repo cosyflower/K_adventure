@@ -30,17 +30,15 @@ bot_token_id = 'xoxb-7070442783094-7112861109200-UImo7AdRysDFCYB69xub4Pxf' # app
 app_token_id = 'xapp-1-A072N1TECNN-7089950489011-4fa8538d3daed24db4a9195dc7ffe6a2041c7e6f76502e8cba875b96f082d468' # user_token_id
 
 # test 서버 채널 id
-test_slack_first_channel_id = 'C07264YTB7X'
-test_slack_second_channel_id = 'C0722D0PU22'
+# test_slack_first_channel_id = 'C07264YTB7X'
+# test_slack_second_channel_id = 'C0722D0PU22'
+all_bot_channel = 'C07264YTB7X'
 
 ######### Dummy ###########
-# 연차 / 반차 dummy Id
-dummy_vacation_db_id = '1s1x0S4Gqt5mv8jgYyJWhv7GdVy_2Fs-QnlH6_IIcpXk'
 # 연차 / 반차 template Id
 dummy_vacation_template_id = '1V3Er20zNHmpOOtiljJcExiF8Fk5cxsNP7-V8JD7mjZk'
 
 ######### Dummy directory - example_docx ########
-dummy_directory_id = '1m2_JBV9zFEHJbnXKjwCc1ZPe2eLljuel'
 dummy_vacation_directory_id = '1KnQgIlfH3H-Ow5dQjuweuOrD1tMJc-4c' 
 
 

@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 
 """
@@ -19,3 +20,12 @@ def get_proper_file_name(new_vacation_data):
     start_date = new_vacation_data[2]
     year = start_date[:4]
     return create_leave_string(year)
+
+
+
+def get_current_year():
+    # 현재 날짜와 시간 가져오기
+    now = datetime.now()
+    # 현재 연도 추출
+    current_year = now.year
+    return current_year

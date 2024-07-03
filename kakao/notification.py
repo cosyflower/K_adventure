@@ -8,7 +8,11 @@ from slack_sdk.errors import SlackApiError
 from translator import format_vacation_data
 from googleVacationApi import  get_today_vacation_data
 from term_deposit_rotation import extract_deposit_df
+from formatting import get_current_year, create_leave_string
+from googleVacationApi import get_spreadsheet_id_in_folder
 import pandas as pd
+
+
 def send_slack_message(channel_id, text):
     try:
         client = WebClient(token=config.bot_token_id)
@@ -20,12 +24,20 @@ def send_slack_message(channel_id, text):
         print(f"Error sending message: {e.response['error']}")
 
 def notify_today_vacation_info():
-    channel_id = config.test_slack_second_channel_id
-    spreadsheet_id = config.dummy_vacation_db_id
-    json_keyfile_path = config.kakao_json_key_path
+    channel_id = config.all_bot_channel
 
-    send_slack_message(channel_id, "금일 휴가자 정보를 조회합니다. 잠시만 기다려주세요.\n")
+    search_file_name = create_leave_string(get_current_year)
+    spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
     
+    if spreadsheet_id == None:
+        msg = ("현재 연도를 기준으로 신청한 휴가 내역이 없습니다.\n")
+        send_slack_message(channel_id, msg)    
+        msg = ("금일 휴가 조회를 종료합니다.\n\n")
+        send_slack_message(channel_id, msg)
+        return
+    
+    json_keyfile_path = config.kakao_json_key_path
+    send_slack_message(channel_id, "금일 휴가자 정보를 조회합니다. 잠시만 기다려주세요.\n")
     today_vacation_data = get_today_vacation_data(spreadsheet_id, json_keyfile_path)
     
     if len(today_vacation_data) == 0:

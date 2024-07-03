@@ -27,33 +27,39 @@ from googleapiclient.errors import HttpError
 import pandas as pd
 import json
 import numpy as np
+from directMessageApi import send_direct_message_to_user
 
 def deposit_rotation_system_handler(message, say, user_states):
     user_id = message['user']
     user_input = message['text']
     user_input = process_user_input(user_input)
     if user_input == '종료':
-        say(f"<@{user_id}> 정기예금 회전 시스템을 종료합니다.\n")
+        msg = (f"<@{user_id}> 정기예금 회전 시스템을 종료합니다.\n")
+        send_direct_message_to_user(user_id, msg)
         del user_states[user_id]
     else:
         if user_input.isdigit():
             if user_input == "1": # 질문하기(일반모델)(약 1원)
-                say(f"<@{user_id}> 원하는 질문을 입력해주세요(일반모델 사용료 약 1원)\n"
+                msg = (f"<@{user_id}> 원하는 질문을 입력해주세요(일반모델 사용료 약 1원)\n"
                     "주의사항 본 서비스는 유료 서비스입니다 정기예금 회전 시스템과 관련된 질문만 해주세요\n"
                     "(종료를 원하시면 '종료'를 입력해주세요)\n"
                     )
+                send_direct_message_to_user(user_id, msg)
                 user_states[user_id] = 'deposit_rotation_waiting_low_chatgpt_input'
             elif user_input == "2": # 질문하기(상위모델)(약 10원)
-                say(f"<@{user_id}> 원하는 질문을 입력해주세요(상위모델 사용료 약 10원)\n"
+                msg = (f"<@{user_id}> 원하는 질문을 입력해주세요(상위모델 사용료 약 10원)\n"
                     "주의사항 본 서비스는 유료 서비스입니다 정기예금 회전 시스템과 관련된 질문만 해주세요\n"
                     "(종료를 원하시면 '종료'를 입력해주세요)\n"
                     )
+                send_direct_message_to_user(user_id, msg)
                 user_states[user_id] = 'deposit_rotation_waiting_high_chatgpt_input'
             else:
-                say(f"<@{user_id}> 잘못된 숫자를 입력했습니다. 다시 입력해주세요.\n")
+                msg = (f"<@{user_id}> 잘못된 숫자를 입력했습니다. 다시 입력해주세요.\n")
+                send_direct_message_to_user(user_id, msg)
                 user_states[user_id] = 'deposit_rotation_waiting_only_number'
         else:
-            say(f"<@{user_id}> 숫자만 입력해주세요. 다시 입력해주세요.")
+            msg = (f"<@{user_id}> 숫자만 입력해주세요. 다시 입력해주세요.")
+            send_direct_message_to_user(user_id, msg)
             user_states[user_id] = 'deposit_rotation_waiting_only_number'
 
 def deposit_rotation_system_low_model_handler(message, say, user_states):
@@ -62,12 +68,15 @@ def deposit_rotation_system_low_model_handler(message, say, user_states):
     user_input = message['text']
     user_input = process_user_input(user_input)
     if user_input == '종료':
-        say(f"<@{user_id}> 정기예금 회전 시스템을 종료합니다.\n")
+        msg = (f"<@{user_id}> 정기예금 회전 시스템을 종료합니다.\n")
+        send_direct_message_to_user(user_id, msg)
         del user_states[user_id]
     else:
-        say(f"<@{user_id}> 답변을 준비중입니다...\n")
+        msg = (f"<@{user_id}> 답변을 준비중입니다...\n")
+        send_direct_message_to_user(user_id, msg)
         answer = qna_chatgpt_low_model(user_input)
-        say(f"<@{user_id}> {answer}\n 답변이 완료되었습니다.")
+        msg = (f"<@{user_id}> {answer}\n 답변이 완료되었습니다.")
+        send_direct_message_to_user(user_id, msg)
         del user_states[user_id]
 
 def deposit_rotation_system_high_model_handler(message, say, user_states):
@@ -75,12 +84,15 @@ def deposit_rotation_system_high_model_handler(message, say, user_states):
     user_input = message['text']
     user_input = process_user_input(user_input)
     if user_input == '종료':
-        say(f"<@{user_id}> 정기예금 회전 시스템을 종료합니다.\n")
+        msg = (f"<@{user_id}> 정기예금 회전 시스템을 종료합니다.\n")
+        send_direct_message_to_user(user_id, msg)
         del user_states[user_id]
     else:
-        say(f"<@{user_id}> 답변을 준비중입니다...\n")
+        msg = (f"<@{user_id}> 답변을 준비중입니다...\n")
+        send_direct_message_to_user(user_id, msg)
         answer = qna_chatgpt_high_model(user_input)
-        say(f"<@{user_id}> {answer}\n 답변이 완료되었습니다.")
+        msg = (f"<@{user_id}> {answer}\n 답변이 완료되었습니다.")
+        send_direct_message_to_user(user_id, msg)
         del user_states[user_id]
 
 def qna_chatgpt_low_model(user_input):
