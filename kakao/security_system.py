@@ -6,7 +6,7 @@ import json
 import requests
 from config import intern_channel_id, executives_channel_id, management_channel_id, advisor_id
 from directMessageApi import send_direct_message_to_user
-
+import config
 def security_system_user_function_handler(message, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list):
     user_id = message['user']
     user_input = message['text']
@@ -368,7 +368,7 @@ def is_real_advisor(user_id):
 def get_all_users():
     url = "https://slack.com/api/users.list"
     headers = {
-        "Authorization": f"Bearer xoxb-7070442783094-7112861109200-UImo7AdRysDFCYB69xub4Pxf"
+        "Authorization": f"Bearer {config.bot_token_id}"
     }
     params = {
         "limit": 100  # 한 번에 최대 200명의 사용자를 가져올 수 있습니다.
@@ -400,7 +400,7 @@ def get_channel_users(channel_id):
     def get_channel_members(channel_id):
         url = "https://slack.com/api/conversations.members"
         headers = {
-            "Authorization": f"Bearer xoxb-7070442783094-7112861109200-UImo7AdRysDFCYB69xub4Pxf"
+            "Authorization": f"Bearer {config.bot_token_id}"
         }
         params = {
             "channel": channel_id
@@ -417,13 +417,14 @@ def get_channel_users(channel_id):
                 params["cursor"] = next_cursor
             else:
                 break
+            print(member_ids)
         return member_ids
 
     # Step 2: Get user info for each member ID
     def get_user_info(user_id):
         url = "https://slack.com/api/users.info"
         headers = {
-            "Authorization": f"Bearer xoxb-7070442783094-7112861109200-UImo7AdRysDFCYB69xub4Pxf"
+            "Authorization": f"Bearer {config.bot_token_id}"
         }
         params = {
             "user": user_id
@@ -464,10 +465,11 @@ def update_authority():
             user_info_dict[user['id']] = {**user, 'authority': 2}
     for user in intern:
         if user['id'] not in user_info_dict:
-            user_info_dict[user['id']] = {**user, 'authority': 3}
+            user_info_dict[user['id']] = {**user, 'authority': 3} 
     for user in all_user:
         if user['id'] not in user_info_dict:
             user_info_dict[user['id']] = {**user, 'authority': 4}
+
     with open("authority_change_list.json", 'r') as file:
         authority_change_list = json.load(file)
     for user_id, new_authority in authority_change_list.items():
