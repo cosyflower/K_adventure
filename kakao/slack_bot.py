@@ -1,6 +1,8 @@
 import os
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 import googleapi
 import chatgpt
 import re
@@ -23,6 +25,7 @@ from notification import notify_today_vacation_info, notify_deposit_info
 from formatting import process_user_input
 from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler, get_remained_vacation, \
 get_today_vacation_info
+from directMessageApi import send_direct_message
 
 # slack bot system
 
@@ -82,9 +85,29 @@ user_vacation_info = {}
 cancel_vacation_status = {}
 
 @app.event("message")
-def handle_message_events(body, logger):
-    # 이벤트로부터 메시지의 내용을 추출하고 로그로 기록합니다.
-    logger.info(body)
+def handle_message_events(event, say):
+    client = WebClient(token=config.bot_token_id)
+    # 다이렉트 메시지인지 확인
+    if event.get('channel_type') == 'im':
+        user_id = event['user']
+        user_input = event['text']
+        
+        print("is called!\n")
+        # 사용자 명령어 인식 프로세스
+        processed_input = process_user_input(user_input)
+        
+        try:
+            # 다이렉트 메시지 전송
+            response = client.chat_postMessage(
+                channel=user_id,
+                text=processed_input
+            )
+            print("finished!\n")
+        except SlackApiError as e:
+            error_message = client.chat_postMessage(
+            channel = user_id,
+            text = f"Error sending DM: {e.response['error']}"
+        )
 
 @app.event("app_mention")
 def handle_message_events(event, say):
