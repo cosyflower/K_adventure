@@ -37,6 +37,35 @@ from directMessageApi import send_direct_message_to_user
 API 설명
 """
 
+# 테스트 용도
+def list_shared_drives():
+    """
+    Google Drive API를 사용하여 모든 공유 드라이브의 ID와 이름을 가져옵니다.
+    """
+    # 서비스 계정 인증 정보 로드
+    scope = ['https://www.googleapis.com/auth/drive']
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(config.kakao_json_key_path, scope)
+    
+    # Google Drive API 클라이언트 생성
+    service = build('drive', 'v3', credentials=credentials)
+    
+    # 공유 드라이브 목록 가져오기
+    try:
+        results = service.drives().list(pageSize=10).execute()
+        drives = results.get('drives', [])
+        
+        if not drives:
+            print('No shared drives found.')
+            return None
+        else:
+            for drive in drives:
+                print(f"Found shared drive: {drive['name']} (ID: {drive['id']})")
+            return drives
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+
 def get_spreadsheet(spreadsheet_id, json_keyfile_path):
     # 구글 스프레드시트 API 인증 및 클라이언트 생성
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -48,7 +77,7 @@ def get_spreadsheet(spreadsheet_id, json_keyfile_path):
 
 def get_spreadsheet_id_in_folder(file_name, folder_id):
     """
-    Google Drive에서 특정 스프레드시트 파일의 ID를 가져옵니다.
+    Google 공유 Drive에서 특정 스프레드시트 파일의 ID를 가져옵니다.
 
     :param file_name: 찾고자 하는 스프레드시트 파일의 이름
     :param credentials_json: OAuth 2.0 클라이언트 ID가 포함된 인증 정보 파일 경로
@@ -62,9 +91,11 @@ def get_spreadsheet_id_in_folder(file_name, folder_id):
     service = build('drive', 'v3', credentials=credentials)
     # 파일 검색 쿼리
     query = f"'{folder_id}' in parents and name = '{file_name}' and mimeType = 'application/vnd.google-apps.spreadsheet'"
-    results = service.files().list(q=query, fields="files(id, name)", supportsAllDrives=True).execute()
+    results = service.files().list(q=query, fields="files(id, name)", supportsAllDrives=True,
+                                   includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
     
+    print(items)
     if not items:
         print(f"No files found with name: {file_name} in folder: {folder_id}")
         return None

@@ -23,9 +23,9 @@ from term_deposit_rotation import deposit_rotation_system_handler, deposit_rotat
 # Testing for vacation
 from notification import notify_today_vacation_info, notify_deposit_info
 from formatting import process_user_input
-from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler
+from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler, get_spreadsheet_id_in_folder, list_shared_drives
 from directMessageApi import send_direct_message_to_user
-
+from config import dummy_vacation_directory_id
 # slack bot system
 
 
@@ -92,8 +92,13 @@ def handle_message_events(event, say):
     print(f"user_input : {user_input}")
     print(f"process_user_input : {processed_input}")
 
-    # 사용자가 언급한 내용 반환 - 그대로 사용자에게 보여줌
-    # 여기서 문제가 발생하는 것임
+    if processed_input == 'test':    
+        res = get_spreadsheet_id_in_folder("연차/반차_2024", dummy_vacation_directory_id)
+        if res is None:
+            print("Not existed")
+        else:
+            print("existed")
+        return
 
     # user_states 상태 확인 - 없으면 생성이 되지 않았습니다 출력 
     if user_id in user_states:
