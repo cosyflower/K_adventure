@@ -45,7 +45,7 @@ def check_the_user_purpose(user_input,user_id):
     elif user_input in term_deposit_rotation_list:
         return term_deposit_rotation_list[0]
     else:
-        msg = (f"<@{user_id}> 회사명 오탈자 교정 작업(+2원)")
+        msg = (f"<@{user_id}> 명령어 오탈자 교정 작업(+2원)")
         send_direct_message_to_user(user_id, msg)
         return chatgpt.analyze_user_purpose(user_input)
 
