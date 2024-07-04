@@ -30,7 +30,7 @@ def rose_bot_handler(message, say, user_states):
                     send_direct_message_to_user(user_id, msg)
                     user_states[user_id] = 'vacation_purpose_handler'
                 else:
-                    msg = (f"<@{user_id}> 권한이 없습니다.")
+                    msg = (f"<@{user_id}> 권한이 없습니다. 종료합니다")
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "2": ## 보안시스템
@@ -48,7 +48,7 @@ def rose_bot_handler(message, say, user_states):
                     send_direct_message_to_user(user_id, msg)
                     user_states[user_id] = 'security_system_waiting_function_number'
                 else:
-                    msg = (f"<@{user_id}> 권한이 없습니다.")
+                    msg = (f"<@{user_id}> 권한이 없습니다. 종료합니다")
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "3": ## 문서 4종 생성
@@ -57,32 +57,35 @@ def rose_bot_handler(message, say, user_states):
                     send_direct_message_to_user(user_id, msg)
                     user_states[user_id] = 'docx_generating_waiting_company_name'
                 else:
-                    msg = (f"<@{user_id}> 권한이 없습니다.")
+                    msg = (f"<@{user_id}> 권한이 없습니다. 종료합니다")
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "4": ## 정기예금 회전 시스템
                 if get_user_authority(user_id) < 3:
-                    msg = ("정기예금 회전 시스템을 작동합니다. 종료를 원한다면 \'종료\'를 입력해주세요\n"
-                    "1. 질문하기(일반모델)(약 1원)\n"
-                    "2. 질문하기(상위모델)(약 10원)\n"
-                    # "3. 최종 만기일이 다가온 정기예금 상품조회\n"
-                        )
+                    # msg = ("정기예금 회전 시스템을 작동합니다. 종료를 원한다면 \'종료\'를 입력해주세요\n"
+                    # "1. 질문하기(일반모델)(약 1원)\n"
+                    # "2. 질문하기(상위모델)(약 10원)\n"
+                    # # "3. 최종 만기일이 다가온 정기예금 상품조회\n"
+                    #     )
+                    # send_direct_message_to_user(user_id, msg)
+                    # user_states[user_id] = 'deposit_rotation_waiting_only_number'
+                    msg = "공사중...종료합니다"
                     send_direct_message_to_user(user_id, msg)
-                    user_states[user_id] = 'deposit_rotation_waiting_only_number'
+                    del user_states[user_id]
                 else:
                     msg = (f"<@{user_id}> 권한이 없습니다.")
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "5": ## 회수 상황판
-                msg = (f"<@{user_id}> 공사중입니다.\n")
+                msg = (f"<@{user_id}> 공사중입니다. 종료합니다.\n")
                 send_direct_message_to_user(user_id, msg)
                 del user_states[user_id]
             elif user_input == "6": ## 검색
-                msg = (f"<@{user_id}> 공사중입니다.\n")
+                msg = (f"<@{user_id}> 공사중입니다. 종료합니다\n")
                 send_direct_message_to_user(user_id, msg)
                 del user_states[user_id]
             elif user_input == "7": ## 1on1
-                msg = (f"<@{user_id}> 공사중입니다.\n")
+                msg = (f"<@{user_id}> 공사중입니다. 종료합니다\n")
                 send_direct_message_to_user(user_id, msg)
                 del user_states[user_id]
             else:
