@@ -31,11 +31,12 @@ def get_current_year():
     current_year = now.year
     return current_year
 
-
 def process_and_extract_email(input_string):
     # '<'와 '>'를 제거
     if input_string.startswith('<') and input_string.endswith('>'):
         input_string = input_string[1:-1]
+    else:
+        return None
     
     # '|'를 기준으로 문자열을 분할
     parts = input_string.split('|')

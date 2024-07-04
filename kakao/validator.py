@@ -57,6 +57,10 @@ def is_valid_email(email):
     # 이메일 형식을 검증하기 위한 정규식 패턴
     # 추후 삭제 - 입력을 확인하기 위해서 임시 print
     print(email)
+
+    if email is None:
+        return False
+
     pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
 
     # 정규식 패턴과 일치하는지 확인

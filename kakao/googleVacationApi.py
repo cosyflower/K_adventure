@@ -29,7 +29,7 @@ from translator import to_specific_date, format_vacation_info, to_cancel_sequenc
 from validator import is_valid_date, is_valid_vacation_sequence, is_valid_vacation_reason_sequence, \
 is_valid_email, is_valid_confirm_sequence, is_valid_cancel_sequence, is_valid_vacation_purpose
 from user_commend import VACATION_SEQUENCE_TO_TYPE, VACATION_SEQUENCE_TO_REASON
-from formatting import process_user_input, get_proper_file_name, create_leave_string, get_current_year
+from formatting import process_user_input, get_proper_file_name, create_leave_string, get_current_year, process_and_extract_email
 from directMessageApi import send_direct_message_to_user
 
 
@@ -334,11 +334,7 @@ def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, 
     if cleaned_user_input == '종료':
         msg = (f"<@{user_id}>님 휴가 시스템을 종료합니다.\n\n")
         send_direct_message_to_user(user_id, msg)
-        # if user_id in user_states:
         del user_states[user_id]
-        send_direct_message_to_user(user_id, "user_states[user_id] deleted!\n")
-        # if user_id in cancel_vacation_status:
-        # del cancel_vacation_status[user_id]
         return
 
     if is_valid_vacation_purpose(cleaned_user_input):
@@ -537,8 +533,7 @@ def input_vacation_email(message, say, user_vacation_info, user_vacation_status)
     user_id = message['user']
     user_input = message['text']
     # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
-    cleaned_user_input = process_user_input(user_input)
-    email = cleaned_user_input
+    email = process_and_extract_email(user_input)
 
     if is_valid_email(email):
         print("올바른 이메일 형식")
@@ -671,7 +666,6 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             user_vacation_info[user_id] = []
             user_vacation_status[user_id] = 'pending'
 
-    print("debug")
     # 휴가 종류 선택하기
     if user_vacation_status[user_id] == 'checking_vacation_type':
         input_vacation_type(message, say, user_vacation_info, user_vacation_status)

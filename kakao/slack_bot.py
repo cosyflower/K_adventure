@@ -16,13 +16,13 @@ from user_commend import docx_generate, security_system, vacation_system_list, c
 
 from document4create import docx_generating_company_name_handler, docx_generating_inv_choice_handler #, docx_generating_docx_category_handler
 
-from security_system import security_system_user_function_handler, security_system_authority_category_handler, security_system_authority_update_json_file_handler, security_system_advisor_authority_make_handler, security_system_advisor_authority_delete_handler, get_user_authority, is_fake_advisor, is_real_advisor, update_authority
+from security_system import security_system_user_function_handler, security_system_authority_category_handler, security_system_authority_update_json_file_handler, security_system_advisor_authority_make_handler, security_system_advisor_authority_delete_handler, get_user_authority, update_authority
 
 from rosebot import rose_bot_handler
 from term_deposit_rotation import deposit_rotation_system_handler, deposit_rotation_system_low_model_handler, deposit_rotation_system_high_model_handler
 # Testing for vacation
 from notification import notify_today_vacation_info, notify_deposit_info
-from formatting import process_user_input, process_and_extract_email
+from formatting import process_user_input
 from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler
 from directMessageApi import send_direct_message_to_user
 
@@ -85,126 +85,61 @@ def handle_message_events(event, say):
     user_id = event['user']
     user_input = event['text']
     
-    print("direct message called")
+    print("\ndirect message called")
     
     # 사용자 명령어 인식 프로세스
     processed_input = process_user_input(user_input)
     print(f"user_input : {user_input}")
     print(f"process_user_input : {processed_input}")
-    print(f"email_processed :{process_and_extract_email(user_input)}")
 
     # 사용자가 언급한 내용 반환 - 그대로 사용자에게 보여줌
     # 여기서 문제가 발생하는 것임
 
-    #### 수정 해야 함 ##################
-    if processed_input:
-        msg = (f"<@{user_id}> {processed_input}")
-        send_direct_message_to_user(user_id, msg)
+    # user_states 상태 확인 - 없으면 생성이 되지 않았습니다 출력 
+    if user_id in user_states:
+        print(f"user_states : {user_states[user_id]}")
+    else:
+        print("user_states 아직 생성이 되지 않았습니다")
 
-        # user_states 상태 확인 - 없으면 생성이 되지 않았습니다 출력 
-        if user_id in user_states:
-            print(f"user_states : {user_states[user_id]}")
-        else:
-            print("user_states 아직 생성이 되지 않았습니다")
-
-        
-        if user_id not in user_states:
-            user_purpose_handler(event, say) # 안내 문구 출력 - 알맞은 user_states[user_id] 배정하는 역할
-        else: # 슬랙봇을 실행한 상황에 user_states[user_id]를 부여받은 상황일 때 진행
-            #########################   문서4종시스템    ########################################
-            if user_states[user_id] == 'docx_generating_waiting_company_name': 
-                docx_generating_company_name_handler(event, say, user_states, inv_list_info, inv_info)
-            elif user_states[user_id] == 'docx_generating_waiting_inv_choice':
-                docx_generating_inv_choice_handler(event, say, user_states, inv_list_info, inv_info)
-            # elif user_states[user_id] == 'docx_generating_waiting_docx_category':
-            #     docx_generating_docx_category_handler(event, say, user_states, inv_list_info, inv_info)
-            #########################   보안시스템    ########################################
-            elif user_states[user_id] == 'security_system_waiting_function_number':
-                security_system_user_function_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-            elif user_states[user_id] == 'security_system_waiting_authority_category':
-                security_system_authority_category_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-            elif user_states[user_id] == 'security_system_json_file':
-                security_system_authority_update_json_file_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-            elif user_states[user_id] == 'security_system_advisor_authority_make':
-                security_system_advisor_authority_make_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-            elif user_states[user_id] == 'security_system_advisor_authority_delete':
-                security_system_advisor_authority_delete_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-            #########################   휴가시스템    ########################################
-            elif user_states[user_id] == 'vacation_purpose_handler':
-                vacation_purpose_handler(event, say, user_states, cancel_vacation_status, user_vacation_info, user_vacation_status)
-            elif user_states[user_id] == 'request_vacation':
-                request_vacation_handler(event, say, user_states, user_vacation_status, user_vacation_info)
-            elif user_states[user_id] == 'cancel_vacation':
-                cancel_vacation_handler(event, say, user_states, cancel_vacation_status)    
-            ######################### 로제봇 시스템 ###################################
-            elif user_states[user_id] == 'rosebot_waiting_only_number':
-                rose_bot_handler(event, say, user_states)
-            ######################### 정기예금 회전 시스템 ###################################
-            elif user_states[user_id] == 'deposit_rotation_waiting_only_number':
-                deposit_rotation_system_handler(event, say, user_states)
-            elif user_states[user_id] == 'deposit_rotation_waiting_low_chatgpt_input':
-                deposit_rotation_system_low_model_handler(event, say, user_states)
-            elif user_states[user_id] == 'deposit_rotation_waiting_high_chatgpt_input':
-                deposit_rotation_system_high_model_handler(event, say, user_states)
-
-
-# @app.event("message")
-# def handle_message_events(event, say):
-#     # 다이렉트 메시지인지 확인
-#     print("debug\n")
-#     if event.get('channel_type') == 'im':    
-#         print("다이렉트 메세지를 확인했습니다\n")
-
-#         user_id = event['user']
-#         user_input = event['text']
-
-#         print(f"user input : {user_input}\n")
-
-#         if user_id in user_states:
-#             print(f"존재하고 user_states : {user_states[user_id]}\n")
-#         else:
-#             print("아직 존재하지 않습니다\n")
-
-#         사용자 명령어 인식 프로세스
-#         processed_input = process_user_input(user_input)
-#         if user_id not in user_states:
-#             user_purpose_handler(event, say) # 안내 문구 출력 - 알맞은 user_states[user_id] 배정하는 역할
-#         else: # 슬랙봇을 실행한 상황에 user_states[user_id]를 부여받은 상황일 때 진행
-#             #########################   문서4종시스템    ########################################
-#             if user_states[user_id] == 'docx_generating_waiting_company_name': 
-#                 docx_generating_company_name_handler(event, say, user_states, inv_list_info, inv_info)
-#             elif user_states[user_id] == 'docx_generating_waiting_inv_choice':
-#                 docx_generating_inv_choice_handler(event, say, user_states, inv_list_info, inv_info)
-#             # elif user_states[user_id] == 'docx_generating_waiting_docx_category':
-#             #     docx_generating_docx_category_handler(event, say, user_states, inv_list_info, inv_info)
-#             #########################   보안시스템    ########################################
-#             elif user_states[user_id] == 'security_system_waiting_function_number':
-#                 security_system_user_function_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-#             elif user_states[user_id] == 'security_system_waiting_authority_category':
-#                 security_system_authority_category_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-#             elif user_states[user_id] == 'security_system_json_file':
-#                 security_system_authority_update_json_file_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-#             elif user_states[user_id] == 'security_system_advisor_authority_make':
-#                 security_system_advisor_authority_make_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-#             elif user_states[user_id] == 'security_system_advisor_authority_delete':
-#                 security_system_advisor_authority_delete_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-#             #########################   휴가시스템    ########################################
-#             elif user_states[user_id] == 'vacation_purpose_handler':
-#                 vacation_purpose_handler(event, say, user_states, cancel_vacation_status, user_vacation_info, user_vacation_status)
-#             elif user_states[user_id] == 'request_vacation':
-#                 request_vacation_handler(event, say, user_states, user_vacation_status, user_vacation_info)
-#             elif user_states[user_id] == 'cancel_vacation':
-#                 cancel_vacation_handler(event, say, user_states, cancel_vacation_status)    
-#             ######################### 로제봇 시스템 ###################################
-#             elif user_states[user_id] == 'rosebot_waiting_only_number':
-#                 rose_bot_handler(event, say, user_states)
-#             ######################### 정기예금 회전 시스템 ###################################
-#             elif user_states[user_id] == 'deposit_rotation_waiting_only_number':
-#                 deposit_rotation_system_handler(event, say, user_states)
-#             elif user_states[user_id] == 'deposit_rotation_waiting_low_chatgpt_input':
-#                 deposit_rotation_system_low_model_handler(event, say, user_states)
-#             elif user_states[user_id] == 'deposit_rotation_waiting_high_chatgpt_input':
-#                 deposit_rotation_system_high_model_handler(event, say, user_states)
+    
+    if user_id not in user_states:
+        user_purpose_handler(event, say) # 안내 문구 출력 - 알맞은 user_states[user_id] 배정하는 역할
+    else: # 슬랙봇을 실행한 상황에 user_states[user_id]를 부여받은 상황일 때 진행
+        #########################   문서4종시스템    ########################################
+        if user_states[user_id] == 'docx_generating_waiting_company_name': 
+            docx_generating_company_name_handler(event, say, user_states, inv_list_info, inv_info)
+        elif user_states[user_id] == 'docx_generating_waiting_inv_choice':
+            docx_generating_inv_choice_handler(event, say, user_states, inv_list_info, inv_info)
+        # elif user_states[user_id] == 'docx_generating_waiting_docx_category':
+        #     docx_generating_docx_category_handler(event, say, user_states, inv_list_info, inv_info)
+        #########################   보안시스템    ########################################
+        elif user_states[user_id] == 'security_system_waiting_function_number':
+            security_system_user_function_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
+        elif user_states[user_id] == 'security_system_waiting_authority_category':
+            security_system_authority_category_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
+        elif user_states[user_id] == 'security_system_json_file':
+            security_system_authority_update_json_file_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
+        elif user_states[user_id] == 'security_system_advisor_authority_make':
+            security_system_advisor_authority_make_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
+        elif user_states[user_id] == 'security_system_advisor_authority_delete':
+            security_system_advisor_authority_delete_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
+        #########################   휴가시스템    ########################################
+        elif user_states[user_id] == 'vacation_purpose_handler':
+            vacation_purpose_handler(event, say, user_states, cancel_vacation_status, user_vacation_info, user_vacation_status)
+        elif user_states[user_id] == 'request_vacation':
+            request_vacation_handler(event, say, user_states, user_vacation_status, user_vacation_info)
+        elif user_states[user_id] == 'cancel_vacation':
+            cancel_vacation_handler(event, say, user_states, cancel_vacation_status)    
+        ######################### 로제봇 시스템 ###################################
+        elif user_states[user_id] == 'rosebot_waiting_only_number':
+            rose_bot_handler(event, say, user_states)
+        ######################### 정기예금 회전 시스템 ###################################
+        elif user_states[user_id] == 'deposit_rotation_waiting_only_number':
+            deposit_rotation_system_handler(event, say, user_states)
+        elif user_states[user_id] == 'deposit_rotation_waiting_low_chatgpt_input':
+            deposit_rotation_system_low_model_handler(event, say, user_states)
+        elif user_states[user_id] == 'deposit_rotation_waiting_high_chatgpt_input':
+            deposit_rotation_system_high_model_handler(event, say, user_states)
 
 @app.event("app_mention")
 def handle_message_events(event, say):
@@ -215,45 +150,6 @@ def handle_message_events(event, say):
     send_direct_message_to_user(user_id, user_input)
 
     print("mentioned called\n")
-
-    # if user_id not in user_states:
-    #     user_purpose_handler(event, say) # 안내 문구 출력 - 알맞은 user_states[user_id] 배정하는 역할
-    # else: # 슬랙봇을 실행한 상황에 user_states[user_id]를 부여받은 상황일 때 진행
-    #     #########################   문서4종시스템    ########################################
-    #     if user_states[user_id] == 'docx_generating_waiting_company_name': 
-    #         docx_generating_company_name_handler(event, say, user_states, inv_list_info, inv_info)
-    #     elif user_states[user_id] == 'docx_generating_waiting_inv_choice':
-    #         docx_generating_inv_choice_handler(event, say, user_states, inv_list_info, inv_info)
-    #     # elif user_states[user_id] == 'docx_generating_waiting_docx_category':
-    #     #     docx_generating_docx_category_handler(event, say, user_states, inv_list_info, inv_info)
-    #     #########################   보안시스템    ########################################
-    #     elif user_states[user_id] == 'security_system_waiting_function_number':
-    #         security_system_user_function_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-    #     elif user_states[user_id] == 'security_system_waiting_authority_category':
-    #         security_system_authority_category_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-    #     elif user_states[user_id] == 'security_system_json_file':
-    #         security_system_authority_update_json_file_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-    #     elif user_states[user_id] == 'security_system_advisor_authority_make':
-    #         security_system_advisor_authority_make_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-    #     elif user_states[user_id] == 'security_system_advisor_authority_delete':
-    #         security_system_advisor_authority_delete_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
-    #     #########################   휴가시스템    ########################################
-    #     elif user_states[user_id] == 'vacation_purpose_handler':
-    #         vacation_purpose_handler(event, say, user_states, cancel_vacation_status, user_vacation_info, user_vacation_status)
-    #     elif user_states[user_id] == 'request_vacation':
-    #         request_vacation_handler(event, say, user_states, user_vacation_status, user_vacation_info)
-    #     elif user_states[user_id] == 'cancel_vacation':
-    #         cancel_vacation_handler(event, say, user_states, cancel_vacation_status)    
-    #     ######################### 로제봇 시스템 ###################################
-    #     elif user_states[user_id] == 'rosebot_waiting_only_number':
-    #         rose_bot_handler(event, say, user_states)
-    #     ######################### 정기예금 회전 시스템 ###################################
-    #     elif user_states[user_id] == 'deposit_rotation_waiting_only_number':
-    #         deposit_rotation_system_handler(event, say, user_states)
-    #     elif user_states[user_id] == 'deposit_rotation_waiting_low_chatgpt_input':
-    #         deposit_rotation_system_low_model_handler(event, say, user_states)
-    #     elif user_states[user_id] == 'deposit_rotation_waiting_high_chatgpt_input':
-    #         deposit_rotation_system_high_model_handler(event, say, user_states)
 
 def user_purpose_handler(message, say):
     user_id = message['user']
