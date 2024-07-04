@@ -16,46 +16,14 @@ def docx_generating_company_name_handler(message, say, user_states, inv_list_inf
         del user_states[user_id]
         return
 
-    # 모든 기업 이름을 가지고 오는 구간
-    try:
-        msg = ("스프레드시트에 등록된 기업명 정보를 로드중입니다.\n")
-        send_direct_message_to_user(user_id, msg)
-        all_company_names, all_company_names_full = googleapi.get_all_company_names()
-        msg = ("스프레드시트에 등록된 기업명 정보 로드 완료. 잠시만 기다려주세요...\n")
-        send_direct_message_to_user(user_id, msg)
-    except FileNotFoundError as e: # JSON 키 파일이 없는 경우
-        msg = ("등록된 키 파일의 정보를 찾을 수 없습니다. JSON 키 파일을 등록해주세요. 프로그램을 종료합니다.\n")
-        send_direct_message_to_user(user_id, msg)
-        # say(f"File not found error: {e}")
-        # all_company_names, all_company_names_full = [], []
-        del user_states[user_id]
-        return
-    except gspread.exceptions.SpreadsheetNotFound as e: # 스프레드시트를 찾지 못한 경우
-        msg = ("연결된 스프레트시트 정보를 찾을 수 없습니다. 파일을 확인해주세요. 프로그램을 종료합니다.\n")
-        send_direct_message_to_user(user_id, msg)
-        # say(f"Spreadsheet not found: {e}")
-        # all_company_names, all_company_names_full = [], []
-        del user_states[user_id]
-        return
-    except gspread.exceptions.APIError as e: # API 호출 중 에러가 발생한 경우
-        msg = ("gspread API 호출 중 에러가 발생했습니다. 다시 시도해주세요. 프로그램을 종료합니다.\n")
-        send_direct_message_to_user(user_id, msg)
-        # say(f"API error: {e}")
-        # all_company_names, all_company_names_full = [], []
-        del user_states[user_id]
-        return
-    except Exception as e: # 그 외의 기타 에러가 발생한 경우
-        msg = (f"알 수 없는 에러가 발생했습니다. 에러를 확인해주세요. 프로그램을 종료합니다.\nAn unexpected error occurred: {e}")
-        send_direct_message_to_user(user_id, msg)
-        # all_company_names, all_company_names_full = [], []
-        del user_states[user_id]
-        return
+    all_company_names, all_company_names_full = googleapi.get_all_company_names()
     
     if user_input in (all_company_names + all_company_names_full):
         company_name = user_input
     else:
+        msg = (f"<@{user_id}> 회사명 오탈자 교정 작업(+10원)")
+        send_direct_message_to_user(user_id, msg)
         company_name = chatgpt.analyze_company_name(all_company_names,user_input)
-        print("chatgpt 사용 + 10원")
     if company_name in (all_company_names + all_company_names_full):
         inv_list = googleapi.get_inv_list_and_date(company_name)
         choice = ""
@@ -93,6 +61,8 @@ def docx_generating_inv_choice_handler(message, say, user_states, inv_list_info,
                 send_direct_message_to_user(user_id, msg)
                 user_states[user_id] = 'docx_generating_waiting_company_name'
             else:
+                msg = (f"<@{user_id}> 회사 정보를 불러오는 중입니다...")
+                send_direct_message_to_user(user_id, msg)
                 data = inv_list[user_input-1]
                 inv_id = data['inv_id']
                 kv_id = googleapi.get_kv_id_from_inv_id(inv_id)
@@ -102,28 +72,33 @@ def docx_generating_inv_choice_handler(message, say, user_states, inv_list_info,
                 db_7 = googleapi.get_db7_info_from_fund_num(fund_num)
                 total_investment, total_investment_in = googleapi.get_extra_info_frome_inv_id(inv_id,fund_num)
                 current_time = googleapi.get_time()
+
                 msg = (f"<@{user_id}> 운용지시서 문서 생성 중입니다.")
                 send_direct_message_to_user(user_id, msg)
                 googleapi.make_docx_fileA(db_1,db_4,db_7,current_time)
                 msg = (f"<@{user_id}> 운용지시서 서류 생성 완료.")
                 send_direct_message_to_user(user_id, msg)
+
                 msg = (f"<@{user_id}> 투심위의사록 문서 생성 중입니다.")
                 send_direct_message_to_user(user_id, msg)
                 new_document_id = googleapi.make_docx_fileB(db_1,db_4,db_7,current_time)
                 googleapi.update_tableB(db_7,new_document_id)
                 googleapi.update_tableB_ver2(new_document_id)
                 msg = (f"<@{user_id}> 투심위의사록 서류 생성 완료.")
+
                 send_direct_message_to_user(user_id, msg)
                 msg = (f"<@{user_id}> 준법사항 체크리스트 문서 생성 중입니다.")
                 send_direct_message_to_user(user_id, msg)
                 googleapi.make_docx_fileC(db_1, db_4, db_7, total_investment, total_investment_in,current_time)
                 msg = (f"<@{user_id}> 준법사항 체크리스트 서류 생성.")
                 send_direct_message_to_user(user_id, msg)
+
                 msg = (f"<@{user_id}> 투자집행품의서 문서 생성 중입니다.")
                 send_direct_message_to_user(user_id, msg)
                 googleapi.make_docx_fileD(db_1,db_4,db_7,current_time)
                 msg = (f"<@{user_id}> 투자집행품의서 서류 생성 완료.")
                 send_direct_message_to_user(user_id, msg)
+
                 msg = (f"<@{user_id}> 모든 서류 생성 완료. 이용해주셔서 감사합니다.")
                 send_direct_message_to_user(user_id, msg)
                 del user_states[user_id]

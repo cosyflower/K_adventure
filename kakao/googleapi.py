@@ -373,9 +373,8 @@ def make_docx_fileA(db_1,db_4,db_7, current_time):
     parent_folder_id = config.fileABCD_parent_folder_id
 
     folder_name = current_time + "_" + COMPANY_NAME
-
     query = f"'{parent_folder_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
-    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True).execute()
+    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
     
     if items:
@@ -386,15 +385,15 @@ def make_docx_fileA(db_1,db_4,db_7, current_time):
             'mimeType': 'application/vnd.google-apps.folder',
             'parents': [parent_folder_id]
         }
-        folder = drive_service.files().create(body=file_metadata, fields='id',supportsAllDrives=True).execute()
+        folder = drive_service.files().create(body=file_metadata, fields='id',supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
         folder_id = folder.get('id')
 
-    file = drive_service.files().get(fileId=new_document_id, fields='parents',supportsAllDrives=True).execute()
+    file = drive_service.files().get(fileId=new_document_id, fields='parents',supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     previous_parents = ",".join(file.get('parents'))
     file = drive_service.files().update(fileId=new_document_id,
                                         addParents=folder_id,
                                         removeParents=previous_parents,
-                                        fields='id, parents',supportsAllDrives=True).execute()
+                                        fields='id, parents', supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
 # 투자심의위원회 의사록
 def make_docx_fileB(db_1,db_4,db_7, current_time):
@@ -533,7 +532,7 @@ def make_docx_fileB(db_1,db_4,db_7, current_time):
     folder_name = current_time + "_" + COMPANY_NAME
 
     query = f"'{parent_folder_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
-    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True).execute()
+    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
     
     if items:
@@ -544,15 +543,15 @@ def make_docx_fileB(db_1,db_4,db_7, current_time):
             'mimeType': 'application/vnd.google-apps.folder',
             'parents': [parent_folder_id]
         }
-        folder = drive_service.files().create(body=file_metadata, fields='id',supportsAllDrives=True).execute()
+        folder = drive_service.files().create(body=file_metadata, fields='id',supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
         folder_id = folder.get('id')
 
-    file = drive_service.files().get(fileId=new_document_id, fields='parents',supportsAllDrives=True).execute()
+    file = drive_service.files().get(fileId=new_document_id, fields='parents',supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     previous_parents = ",".join(file.get('parents'))
     file = drive_service.files().update(fileId=new_document_id,
                                         addParents=folder_id,
                                         removeParents=previous_parents,
-                                        fields='id, parents',supportsAllDrives=True).execute()
+                                        fields='id, parents',supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
     return new_document_id
 # 준법사항 체크리스트(벤처투자조합)
@@ -842,7 +841,7 @@ def make_docx_fileC(db_1,db_4,db_7,total_investment, total_investment_in, curren
     folder_name = current_time + "_" + COMPANY_NAME
 
     query = f"'{parent_folder_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
-    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True).execute()
+    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
     
     if items:
@@ -853,15 +852,15 @@ def make_docx_fileC(db_1,db_4,db_7,total_investment, total_investment_in, curren
             'mimeType': 'application/vnd.google-apps.folder',
             'parents': [parent_folder_id]
         }
-        folder = drive_service.files().create(body=file_metadata, fields='id',supportsAllDrives=True).execute()
+        folder = drive_service.files().create(body=file_metadata, fields='id',supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
         folder_id = folder.get('id')
 
-    file = drive_service.files().get(fileId=new_document_id, fields='parents',supportsAllDrives=True).execute()
+    file = drive_service.files().get(fileId=new_document_id, fields='parents',supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     previous_parents = ",".join(file.get('parents'))
     file = drive_service.files().update(fileId=new_document_id,
                                         addParents=folder_id,
                                         removeParents=previous_parents,
-                                        fields='id, parents',supportsAllDrives=True).execute()
+                                        fields='id, parents',supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
 # 투자집행품의서
 def make_docx_fileD(db_1,db_4,db_7, current_time):
@@ -960,7 +959,7 @@ def make_docx_fileD(db_1,db_4,db_7, current_time):
     folder_name = current_time + "_" + COMPANY_NAME
 
     query = f"'{parent_folder_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
-    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True).execute()
+    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
     
     if items:
@@ -971,15 +970,15 @@ def make_docx_fileD(db_1,db_4,db_7, current_time):
             'mimeType': 'application/vnd.google-apps.folder',
             'parents': [parent_folder_id]
         }
-        folder = drive_service.files().create(body=file_metadata, fields='id',supportsAllDrives=True).execute()
+        folder = drive_service.files().create(body=file_metadata, fields='id',supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
         folder_id = folder.get('id')
 
-    file = drive_service.files().get(fileId=new_document_id, fields='parents',supportsAllDrives=True).execute()
+    file = drive_service.files().get(fileId=new_document_id, fields='parents',supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     previous_parents = ",".join(file.get('parents'))
     file = drive_service.files().update(fileId=new_document_id,
                                         addParents=folder_id,
                                         removeParents=previous_parents,
-                                        fields='id, parents',supportsAllDrives=True).execute()
+                                        fields='id, parents',supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
 
 def get_extra_info_frome_inv_id(inv_id,fund_num):

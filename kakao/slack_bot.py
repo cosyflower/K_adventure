@@ -33,11 +33,7 @@ from directMessageApi import send_direct_message_to_user
 import gspread
 import datetime
 
-"""
-사용자로부터 입력을 받았을 때 처음으로 입력에 대한 분석이 진행되는 함수
-- 토큰을 확인하고 그에 알맞은 문자열을 리턴하는 함수
-"""
-def check_the_user_purpose(user_input):
+def check_the_user_purpose(user_input,user_id):
     if user_input in docx_generate:
         return docx_generate[0]
     elif user_input in vacation_system_list:
@@ -49,7 +45,8 @@ def check_the_user_purpose(user_input):
     elif user_input in term_deposit_rotation_list:
         return term_deposit_rotation_list[0]
     else:
-        print("chatgpt 사용 + 3원")
+        msg = (f"<@{user_id}> 회사명 오탈자 교정 작업(+2원)")
+        send_direct_message_to_user(user_id, msg)
         return chatgpt.analyze_user_purpose(user_input)
 
 
@@ -262,7 +259,7 @@ def user_purpose_handler(message, say):
     user_id = message['user']
     user_input = message['text']
     user_input = process_user_input(user_input)
-    purpose = check_the_user_purpose(user_input)
+    purpose = check_the_user_purpose(user_input,user_id)
 
     if purpose == "문서 4종 생성해줘":
         if get_user_authority(user_id) < 3:
