@@ -533,25 +533,31 @@ def input_vacation_specific_reason(message, say, user_vacation_info, user_vacati
 
 #### 휴가 개인 이메일 입력받기
 def input_vacation_email(message, say, user_vacation_info, user_vacation_status):
+    print("input_vacation_email() called")
     user_id = message['user']
     user_input = message['text']
     # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
-    cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
+    cleaned_user_input = process_user_input(user_input)
     email = cleaned_user_input
-    # 이메일에 '!' 문자가 있는지 확인
-    if '!' not in email:
-        email = email.split('|')[1]
-        # 만약 꺾쇠 괄호(<, >)도 제거하고 싶다면 strip 메서드를 사용할 수 있습니다.
-        email = email.strip('>')
 
     if is_valid_email(email):
+        print("올바른 이메일 형식")
         user_vacation_info[user_id].append(email) # 변환 모듈
         msg = (f"<@{user_id}>님 휴가 신청 진행중입니다. <@{user_id}>님의 휴가 신청 이메일은 {email} 입니다.\n\n")
         send_direct_message_to_user(user_id, msg)
+
+        print(user_vacation_info[user_id])
+        print(user_vacation_status[user_id])
+
         user_vacation_status[user_id] = "pre-confirmed"
     else:
+        print("올바르지 않은 이메일 형식입니다")
         msg = (f"<@{user_id}>님 휴가 신청 진행중입니다. <{email}>올바르지 않은 이메일 형식입니다. 다시 입력하세요\n\n")
         send_direct_message_to_user(user_id, msg)
+
+        print(user_vacation_info[user_id])
+        print(user_vacation_status[user_id])
+
 
 def is_confirmed(confirm_sequence):
     if(confirm_sequence == '0'):
@@ -665,6 +671,7 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             user_vacation_info[user_id] = []
             user_vacation_status[user_id] = 'pending'
 
+    print("debug")
     # 휴가 종류 선택하기
     if user_vacation_status[user_id] == 'checking_vacation_type':
         input_vacation_type(message, say, user_vacation_info, user_vacation_status)
@@ -790,6 +797,7 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             del user_vacation_info[user_id]
             del user_vacation_status[user_id]
             return
+        
         if reason == "안식휴가" and float(remained_vacation[1]) < converted_value:
             msg = (f"<@{user_id}>의 안식휴가 신청이 불가합니다. 안식휴가의 잔여 일수를 확인하세요.\n")
             send_direct_message_to_user(user_id, msg)
@@ -802,28 +810,26 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             return
         
         # DB에 반영한다 
-        is_stored = False
-        while is_stored is False:
-            try:
-                msg = (f"<@{user_id}>의 휴가 신청을 처리중입니다.")
-                send_direct_message_to_user(user_id, msg)
-                append_data(spreadsheet_id, new_row_data)
-                is_stored =True
-            except gspread.exceptions.APIError as e:
-                msg = (f"APIError occurred: {e}")
-                send_direct_message_to_user(user_id, msg)
-            except gspread.exceptions.GSpreadException as e:
-                msg = (f"GSpreadException occurred: {e}")
-                send_direct_message_to_user(user_id, msg)
-            except FileNotFoundError as e:
-                msg = (f"File not found: {e}")
-                send_direct_message_to_user(user_id, msg)
-            except ValueError as e:
-                msg = (f"Unvalid sheet_number: {e}")
-                send_direct_message_to_user(user_id, msg)
-            except Exception as e:
-                msg = (f"An unexpected error occurred: {e}")
-                send_direct_message_to_user(user_id, msg)
+        msg = (f"<@{user_id}>의 휴가 신청을 처리중입니다.")
+        send_direct_message_to_user(user_id, msg)
+        
+        try:
+            append_data(spreadsheet_id, new_row_data)
+        except gspread.exceptions.APIError as e:
+            msg = (f"APIError occurred: {e}")
+            send_direct_message_to_user(user_id, msg)
+        except gspread.exceptions.GSpreadException as e:
+            msg = (f"GSpreadException occurred: {e}")
+            send_direct_message_to_user(user_id, msg)
+        except FileNotFoundError as e:
+            msg = (f"File not found: {e}")
+            send_direct_message_to_user(user_id, msg)
+        except ValueError as e:
+            msg = (f"Unvalid sheet_number: {e}")
+            send_direct_message_to_user(user_id, msg)
+        except Exception as e:
+            msg = (f"An unexpected error occurred: {e}")
+            send_direct_message_to_user(user_id, msg)
         
         msg = (f"<@{user_id}>의 휴가 신청을 완료합니다. 휴가 / 연차 서비스를 종료합니다.\n")
         send_direct_message_to_user(user_id, msg)

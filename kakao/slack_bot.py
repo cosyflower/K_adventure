@@ -22,7 +22,7 @@ from rosebot import rose_bot_handler
 from term_deposit_rotation import deposit_rotation_system_handler, deposit_rotation_system_low_model_handler, deposit_rotation_system_high_model_handler
 # Testing for vacation
 from notification import notify_today_vacation_info, notify_deposit_info
-from formatting import process_user_input
+from formatting import process_user_input, process_and_extract_email
 from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler
 from directMessageApi import send_direct_message_to_user
 
@@ -92,8 +92,14 @@ def handle_message_events(event, say):
     
     # 사용자 명령어 인식 프로세스
     processed_input = process_user_input(user_input)
+    print(f"user_input : {user_input}")
+    print(f"process_user_input : {processed_input}")
+    print(f"email_processed :{process_and_extract_email(user_input)}")
 
     # 사용자가 언급한 내용 반환 - 그대로 사용자에게 보여줌
+    # 여기서 문제가 발생하는 것임
+
+    #### 수정 해야 함 ##################
     if processed_input:
         msg = (f"<@{user_id}> {processed_input}")
         send_direct_message_to_user(user_id, msg)
