@@ -209,15 +209,15 @@ def make_docx_fileA(db_1,db_4,db_7, current_time):
     
     OVERSEAS_COMPANY1 = db_1['해외기업여부'].iloc[0] 
     if OVERSEAS_COMPANY1 == "여":
-        OVERSEAS_COMPANY1 = "O"
-    else:
         OVERSEAS_COMPANY1 = ""
+    else:
+        OVERSEAS_COMPANY1 = "O"
 
     OVERSEAS_COMPANY2 = db_1['해외기업여부'].iloc[0] 
     if OVERSEAS_COMPANY2 == "여":
-        OVERSEAS_COMPANY2 = ""
-    else:
         OVERSEAS_COMPANY2 = "O"
+    else:
+        OVERSEAS_COMPANY2 = ""
 
     INVESTMENT_AMOUNT = change_money_form(db_4['투자금액(원화)'].iloc[0]) 
     INVESTMENT_COUNT = change_count_form(db_4['인수 주식수'].iloc[0])
