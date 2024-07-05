@@ -280,9 +280,9 @@ def is_file_exists_in_directory(directory_id, file_name):
     try:
         # Google Drive API를 사용하여 특정 디렉토리의 파일 목록을 가져옵니다.
         query = f"'{directory_id}' in parents and name = '{file_name}' and trashed = false"
-        response = drive_service.files().list(q=query, spaces='drive', fields='files(id, name)',supportsAllDrives=True).execute()
-        
+        response = drive_service.files().list(q=query, spaces='drive', fields='files(id, name)',supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
         files = response.get('files', [])
+
         
         if files:
             print(f"파일 '{file_name}'이(가) 디렉토리 내에 존재합니다.")
@@ -313,7 +313,7 @@ def copy_gdrive_spreadsheet(template_file_id, new_filename, save_folder_id):
     }
 
     # 파일 복사
-    new_file = drive_service.files().copy(fileId=template_file_id, body=file_metadata).execute()
+    new_file = drive_service.files().copy(fileId=template_file_id, body=file_metadata,supportsAllDrives=True).execute()
 
     print(f"File copied to Google Drive with ID: {new_file.get('id')}")
 # ---------------------------- #
