@@ -149,13 +149,13 @@ def get_day_of_week(input_date_str):
 def change_count_form(num):
     num = str(num)
     num = num.replace(',', '')
-    num = float(num)
+    num = int(num)
     return f"{num:,}"
 
 def change_money_form(num):
     num = str(num)
     num = num.replace(',', '')
-    num = float(num)
+    num = int(num)
     return f"{num:,}원"
 
 def change_money_form2(num):
@@ -187,7 +187,7 @@ def make_docx_fileA(db_1,db_4,db_7, current_time):
     
     COMPANY_NAME = db_1['회사명'].iloc[0]
 
-    new_document = drive_service.files().copy(fileId=document_id, body={'name': COMPANY_NAME+'_운용지시서'},supportsAllDrives=True).execute()     
+    new_document = drive_service.files().copy(fileId=document_id, body={'name': '운용지시서_' + COMPANY_NAME},supportsAllDrives=True).execute()     
     new_document_id = new_document.get('id')
 
     FUND_NAME = db_7['펀드명'].iloc[0]
@@ -406,7 +406,7 @@ def make_docx_fileB(db_1,db_4,db_7, current_time):
 
     COMPANY_NAME = db_1['회사명'].iloc[0]
 
-    new_document = drive_service.files().copy(fileId=document_id, body={'name': COMPANY_NAME + '_투심위의사록'},supportsAllDrives=True).execute()     
+    new_document = drive_service.files().copy(fileId=document_id, body={'name': '투심위의사록_' + COMPANY_NAME},supportsAllDrives=True).execute()     
     new_document_id = new_document.get('id')
 
     INVESTMENT_DATE_MONDAY = get_day_of_week(db_4['투자 납입일'].iloc[0])
@@ -564,7 +564,7 @@ def make_docx_fileC(db_1,db_4,db_7,total_investment, total_investment_in, curren
     document_id = config.fileC_id
     COMPANY_NAME = db_1['회사명'].iloc[0]
 
-    new_document = drive_service.files().copy(fileId=document_id, body={'name': COMPANY_NAME+'_준법사항_체크리스트'},supportsAllDrives=True).execute()     
+    new_document = drive_service.files().copy(fileId=document_id, body={'name': '준법사항_체크리스트_' + COMPANY_NAME},supportsAllDrives=True).execute()     
     new_document_id = new_document.get('id')
 
     FUND_NAME = db_7['펀드명'].iloc[0]
@@ -873,7 +873,7 @@ def make_docx_fileD(db_1,db_4,db_7, current_time):
 
     COMPANY_NAME = db_1['회사명'].iloc[0]
 
-    new_document = drive_service.files().copy(fileId=document_id, body={'name': COMPANY_NAME + '_투자집행품의서'},supportsAllDrives=True).execute()     
+    new_document = drive_service.files().copy(fileId=document_id, body={'name':'투자집행품의서_' + COMPANY_NAME},supportsAllDrives=True).execute()     
     new_document_id = new_document.get('id')
 
     DRAFT_DATE = db_4['투자 납입일'].iloc[0]

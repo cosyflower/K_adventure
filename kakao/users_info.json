@@ -62,13 +62,6 @@
         "display_name": "justin.kv 신정호",
         "authority": 2
     },
-    "U032Z25L680": {
-        "id": "U032Z25L680",
-        "name": "aiden",
-        "real_name": "장원열Aiden Jang",
-        "display_name": "Aiden.kv 장원열",
-        "authority": 2
-    },
     "U0332HZ9AAW": {
         "id": "U0332HZ9AAW",
         "name": "rose054",
@@ -326,6 +319,13 @@
         "name": "googledrive",
         "real_name": "Google Drive",
         "display_name": "Google Drive",
+        "authority": 4
+    },
+    "U032Z25L680": {
+        "id": "U032Z25L680",
+        "name": "aiden",
+        "real_name": "",
+        "display_name": "Aiden.kv 장원열",
         "authority": 4
     },
     "U033K84KP1A": {
