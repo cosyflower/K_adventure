@@ -46,7 +46,7 @@ def get_display_name(user_id, file_path='users_info.json'):
         # user_id와 일치하는 사용자를 탐색
         for user in users_data:
             if user['id'] == user_id:
-                return user['display_name']
+                return user['name']
         
         # 일치하는 사용자가 없을 경우
         return "User ID not found"
