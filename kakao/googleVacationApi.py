@@ -38,24 +38,15 @@ API 설명
 """
 # JSON 파일을 확인하여 user_id에 맞는 데이터를 탐색하고 display_name을 반환한다
 def get_display_name(user_id, file_path='users_info.json'):
-    try:
-        # JSON 파일을 열고 데이터를 읽음
-        with open(file_path, 'r', encoding='utf-8') as file:
-            users_data = json.load(file)
-        
-        # user_id와 일치하는 사용자를 탐색
-        for user in users_data:
-            if user['id'] == user_id:
-                return user['name']
-        
-        # 일치하는 사용자가 없을 경우
-        return "User ID not found"
-    except FileNotFoundError:
-        return "File not found"
-    except json.JSONDecodeError:
-        return "Error decoding JSON file"
-    except Exception as e:
-        return f"An error occurred: {e}"
+    # JSON 파일을 열고 데이터를 읽음
+    with open(file_path, 'r', encoding='utf-8') as file:
+        users_data = json.load(file)
+    
+    # user_id에 해당하는 사용자 데이터 찾기
+    if user_id in users_data:
+        return users_data[user_id].get('display_name')
+    else:
+        print(f"User ID {user_id} not found in data")
     
 
 
