@@ -526,7 +526,7 @@ def input_vacation_reason(message, say, user_vacation_info, user_vacation_status
             user_vacation_status[user_id] = "waiting_vacation_specific_reason"
         else:
             user_vacation_info[user_id].append("") # 휴가 상세 자유를 공백으로 추가해둔다
-            user_vacation_status[user_id] = "waiting_vacation_email"
+            user_vacation_status[user_id] = "pre-confirmed"
     else:
         msg = (f"<@{user_id}>님 휴가 신청 진행중입니다. 잘못된 휴가 사유입니다. 1 - 8번 사이의 번호를 입력하세요\n\n")
         send_direct_message_to_user(user_id, msg)
