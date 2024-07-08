@@ -1,24 +1,220 @@
 {
-    "U072MMSHFGR": {
-        "id": "U072MMSHFGR",
-        "name": "isangho736",
-        "real_name": "이상호",
-        "display_name": "",
-        "authority": 1
+    "U031UM29JDD": {
+        "id": "U031UM29JDD",
+        "name": "brian",
+        "real_name": "Brian 브라이언",
+        "display_name": "Brian.kv 장동욱 (7번)",
+        "authority": 2
     },
-    "U073ARB375W": {
-        "id": "U073ARB375W",
-        "name": "kakaotest240509",
-        "real_name": "kakao_test_240509",
-        "display_name": "",
-        "authority": 1
+    "U031UM2D0FR": {
+        "id": "U031UM2D0FR",
+        "name": "anne",
+        "real_name": "Anne",
+        "display_name": "Anne. kv 안혜원",
+        "authority": 2
     },
-    "U075MCMUL04": {
-        "id": "U075MCMUL04",
-        "name": "ssu.sexycode",
-        "real_name": "황성훈",
-        "display_name": "황성훈",
-        "authority": 1
+    "U0326B07CJZ": {
+        "id": "U0326B07CJZ",
+        "name": "mike",
+        "real_name": "Mike 조현익",
+        "display_name": "mike.kv 조현익",
+        "authority": 2
+    },
+    "U0329A8F6QK": {
+        "id": "U0329A8F6QK",
+        "name": "jacob",
+        "real_name": "김지웅Jacob Kim",
+        "display_name": "Jacob.kv 김지웅",
+        "authority": 2
+    },
+    "U0329MM96KC": {
+        "id": "U0329MM96KC",
+        "name": "jun",
+        "real_name": "Kijun Kim",
+        "display_name": "Jun.kv 김기준",
+        "authority": 2
+    },
+    "U032BJQJMJQ": {
+        "id": "U032BJQJMJQ",
+        "name": "eddie",
+        "real_name": "장승룡 Eddie Chang",
+        "display_name": "eddie.kv 장승룡 (8번)",
+        "authority": 2
+    },
+    "U032FEB8JFM": {
+        "id": "U032FEB8JFM",
+        "name": "simplepoll",
+        "real_name": "Simple Poll",
+        "display_name": "",
+        "authority": 2
+    },
+    "U032MU0HZH7": {
+        "id": "U032MU0HZH7",
+        "name": "wendy",
+        "real_name": "Wendy",
+        "display_name": "wendy 박소진",
+        "authority": 2
+    },
+    "U032Z25EWUQ": {
+        "id": "U032Z25EWUQ",
+        "name": "justin",
+        "real_name": "신정호Justin Shin",
+        "display_name": "justin.kv 신정호",
+        "authority": 2
+    },
+    "U0332HZ9AAW": {
+        "id": "U0332HZ9AAW",
+        "name": "rose054",
+        "real_name": "Rose.​kv 이화영",
+        "display_name": "Rose.​kv 이화영",
+        "authority": 2
+    },
+    "U033E1L3E4D": {
+        "id": "U033E1L3E4D",
+        "name": "ryan",
+        "real_name": "Ryan (김치원)",
+        "display_name": "Ryan",
+        "authority": 2
+    },
+    "U033GU22A1G": {
+        "id": "U033GU22A1G",
+        "name": "rocky",
+        "real_name": "김정록Rocky Kim",
+        "display_name": "Rocky.kv 김정록",
+        "authority": 2
+    },
+    "U033GU3M99Q": {
+        "id": "U033GU3M99Q",
+        "name": "raina",
+        "real_name": "Raina 정나혜",
+        "display_name": "Raina.kv 정나혜",
+        "authority": 2
+    },
+    "U035M850L1E": {
+        "id": "U035M850L1E",
+        "name": "jade",
+        "real_name": "Jade.​kv 정주연",
+        "display_name": "",
+        "authority": 2
+    },
+    "U03HUQ45CVB": {
+        "id": "U03HUQ45CVB",
+        "name": "emma",
+        "real_name": "이예화 Emma Lee",
+        "display_name": "Emma.kv 이예화",
+        "authority": 2
+    },
+    "U03PUFYDQ8J": {
+        "id": "U03PUFYDQ8J",
+        "name": "ben",
+        "real_name": "Byungmin Choi",
+        "display_name": "Ben.kv 최병민",
+        "authority": 2
+    },
+    "U045ZS96B7V": {
+        "id": "U045ZS96B7V",
+        "name": "esther",
+        "real_name": "Esther Kim",
+        "display_name": "Esther.kv 김하연",
+        "authority": 2
+    },
+    "U05R7FD8Y85": {
+        "id": "U05R7FD8Y85",
+        "name": "zero",
+        "real_name": "Zero",
+        "display_name": "Zero.kv 김영무",
+        "authority": 2
+    },
+    "U067YPRUEVC": {
+        "id": "U067YPRUEVC",
+        "name": "judy",
+        "real_name": "Judy.​kv 윤지민",
+        "display_name": "Judy.kv 윤지민",
+        "authority": 2
+    },
+    "U069GCP8B6J": {
+        "id": "U069GCP8B6J",
+        "name": "wf_bot_a069gcdubfy",
+        "real_name": "선택적 복지 REMIND",
+        "display_name": "",
+        "authority": 2
+    },
+    "U076KMVNLJK": {
+        "id": "U076KMVNLJK",
+        "name": "zerobot",
+        "real_name": "제로봇",
+        "display_name": "",
+        "authority": 2
+    },
+    "U0328R301BQ": {
+        "id": "U0328R301BQ",
+        "name": "birthdaybot",
+        "real_name": "BirthdayBot",
+        "display_name": "",
+        "authority": 3
+    },
+    "U032HNW23PW": {
+        "id": "U032HNW23PW",
+        "name": "zapier",
+        "real_name": "Zapier",
+        "display_name": "",
+        "authority": 3
+    },
+    "U05CXCAQ9PG": {
+        "id": "U05CXCAQ9PG",
+        "name": "admin083",
+        "real_name": "Administrator (Kakao Ventures)",
+        "display_name": "Administrator (Kakao Ventures)",
+        "authority": 3
+    },
+    "U05HG52UCGK": {
+        "id": "U05HG52UCGK",
+        "name": "yk",
+        "real_name": "YK (이예겸)",
+        "display_name": "YK (이예겸)",
+        "authority": 3
+    },
+    "U06DVE2CQ11": {
+        "id": "U06DVE2CQ11",
+        "name": "yona",
+        "real_name": "Yona.​kv 강동연",
+        "display_name": "Yona.kv 강동연",
+        "authority": 3
+    },
+    "U06E8AXMXA5": {
+        "id": "U06E8AXMXA5",
+        "name": "claire",
+        "real_name": "Claire",
+        "display_name": "Claire.kv 공지유",
+        "authority": 3
+    },
+    "U06EJF6GFSL": {
+        "id": "U06EJF6GFSL",
+        "name": "song",
+        "real_name": "song kim 김송현",
+        "display_name": "Song.kv 김송현",
+        "authority": 3
+    },
+    "U06S64X9TAP": {
+        "id": "U06S64X9TAP",
+        "name": "taeho",
+        "real_name": "Taeho 김태호",
+        "display_name": "Taeho 김태호",
+        "authority": 3
+    },
+    "U078JMELA74": {
+        "id": "U078JMELA74",
+        "name": "wf_bot_a078m5h14te",
+        "real_name": "베이스캠프",
+        "display_name": "",
+        "authority": 3
+    },
+    "U07AHSD5CA0": {
+        "id": "U07AHSD5CA0",
+        "name": "emily",
+        "real_name": "Emily.​kv 최은솔",
+        "display_name": "Emily.kv 최은솔",
+        "authority": 3
     },
     "USLACKBOT": {
         "id": "USLACKBOT",
@@ -27,10 +223,654 @@
         "display_name": "Slackbot",
         "authority": 4
     },
-    "U072925FWV9": {
-        "id": "U072925FWV9",
-        "name": "kakaotest",
-        "real_name": "kakao_test",
+    "U031UM1TVT9": {
+        "id": "U031UM1TVT9",
+        "name": "deactivateduser759099",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U031UM2EYJ3": {
+        "id": "U031UM2EYJ3",
+        "name": "deactivateduser259044",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U0320S9AZV5": {
+        "id": "U0320S9AZV5",
+        "name": "google_calendar",
+        "real_name": "Google Calendar",
+        "display_name": "",
+        "authority": 4
+    },
+    "U0326CB8XPX": {
+        "id": "U0326CB8XPX",
+        "name": "deactivateduser910211",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U0328QDT0MC": {
+        "id": "U0328QDT0MC",
+        "name": "zoom",
+        "real_name": "Zoom",
+        "display_name": "",
+        "authority": 4
+    },
+    "U0328QZSD1C": {
+        "id": "U0328QZSD1C",
+        "name": "todoist",
+        "real_name": "Todoist",
+        "display_name": "",
+        "authority": 4
+    },
+    "U0329A8SBPV": {
+        "id": "U0329A8SBPV",
+        "name": "sunny",
+        "real_name": "",
+        "display_name": "Sunny 김선우",
+        "authority": 4
+    },
+    "U0329A8UFCK": {
+        "id": "U0329A8UFCK",
+        "name": "deactivateduser822835",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U032BJQ4QJY": {
+        "id": "U032BJQ4QJY",
+        "name": "jay",
+        "real_name": "",
+        "display_name": "Jay.kv 정지영",
+        "authority": 4
+    },
+    "U032CGZ96MB": {
+        "id": "U032CGZ96MB",
+        "name": "loom",
+        "real_name": "Loom",
+        "display_name": "",
+        "authority": 4
+    },
+    "U032FELG1R8": {
+        "id": "U032FELG1R8",
+        "name": "dropbox",
+        "real_name": "Dropbox",
+        "display_name": "",
+        "authority": 4
+    },
+    "U032FFJMUE7": {
+        "id": "U032FFJMUE7",
+        "name": "donut",
+        "real_name": "Donut",
+        "display_name": "",
+        "authority": 4
+    },
+    "U032NMHGB1Q": {
+        "id": "U032NMHGB1Q",
+        "name": "julie",
+        "real_name": "",
+        "display_name": "Julie 이연주",
+        "authority": 4
+    },
+    "U032U2L2KH7": {
+        "id": "U032U2L2KH7",
+        "name": "googledrive",
+        "real_name": "Google Drive",
+        "display_name": "Google Drive",
+        "authority": 4
+    },
+    "U032Z25L680": {
+        "id": "U032Z25L680",
+        "name": "aiden",
+        "real_name": "",
+        "display_name": "Aiden.kv 장원열",
+        "authority": 4
+    },
+    "U033K84KP1A": {
+        "id": "U033K84KP1A",
+        "name": "shina",
+        "real_name": "",
+        "display_name": "shina.kv 정신아",
+        "authority": 4
+    },
+    "U033K851CHJ": {
+        "id": "U033K851CHJ",
+        "name": "deactivateduser720358",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U034052P8UF": {
+        "id": "U034052P8UF",
+        "name": "kmk",
+        "real_name": "김민규",
+        "display_name": "김민규_프로이드",
+        "authority": 4
+    },
+    "U0341QJT01X": {
+        "id": "U0341QJT01X",
+        "name": "airtable",
+        "real_name": "Airtable",
+        "display_name": "",
+        "authority": 4
+    },
+    "U0345TM5DL7": {
+        "id": "U0345TM5DL7",
+        "name": "sooyoun.chang",
+        "real_name": "Sooyoun",
+        "display_name": "",
+        "authority": 4
+    },
+    "U03483E3W7Q": {
+        "id": "U03483E3W7Q",
+        "name": "kh.jeong",
+        "real_name": "정권호_제이앤피메디",
+        "display_name": "정권호_JNPMEDI",
+        "authority": 4
+    },
+    "U034BRG6SUD": {
+        "id": "U034BRG6SUD",
+        "name": "jhlim",
+        "real_name": "Jaehyun Lim",
+        "display_name": "Jaehyun Lim",
+        "authority": 4
+    },
+    "U034ENLTA4A": {
+        "id": "U034ENLTA4A",
+        "name": "ceo970",
+        "real_name": "김동현",
+        "display_name": "김동현",
+        "authority": 4
+    },
+    "U034ENU40AF": {
+        "id": "U034ENU40AF",
+        "name": "sleep",
+        "real_name": "David Lee",
+        "display_name": "David Lee",
+        "authority": 4
+    },
+    "U034ENUE691": {
+        "id": "U034ENUE691",
+        "name": "benji",
+        "real_name": "Jun-Young Lee",
+        "display_name": "Jun-Young Lee",
+        "authority": 4
+    },
+    "U034ENUL1LK": {
+        "id": "U034ENUL1LK",
+        "name": "eswi",
+        "real_name": "위의석",
+        "display_name": "위의석 세나클소프트",
+        "authority": 4
+    },
+    "U034H2R2M36": {
+        "id": "U034H2R2M36",
+        "name": "ardor",
+        "real_name": "노유헌_이모코그",
+        "display_name": "Yoo-Hun Noh",
+        "authority": 4
+    },
+    "U034H2R86N8": {
+        "id": "U034H2R86N8",
+        "name": "deactivateduser564956",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U034URVR887": {
+        "id": "U034URVR887",
+        "name": "chanhee",
+        "real_name": "박찬희",
+        "display_name": "박찬희(세나클소프트)",
+        "authority": 4
+    },
+    "U0354FCBKUG": {
+        "id": "U0354FCBKUG",
+        "name": "ceo",
+        "real_name": "김중희",
+        "display_name": "김중희",
+        "authority": 4
+    },
+    "U0354FCDZ40": {
+        "id": "U0354FCDZ40",
+        "name": "hyunoh",
+        "real_name": "Hyun Oh Song",
+        "display_name": "Hyun Oh Song",
+        "authority": 4
+    },
+    "U036XCBAPFE": {
+        "id": "U036XCBAPFE",
+        "name": "reminder_bot",
+        "real_name": "Reminder Bot",
+        "display_name": "",
+        "authority": 4
+    },
+    "U0371660KU5": {
+        "id": "U0371660KU5",
+        "name": "workast",
+        "real_name": "Workast",
+        "display_name": "",
+        "authority": 4
+    },
+    "U03793Q338S": {
+        "id": "U03793Q338S",
+        "name": "notion",
+        "real_name": "Notion Notifications",
+        "display_name": "",
+        "authority": 4
+    },
+    "U037XS781AL": {
+        "id": "U037XS781AL",
+        "name": "startup-notify",
+        "real_name": "스타트업 사업공고 알림",
+        "display_name": "",
+        "authority": 4
+    },
+    "U038BBXD388": {
+        "id": "U038BBXD388",
+        "name": "deactivateduser237972",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U038BBXFH8Q": {
+        "id": "U038BBXFH8Q",
+        "name": "deactivateduser671800",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U038M3A5AAF": {
+        "id": "U038M3A5AAF",
+        "name": "deactivateduser89266",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U038VTQCJCB": {
+        "id": "U038VTQCJCB",
+        "name": "jaynam235",
+        "real_name": "",
+        "display_name": "Jaynam.kv 남재관",
+        "authority": 4
+    },
+    "U03A66EGBAQ": {
+        "id": "U03A66EGBAQ",
+        "name": "deactivateduser461819",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U03A9JUBFFU": {
+        "id": "U03A9JUBFFU",
+        "name": "automateio",
+        "real_name": "Automate.io",
+        "display_name": "",
+        "authority": 4
+    },
+    "U03EK4FFPUK": {
+        "id": "U03EK4FFPUK",
+        "name": "deactivateduser450279",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U03FWLR9F9R": {
+        "id": "U03FWLR9F9R",
+        "name": "tally_forms",
+        "real_name": "Tally Forms",
+        "display_name": "",
+        "authority": 4
+    },
+    "U03HNA54ZU3": {
+        "id": "U03HNA54ZU3",
+        "name": "eddie_bot",
+        "real_name": "Eddie bot",
+        "display_name": "",
+        "authority": 4
+    },
+    "U03LC49ALKF": {
+        "id": "U03LC49ALKF",
+        "name": "whattime",
+        "real_name": "",
+        "display_name": "",
+        "authority": 4
+    },
+    "U03LF0A30TV": {
+        "id": "U03LF0A30TV",
+        "name": "calendly",
+        "real_name": "Calendly",
+        "display_name": "",
+        "authority": 4
+    },
+    "U03M12NADEJ": {
+        "id": "U03M12NADEJ",
+        "name": "pr",
+        "real_name": "",
+        "display_name": "PR_kakaoventures",
+        "authority": 4
+    },
+    "U03ME4MGTEW": {
+        "id": "U03ME4MGTEW",
+        "name": "deactivateduser595316",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U03MSLX4PU2": {
+        "id": "U03MSLX4PU2",
+        "name": "deactivateduser17466",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U03P7UH4G68": {
+        "id": "U03P7UH4G68",
+        "name": "sendtime",
+        "real_name": "센드타임",
+        "display_name": "",
+        "authority": 4
+    },
+    "U03QLA5URAS": {
+        "id": "U03QLA5URAS",
+        "name": "deactivateduser290907",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U047BA11PGX": {
+        "id": "U047BA11PGX",
+        "name": "typed",
+        "real_name": "Typed",
+        "display_name": "",
+        "authority": 4
+    },
+    "U048W4GDJ0N": {
+        "id": "U048W4GDJ0N",
+        "name": "deactivateduser742122",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U04JTP2QYQ6": {
+        "id": "U04JTP2QYQ6",
+        "name": "lemonbase",
+        "real_name": "Lemonbase",
+        "display_name": "",
+        "authority": 4
+    },
+    "U04JXFB2RRT": {
+        "id": "U04JXFB2RRT",
+        "name": "deactivateduser553532",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U04K0Q87L2F": {
+        "id": "U04K0Q87L2F",
+        "name": "isabel",
+        "real_name": "",
+        "display_name": "isabel.kv 방수빈",
+        "authority": 4
+    },
+    "U04M1E3QZS7": {
+        "id": "U04M1E3QZS7",
+        "name": "deactivateduser617885",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U04M2HYA38S": {
+        "id": "U04M2HYA38S",
+        "name": "oneoneone",
+        "real_name": "ONEONEONE",
+        "display_name": "",
+        "authority": 4
+    },
+    "U04MRM2A2PL": {
+        "id": "U04MRM2A2PL",
+        "name": "smartsheet",
+        "real_name": "Smartsheet",
+        "display_name": "",
+        "authority": 4
+    },
+    "U04PBFCEENQ": {
+        "id": "U04PBFCEENQ",
+        "name": "notion2",
+        "real_name": "Notion",
+        "display_name": "",
+        "authority": 4
+    },
+    "U04PN23NKA6": {
+        "id": "U04PN23NKA6",
+        "name": "jen",
+        "real_name": "",
+        "display_name": "Jen.kv 배지연",
+        "authority": 4
+    },
+    "U04Q53DQX6K": {
+        "id": "U04Q53DQX6K",
+        "name": "1on1_bot",
+        "real_name": "",
+        "display_name": "",
+        "authority": 4
+    },
+    "U056BDK7D5F": {
+        "id": "U056BDK7D5F",
+        "name": "raylie",
+        "real_name": "",
+        "display_name": "Raylie.kv 송정진",
+        "authority": 4
+    },
+    "U05BN6XDWTF": {
+        "id": "U05BN6XDWTF",
+        "name": "recatch",
+        "real_name": "Recatch",
+        "display_name": "",
+        "authority": 4
+    },
+    "U05CMGE8XKR": {
+        "id": "U05CMGE8XKR",
+        "name": "google_sheets_workflo",
+        "real_name": "Google Sheets Workflow Steps",
+        "display_name": "",
+        "authority": 4
+    },
+    "U05CZ5GQTCM": {
+        "id": "U05CZ5GQTCM",
+        "name": "wb_bot_a05cz5gqg9k",
+        "real_name": "",
+        "display_name": "",
+        "authority": 4
+    },
+    "U05D4FF4E8L": {
+        "id": "U05D4FF4E8L",
+        "name": "wb_bot_a05cmgbnxfh",
+        "real_name": "",
+        "display_name": "",
+        "authority": 4
+    },
+    "U05DRPXEXFA": {
+        "id": "U05DRPXEXFA",
+        "name": "wb_bot_a05cvd9pc86",
+        "real_name": "",
+        "display_name": "",
+        "authority": 4
+    },
+    "U05FZSAHGRM": {
+        "id": "U05FZSAHGRM",
+        "name": "wb_bot_a05gecsfnry",
+        "real_name": "PR 리마인더",
+        "display_name": "",
+        "authority": 4
+    },
+    "U05GDD90USK": {
+        "id": "U05GDD90USK",
+        "name": "calendly2",
+        "real_name": "Calendly",
+        "display_name": "",
+        "authority": 4
+    },
+    "U05GM9RVD6J": {
+        "id": "U05GM9RVD6J",
+        "name": "google_sheets",
+        "real_name": "Google Sheets",
+        "display_name": "",
+        "authority": 4
+    },
+    "U05GUV67HB9": {
+        "id": "U05GUV67HB9",
+        "name": "deactivateduser852303",
+        "real_name": "",
+        "display_name": "deactivateduser",
+        "authority": 4
+    },
+    "U05GWCSTMFW": {
+        "id": "U05GWCSTMFW",
+        "name": "wf_bot_a05gtuqpnls",
+        "real_name": "VAP - 카벤 패밀리 연결 수요 조사봇",
+        "display_name": "",
+        "authority": 4
+    },
+    "U05H1MH72HX": {
+        "id": "U05H1MH72HX",
+        "name": "wf_bot_a05hcnj694g",
+        "real_name": "",
+        "display_name": "",
+        "authority": 4
+    },
+    "U05H9C88GSF": {
+        "id": "U05H9C88GSF",
+        "name": "zoey",
+        "real_name": "",
+        "display_name": "Zoey.kv 여지원",
+        "authority": 4
+    },
+    "U05HUT6NXA5": {
+        "id": "U05HUT6NXA5",
+        "name": "woo",
+        "real_name": "",
+        "display_name": "Woo",
+        "authority": 4
+    },
+    "U05HVAP51TK": {
+        "id": "U05HVAP51TK",
+        "name": "john",
+        "real_name": "",
+        "display_name": "john.kv 권용욱",
+        "authority": 4
+    },
+    "U05MMAKBSDU": {
+        "id": "U05MMAKBSDU",
+        "name": "offlight",
+        "real_name": "OFFLIGHT",
+        "display_name": "",
+        "authority": 4
+    },
+    "U05PRMEDEAJ": {
+        "id": "U05PRMEDEAJ",
+        "name": "wf_bot_a05pyat8tew",
+        "real_name": "사후관리자 변경 여부",
+        "display_name": "",
+        "authority": 4
+    },
+    "U05RWGX3CTY": {
+        "id": "U05RWGX3CTY",
+        "name": "akiflow",
+        "real_name": "Akiflow",
+        "display_name": "",
+        "authority": 4
+    },
+    "U05SRMSRD18": {
+        "id": "U05SRMSRD18",
+        "name": "disquiet",
+        "real_name": "Disquiet",
+        "display_name": "",
+        "authority": 4
+    },
+    "U064KBADRRN": {
+        "id": "U064KBADRRN",
+        "name": "wf_bot_a063yq5qpaq",
+        "real_name": "회수보고서 작성",
+        "display_name": "",
+        "authority": 4
+    },
+    "U065B4R1VB7": {
+        "id": "U065B4R1VB7",
+        "name": "sunsama",
+        "real_name": "sunsama",
+        "display_name": "",
+        "authority": 4
+    },
+    "U068P1BRLRH": {
+        "id": "U068P1BRLRH",
+        "name": "wf_bot_a068gen64a2",
+        "real_name": "위클리보고 공유",
+        "display_name": "",
+        "authority": 4
+    },
+    "U069A4U62G6": {
+        "id": "U069A4U62G6",
+        "name": "jinny",
+        "real_name": "",
+        "display_name": "Jinny.kv 안현진",
+        "authority": 4
+    },
+    "U069LM642G1": {
+        "id": "U069LM642G1",
+        "name": "day_off_scheduler_app",
+        "real_name": "Day off scheduler app",
+        "display_name": "",
+        "authority": 4
+    },
+    "U06A4HG26KS": {
+        "id": "U06A4HG26KS",
+        "name": "wf_bot_a069flfmsnp",
+        "real_name": "주간 회의 알리미",
+        "display_name": "",
+        "authority": 4
+    },
+    "U06EJAU6GD6": {
+        "id": "U06EJAU6GD6",
+        "name": "connor",
+        "real_name": "",
+        "display_name": "Connor.kv 정성훈",
+        "authority": 4
+    },
+    "U06NG65CFHB": {
+        "id": "U06NG65CFHB",
+        "name": "wf_bot_a06njvdg63d",
+        "real_name": "예약 메시지 전송",
+        "display_name": "",
+        "authority": 4
+    },
+    "U06Q07CP6UW": {
+        "id": "U06Q07CP6UW",
+        "name": "zero978",
+        "real_name": "",
+        "display_name": "",
+        "authority": 4
+    },
+    "U06QANK3A9Z": {
+        "id": "U06QANK3A9Z",
+        "name": "roze_bot",
+        "real_name": "로제봇",
+        "display_name": "",
+        "authority": 4
+    },
+    "U06T0Q6HGQN": {
+        "id": "U06T0Q6HGQN",
+        "name": "plugbear",
+        "real_name": "",
+        "display_name": "",
+        "authority": 4
+    },
+    "U0777FQJEKF": {
+        "id": "U0777FQJEKF",
+        "name": "wf_bot_a077a9fpsrz",
+        "real_name": "Send a scheduled message",
         "display_name": "",
         "authority": 4
     }
