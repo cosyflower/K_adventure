@@ -23,7 +23,7 @@ from term_deposit_rotation import deposit_rotation_system_handler, deposit_rotat
 # Testing for vacation
 from notification import notify_today_vacation_info, notify_deposit_info
 from formatting import process_user_input
-from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler, get_spreadsheet_id_in_folder, list_shared_drives
+from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler
 from directMessageApi import send_direct_message_to_user
 from config import dummy_vacation_directory_id
 # slack bot system
@@ -83,28 +83,14 @@ cancel_vacation_status = {}
 @app.event("message")
 def handle_message_events(event, say):
     user_id = event['user']
-    user_input = event['text']
-    
-    print("\ndirect message called")
+    user_input = event['text']    
     
     # 사용자 명령어 인식 프로세스
     processed_input = process_user_input(user_input)
-    print(f"user_input : {user_input}")
-    print(f"process_user_input : {processed_input}")
-
-    if processed_input == 'test':    
-        res = get_spreadsheet_id_in_folder("연차/반차_2024", dummy_vacation_directory_id)
-        if res is None:
-            print("Not existed")
-        else:
-            print("existed")
-        return
-
     # user_states 상태 확인 - 없으면 생성이 되지 않았습니다 출력 
-    if user_id in user_states:
-        print(f"user_states : {user_states[user_id]}")
-    else:
-        print("user_states 아직 생성이 되지 않았습니다")
+    if processed_input =='test':
+        print(user_input)
+        return
 
     
     if user_id not in user_states:
@@ -153,8 +139,6 @@ def handle_message_events(event, say):
     ### 사용자 명령어 인식 프로세스
     user_input = process_user_input(user_input)
     send_direct_message_to_user(user_id, user_input)
-
-    print("mentioned called\n")
 
 def user_purpose_handler(message, say):
     user_id = message['user']

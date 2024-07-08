@@ -36,34 +36,26 @@ from directMessageApi import send_direct_message_to_user
 """
 API 설명
 """
-
-# 테스트 용도
-def list_shared_drives():
-    """
-    Google Drive API를 사용하여 모든 공유 드라이브의 ID와 이름을 가져옵니다.
-    """
-    # 서비스 계정 인증 정보 로드
-    scope = ['https://www.googleapis.com/auth/drive']
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(config.kakao_json_key_path, scope)
-    
-    # Google Drive API 클라이언트 생성
-    service = build('drive', 'v3', credentials=credentials)
-    
-    # 공유 드라이브 목록 가져오기
+# JSON 파일을 확인하여 user_id에 맞는 데이터를 탐색하고 display_name을 반환한다
+def get_display_name(user_id, file_path='users_info.json'):
     try:
-        results = service.drives().list(pageSize=10).execute()
-        drives = results.get('drives', [])
+        # JSON 파일을 열고 데이터를 읽음
+        with open(file_path, 'r', encoding='utf-8') as file:
+            users_data = json.load(file)
         
-        if not drives:
-            print('No shared drives found.')
-            return None
-        else:
-            for drive in drives:
-                print(f"Found shared drive: {drive['name']} (ID: {drive['id']})")
-            return drives
+        # user_id와 일치하는 사용자를 탐색
+        for user in users_data:
+            if user['id'] == user_id:
+                return user['display_name']
+        
+        # 일치하는 사용자가 없을 경우
+        return "User ID not found"
+    except FileNotFoundError:
+        return "File not found"
+    except json.JSONDecodeError:
+        return "Error decoding JSON file"
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return None
+        return f"An error occurred: {e}"
 
 
 def get_spreadsheet(spreadsheet_id, json_keyfile_path):
@@ -743,15 +735,15 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         user_vacation_status[user_id] = "checking_vacation_specific_reason"
 
     # 이메일 입력 
-    if user_vacation_status[user_id] == "checking_vacation_email":
-        input_vacation_email(message, say, user_vacation_info, user_vacation_status)
-    if user_vacation_status[user_id] == "waiting_vacation_email":
-        # email 입력받기
-        msg = (f"<@{user_id}>님 휴가 신청 진행중입니다. <@{user_id}>의 개인 이메일을 작성해주세요.\n"
-            "* 유의 * 이메일 아이디 내 느낌표(!)가 존재해서는 안 됩니다."
-            )
-        send_direct_message_to_user(user_id, msg)
-        user_vacation_status[user_id] = "checking_vacation_email"
+    # if user_vacation_status[user_id] == "checking_vacation_email":
+    #     input_vacation_email(message, say, user_vacation_info, user_vacation_status)
+    # if user_vacation_status[user_id] == "waiting_vacation_email":
+    #     # email 입력받기
+    #     msg = (f"<@{user_id}>님 휴가 신청 진행중입니다. <@{user_id}>의 개인 이메일을 작성해주세요.\n"
+    #         "* 유의 * 이메일 아이디 내 느낌표(!)가 존재해서는 안 됩니다."
+    #         )
+    #     send_direct_message_to_user(user_id, msg)
+    #     user_vacation_status[user_id] = "checking_vacation_email"
     
     if user_vacation_status[user_id] == "waiting_final_confirm":
         checking_final_confirm(message, say, user_vacation_status, user_vacation_info)
@@ -761,7 +753,9 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         send_direct_message_to_user(user_id, msg)
         for a, value in enumerate(user_vacation_info[user_id]):
             # 저장된 정보 출력 
-            # user_states, user_vacation_info, user_vacation_status 로 상태를 지속적으로 확인하는 중으로 생각하기
+            # 상세 이유가 공백인 경우 출력하지 않음 (해결))
+            if value == '':
+                continue
             msg = (f"{value}\n")
             send_direct_message_to_user(user_id, msg)
         msg = (f"<@{user_id}>의 휴가 신청을 완료하려면 0을, 수정을 원하면 1을 입력하세요.")
@@ -779,7 +773,7 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         type = user_vacation_info[user_id][2]
         reason = user_vacation_info[user_id][3]
         specific_reason = user_vacation_info[user_id][4]
-        email = user_vacation_info[user_id][5]
+        email = get_display_name(user_id, 'users_info.json') + '@kakaventures.com'
 
         new_row_data.extend([
             current_time,
@@ -792,21 +786,22 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             email
         ])
 
+        print(f"{new_row_data}\n")
+
         # DB 반영하기 전, 개인휴가 안식휴가에 대해서 if 조건을 추가해야 한다
         # 개인휴가 혹은 안식 휴가라면 - 잔여 휴가 정보를 가지고 온다
         # 선택한 휴가 종류 연차면 1, 반차면 0.5, 반반차면 0.25로 구분
         # 잔여 휴가 < 휴가 종류 인 경우 신청 불가 사유를 알려주고  종료
         # 종료 시 아래의 del 가지고 오고 return 할 것
-
         search_file_name = get_proper_file_name(new_row_data)
         if is_file_exists_in_directory(config.dummy_vacation_directory_id, search_file_name) is False:
-            print("파일생성시작")
+            # print("파일생성시작")
             copy_gdrive_spreadsheet(config.dummy_vacation_template_id, search_file_name, config.dummy_vacation_directory_id)
-            print("파일생성완료")
+            # print("파일생성완료")
 
         spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
         if spreadsheet_id == None:
-            print("코드확인! 종료!")    
+            # print("코드확인! 종료!")    
             return
 
         remained_vacation = get_remained_vacation_by_userId(spreadsheet_id, user_id)
