@@ -479,10 +479,12 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
         send_direct_message_to_user(user_id, msg)
         for num in cancel_sequence_list:
             deletion_occured = delete_data(spreadsheet_id, 1, found_data_list[num-1])
-        # 삭제 완료 안내문 출력
+        
         msg = (f"<@{user_id}>의 휴가 삭제를 진행중입니다. 휴가 삭제를 완료했습니다.")
         send_direct_message_to_user(user_id, msg)
-        # 조회, 추가, 취소 기능을 기다리는 중이다
+    
+        # 구글 캘린더에 떠 있는 부재중 알림을 해제해야 함
+
         del cancel_vacation_status[user_id]
         del user_states[user_id]
         # user_states[user_id] = 'vacation_tracker'
@@ -778,7 +780,7 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             email
         ])
 
-        print(f"{new_row_data}\n")
+        # print(f"{new_row_data}\n")
 
         # DB 반영하기 전, 개인휴가 안식휴가에 대해서 if 조건을 추가해야 한다
         # 개인휴가 혹은 안식 휴가라면 - 잔여 휴가 정보를 가지고 온다
@@ -827,6 +829,7 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         
         try:
             append_data(spreadsheet_id, new_row_data)
+            # 구글 캘린더에 부재중 알림 올리기 (날짜, 시간 확인하고, user_id 확인해야 함)
         except gspread.exceptions.APIError as e:
             msg = (f"APIError occurred: {e}")
             send_direct_message_to_user(user_id, msg)
