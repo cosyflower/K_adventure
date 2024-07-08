@@ -56,6 +56,7 @@ def get_display_name(user_id, file_path='users_info.json'):
         return "Error decoding JSON file"
     except Exception as e:
         return f"An error occurred: {e}"
+    
 
 
 def get_spreadsheet(spreadsheet_id, json_keyfile_path):
@@ -548,7 +549,7 @@ def input_vacation_specific_reason(message, say, user_vacation_info, user_vacati
     vacation_specific_reason = cleaned_user_input
 
     user_vacation_info[user_id].append(vacation_specific_reason)
-    user_vacation_status[user_id] = "waiting_vacation_email"
+    user_vacation_status[user_id] = "pre-confirmed"
 
 #### 휴가 개인 이메일 입력받기
 def input_vacation_email(message, say, user_vacation_info, user_vacation_status):
