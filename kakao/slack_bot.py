@@ -45,8 +45,6 @@ def check_the_user_purpose(user_input,user_id):
     elif user_input in term_deposit_rotation_list:
         return term_deposit_rotation_list[0]
     else:
-        msg = (f"<@{user_id}> 명령어 오탈자 교정 작업(+2원)")
-        send_direct_message_to_user(user_id, msg)
         return chatgpt.analyze_user_purpose(user_input)
 
 
@@ -84,15 +82,12 @@ cancel_vacation_status = {}
 def handle_message_events(event, say):
     user_id = event['user']
     user_input = event['text']    
-    
     # 사용자 명령어 인식 프로세스
     processed_input = process_user_input(user_input)
     # user_states 상태 확인 - 없으면 생성이 되지 않았습니다 출력 
-    if processed_input =='test':
-        print(user_input)
-        return
-
-    
+    # if processed_input =='test':
+    #     print(user_input)
+    #     return
     if user_id not in user_states:
         user_purpose_handler(event, say) # 안내 문구 출력 - 알맞은 user_states[user_id] 배정하는 역할
     else: # 슬랙봇을 실행한 상황에 user_states[user_id]를 부여받은 상황일 때 진행
@@ -200,8 +195,8 @@ def user_purpose_handler(message, say):
     elif purpose == "정기예금 회전시스템":
         if get_user_authority(user_id) < 3:
             # msg = ("정기예금 회전 시스템을 작동합니다. 종료를 원한다면 \'종료\'를 입력해주세요\n"
-            #         "1. 질문하기(일반모델)(약 1원)\n"
-            #         "2. 질문하기(상위모델)(약 10원)\n"
+            #         "1. 질문하기(일반모델)\n"
+            #         "2. 질문하기(상위모델)\n"
             #         # "3. 최종 만기일이 다가온 정기예금 상품조회\n"
             #     )
             # send_direct_message_to_user(user_id, msg)

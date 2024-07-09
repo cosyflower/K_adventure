@@ -28,13 +28,16 @@ def security_system_user_function_handler(message, say, user_states, security_sy
                     authority_name = ""
                     if info['authority'] == 1:
                         authority_name = "투자팀"
+                        comment = comment + f"{i}. id: {info['id']}, name: {info['name']}, authority: {authority_name}\n"
                     elif info['authority'] == 2:
                         authority_name = "임직원"
+                        comment = comment + f"{i}. id: {info['id']}, name: {info['name']}, authority: {authority_name}\n"
                     elif info['authority'] == 3:
                         authority_name = "인턴"
-                    else:
-                        authority_name = "미정"
-                    comment = comment + f"{i}. id: {info['id']}, name: {info['name']}, authority: {authority_name}\n"
+                        comment = comment + f"{i}. id: {info['id']}, name: {info['name']}, authority: {authority_name}\n"
+                    # else:
+                    #     authority_name = "미정"
+                    #comment = comment + f"{i}. id: {info['id']}, name: {info['name']}, authority: {authority_name}\n"
                 msg = (f"<@{user_id}> {comment} 전체 사용자 권한 조회가 끝났습니다")
                 send_direct_message_to_user(user_id, msg)
                 del user_states[user_id]

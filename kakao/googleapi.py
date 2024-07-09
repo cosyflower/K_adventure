@@ -394,7 +394,7 @@ def make_docx_fileA(db_1,db_4,db_7, current_time):
                                         addParents=folder_id,
                                         removeParents=previous_parents,
                                         fields='id, parents', supportsAllDrives=True).execute()
-    print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
+    # print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
 # 투자심의위원회 의사록
 def make_docx_fileB(db_1,db_4,db_7, current_time):
     SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
@@ -552,7 +552,7 @@ def make_docx_fileB(db_1,db_4,db_7, current_time):
                                         addParents=folder_id,
                                         removeParents=previous_parents,
                                         fields='id, parents',supportsAllDrives=True).execute()
-    print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
+    # print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
     return new_document_id
 # 준법사항 체크리스트(벤처투자조합)
 def make_docx_fileC(db_1,db_4,db_7,total_investment, total_investment_in, current_time):
@@ -861,7 +861,7 @@ def make_docx_fileC(db_1,db_4,db_7,total_investment, total_investment_in, curren
                                         addParents=folder_id,
                                         removeParents=previous_parents,
                                         fields='id, parents',supportsAllDrives=True).execute()
-    print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
+    # print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
 # 투자집행품의서
 def make_docx_fileD(db_1,db_4,db_7, current_time):
     SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
@@ -979,7 +979,7 @@ def make_docx_fileD(db_1,db_4,db_7, current_time):
                                         addParents=folder_id,
                                         removeParents=previous_parents,
                                         fields='id, parents',supportsAllDrives=True).execute()
-    print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
+    # print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
 
 def get_extra_info_frome_inv_id(inv_id,fund_num):
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -1070,7 +1070,7 @@ def update_tableB(db_7,doc_id):
             })
 
     result = service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
-    print(f'Updated {len(result.get("replies")) // 2} placeholders in the document.')
+    # print(f'Updated {len(result.get("replies")) // 2} placeholders in the document.')
 
 def update_tableB_ver2(doc_id):
 
@@ -1127,7 +1127,7 @@ def update_tableB_ver2(doc_id):
             body={'requests': requests}
         ).execute()
 
-        print(f"Deleted rows containing '{search_string}' from the document.")
+        # print(f"Deleted rows containing '{search_string}' from the document.")
 
 def get_all_company_names():
     scope1 = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']

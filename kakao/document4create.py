@@ -21,8 +21,6 @@ def docx_generating_company_name_handler(message, say, user_states, inv_list_inf
     if user_input in (all_company_names + all_company_names_full):
         company_name = user_input
     else:
-        msg = (f"<@{user_id}> 회사명 오탈자 교정 작업(+10원)")
-        send_direct_message_to_user(user_id, msg)
         company_name = chatgpt.analyze_company_name(all_company_names,user_input)
     if company_name in (all_company_names + all_company_names_full):
         inv_list = googleapi.get_inv_list_and_date(company_name)
