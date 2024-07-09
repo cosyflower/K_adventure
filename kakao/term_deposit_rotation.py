@@ -96,39 +96,47 @@ def deposit_rotation_system_high_model_handler(message, say, user_states):
         del user_states[user_id]
 
 def qna_chatgpt_low_model(user_input):
-    prompt = ""
-    client = OpenAI(api_key='sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
-    response = client.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=[
-        {
-        "role": "system",
-        "content": prompt
-        },
-        {
-        "role": "user",
-        "content": deposit_data_to_json() + "\n" + user_input
-        }
-    ],)
-    output = response.choices[0].message.content
+    try:
+        prompt = ""
+        client = OpenAI(api_key='sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
+        response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {
+            "role": "system",
+            "content": prompt
+            },
+            {
+            "role": "user",
+            "content": deposit_data_to_json() + "\n" + user_input
+            }
+        ],)
+        output = response.choices[0].message.content
+    except Exception as e:
+        print(f"qna_chatgpt_low_model chatgpt error: {e}")
+        return "서버 오류로 인해 사용이 불가능합니다 잠시후 다시 이용해 주세요"
     return output
 
 def qna_chatgpt_high_model(user_input):
-    prompt = ""
-    client = OpenAI(api_key='sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
-    response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {
-        "role": "system",
-        "content": prompt
-        },
-        {
-        "role": "user",
-        "content": deposit_data_to_json() + "\n" + user_input
-        }
-    ],)
-    output = response.choices[0].message.content
+    try:
+        prompt = ""
+        client = OpenAI(api_key='sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
+        response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+            "role": "system",
+            "content": prompt
+            },
+            {
+            "role": "user",
+            "content": deposit_data_to_json() + "\n" + user_input
+            }
+        ],)
+        output = response.choices[0].message.content
+    except Exception as e:
+        print(f"qna_chatgpt_high_model chatgpt error: {e}")
+        return "서버 오류로 인해 사용이 불가능합니다 잠시후 다시 이용해 주세요"
     return output
 
 def extract_deposit_df():
