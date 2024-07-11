@@ -65,10 +65,13 @@ app_token_id = 'xapp-1-A07704ULQCB-7261083472928-4240d3f4a5a807b855af54ae306a57f
 all_bot_channel = 'C03AGDJ01P0'
 dummy_vacation_template_id = '1090B_3K-uuCO0GfBF8CfbllCM1QgqKx_14OalWQInoo'
 dummy_vacation_directory_id = '0ADXn4EWBStqjUk9PVA'
+
+google_calendar_id = 'zero@kakaoventures.co.kr'
 # # TEST
 # all_bot_channel = 'C07264YTB7X'
 # dummy_vacation_template_id = '1V3Er20zNHmpOOtiljJcExiF8Fk5cxsNP7-V8JD7mjZk'
 # dummy_vacation_directory_id = '1KnQgIlfH3H-Ow5dQjuweuOrD1tMJc-4c' 
+
 
 
 ######## Real_File_configuration
