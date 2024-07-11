@@ -31,7 +31,7 @@ is_valid_email, is_valid_confirm_sequence, is_valid_cancel_sequence, is_valid_va
 from user_commend import VACATION_SEQUENCE_TO_TYPE, VACATION_SEQUENCE_TO_REASON
 from formatting import process_user_input, get_proper_file_name, create_leave_string, get_current_year, process_and_extract_email
 from directMessageApi import send_direct_message_to_user
-from googleCalendarApi import string_to_strptime, set_out_of_office_event
+from googleCalendarApi import string_to_strptime, set_out_of_office_event, delete_out_of_office_event
 
 
 """
@@ -45,7 +45,7 @@ def get_display_name(user_id, file_path='users_info.json'):
     
     # user_id에 해당하는 사용자 데이터 찾기
     if user_id in users_data:
-        return users_data[user_id].get('display_name')
+        return users_data[user_id].get('name')
     else:
         print(f"User ID {user_id} not found in data")
     
@@ -171,8 +171,6 @@ def delete_row_to_sheet(spreadsheet, sheet_number, row_data):
 
 def delete_data(spreadsheet_id, sheet_number, row_data):
     delete_row_to_sheet(get_spreadsheet(spreadsheet_id, config.kakao_json_key_path), sheet_number, row_data)
-    # 캘린더에서 해제해야 한다
-    print(f"row data: {row_data}")
 
 def get_real_name_by_user_id(user_id, json_path='users_info.json'):
     with open(json_path, 'r', encoding='utf-8') as file:
@@ -482,7 +480,8 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
         send_direct_message_to_user(user_id, msg)
         for num in cancel_sequence_list:
             delete_data(spreadsheet_id, 1, found_data_list[num-1])
-        
+            delete_out_of_office_event(user_id, found_data_list[num-1][2], found_data_list[num-1][3])
+
         msg = (f"<@{user_id}>의 휴가 삭제를 진행중입니다. 휴가 삭제를 완료했습니다.")
         send_direct_message_to_user(user_id, msg)
     
@@ -770,7 +769,7 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         type = user_vacation_info[user_id][2]
         reason = user_vacation_info[user_id][3]
         specific_reason = user_vacation_info[user_id][4]
-        email = get_display_name(user_id, 'users_info.json') + '@kakaventures.com'
+        email = get_display_name(user_id, 'users_info.json') + '@kakaventures.co.kr'
 
         new_row_data.extend([
             current_time,

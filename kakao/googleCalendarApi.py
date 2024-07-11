@@ -21,8 +21,8 @@ def string_to_strptime_on_row_data(row_date_string):
 
 def set_out_of_office_event(user_id, start_date, end_date, summary='Out of Office', email=''):
     # 날짜 문자열을 datetime 객체로 변환
-    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d %H:%M')
-    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d %H:%M')
+    # start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d %H:%M')
+    # end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d %H:%M')
 
     # 한국 시간대로 변환
     seoul_tz = pytz.timezone('Asia/Seoul')
@@ -61,8 +61,11 @@ def set_out_of_office_event(user_id, start_date, end_date, summary='Out of Offic
 
 def delete_out_of_office_event(user_id, start_date, end_date):
     # 날짜 문자열을 datetime 객체로 변환
-    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d %H:%M')
-    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d %H:%M')
+    start_date = start_date.replace('오전', 'AM').replace('오후', 'PM')
+    end_date = end_date.replace('오전', 'AM').replace('오후', 'PM')
+
+    start_date = datetime.datetime.strptime(start_date, '%Y. %m. %d %p %I:%M:%S')
+    end_date = datetime.datetime.strptime(end_date, '%Y. %m. %d %p %I:%M:%S')
 
     # 한국 시간대로 변환
     seoul_tz = pytz.timezone('Asia/Seoul')
@@ -99,4 +102,4 @@ def delete_out_of_office_event(user_id, start_date, end_date):
 # 자신의 user_id가 들어간다고 생각하기
 # set_out_of_office_event("U05R7FD8Y85", '2024-07-13 09:00', '2024-07-13 19:00')
 # delete_out_of_office_event("U05R7FD8Y85", '2024-07-13 09:00', '2024-07-13 19:00')
-print(string_to_strptime_on_row_data('2024.05.05 10:00:00'))
+# print(string_to_strptime_on_row_data('2024.05.05 10:00:00'))
