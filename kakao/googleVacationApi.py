@@ -31,6 +31,7 @@ is_valid_email, is_valid_confirm_sequence, is_valid_cancel_sequence, is_valid_va
 from user_commend import VACATION_SEQUENCE_TO_TYPE, VACATION_SEQUENCE_TO_REASON
 from formatting import process_user_input, get_proper_file_name, create_leave_string, get_current_year, process_and_extract_email
 from directMessageApi import send_direct_message_to_user
+from googleCalendarApi import string_to_strptime, set_out_of_office_event
 
 
 """
@@ -845,6 +846,13 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         except Exception as e:
             msg = (f"An unexpected error occurred: {e}")
             send_direct_message_to_user(user_id, msg)
+
+        set_out_of_office_event(user_id, 
+                                string_to_strptime(user_vacation_info[user_id][0]),
+                                string_to_strptime(user_vacation_info[user_id][1]),
+                                summary= "휴가로 인한 부재중",
+                                email= email
+                                )
         
         msg = (f"<@{user_id}>의 휴가 신청을 완료합니다. 휴가 / 연차 서비스를 종료합니다.\n")
         send_direct_message_to_user(user_id, msg)
