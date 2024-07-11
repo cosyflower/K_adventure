@@ -4,10 +4,10 @@ from openai import OpenAI
 # 사용자 의도 파악용
 def analyze_user_purpose(user_input):
     try:
-        prompt = "문서 4종 생성해줘', '연차 신청해줘', '반차 신청해줘', 'DB 검색해줘', '일대일 미팅 검색해줘', '운영보고서 작성해줘', '없는 기능입니다' 중에 입력 값과 가장 비슷한 하나를 출력해줘"
+        prompt = "문서4종,정기예금회전시스템,일대일미팅,보안시스템,휴가신청시스템,로제봇 중에서 입력값의 오타나 의미를 고려해서 관련된 1개를 출력해. 만약에 관련된 항목이 없는 거 같으면 x를 출력해."
         client = OpenAI(api_key='sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
         response = client.chat.completions.create(
-        model="ft:gpt-3.5-turbo-0125:personal:userpurposemodel:9RfNJJz2",
+        model="gpt-4o",
         messages=[
             {
             "role": "system",
@@ -30,7 +30,7 @@ def analyze_company_name(all_company_names,user_input):
         prompt = "[]안에 있는 회사명들 중에서 ()안에 있는 회사명과 가장 비슷한 회사를 출력해."
         client = OpenAI(api_key='sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
         response = client.chat.completions.create(
-        model="ft:gpt-3.5-turbo-0125:personal:companymodelsmall:9S5Afwy4", 
+        model="gpt-3.5-turbo-0125",
         messages=[
             {
             "role": "system",

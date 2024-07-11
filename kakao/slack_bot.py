@@ -12,7 +12,7 @@ import config
 import schedule
 import time
 import threading
-from user_commend import docx_generate, security_system, vacation_system_list, call_slack_bot, term_deposit_rotation_list # 사용자 명령어 DB
+from user_commend import docx_generate, security_system, vacation_system_list, call_slack_bot, term_deposit_rotation_list, one_and_one # 사용자 명령어 DB
 
 from document4create import docx_generating_company_name_handler, docx_generating_inv_choice_handler #, docx_generating_docx_category_handler
 
@@ -34,6 +34,7 @@ import gspread
 import datetime
 
 def check_the_user_purpose(user_input,user_id):
+    user_input = user_input.replace(" ","")
     if user_input in docx_generate:
         return docx_generate[0]
     elif user_input in vacation_system_list:
@@ -44,6 +45,8 @@ def check_the_user_purpose(user_input,user_id):
         return call_slack_bot[0]
     elif user_input in term_deposit_rotation_list:
         return term_deposit_rotation_list[0]
+    elif user_input in one_and_one:
+        return one_and_one[0]
     else:
         return chatgpt.analyze_user_purpose(user_input)
 
@@ -141,7 +144,7 @@ def user_purpose_handler(message, say):
     user_input = process_user_input(user_input)
     purpose = check_the_user_purpose(user_input,user_id)
 
-    if purpose == "문서 4종 생성해줘":
+    if purpose == "문서 4종":
         if get_user_authority(user_id) < 3:
             msg = (f"<@{user_id}> 문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
             send_direct_message_to_user(user_id, msg)
@@ -149,7 +152,7 @@ def user_purpose_handler(message, say):
         else:
             msg = (f"<@{user_id}> 권한이 없습니다. 종료합니다")
             send_direct_message_to_user(user_id, msg)
-    elif purpose == "보안시스템 작동해줘":
+    elif purpose == "보안시스템":
         if get_user_authority(user_id) < 4:
             msg = (f"<@{user_id}> 보안시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
                 "1. 전체 사용자 권한 조회\n"
@@ -166,7 +169,7 @@ def user_purpose_handler(message, say):
         else:
             msg = (f"<@{user_id}> 권한이 없습니다. 종료합니다")
             send_direct_message_to_user(user_id, msg)
-    elif purpose == "휴가 시스템 작동해줘":
+    elif purpose == "휴가신청시스템":
         if get_user_authority(user_id) < 4:
             msg = (f"<@{user_id}> 휴가시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
                 "1. 신청된 휴가 조회\n"
@@ -180,7 +183,7 @@ def user_purpose_handler(message, say):
         else:
             msg = (f"<@{user_id}> 권한이 없습니다. 종료합니다")
             send_direct_message_to_user(user_id, msg)
-    elif purpose == "로제봇 도와줘":
+    elif purpose == "로제봇":
         msg = ("슬랙봇 시스템을 작동합니다. 무엇을 도와드릴까요? 종료를 원한다면 \'종료\'를 입력해주세요\n"
             "1. 휴가 신청\n"
             "2. 보안 시스템\n"
@@ -192,7 +195,7 @@ def user_purpose_handler(message, say):
         )
         send_direct_message_to_user(user_id, msg)
         user_states[user_id] = 'rosebot_waiting_only_number'
-    elif purpose == "정기예금 회전시스템":
+    elif purpose == "정기예금회전시스템":
         if get_user_authority(user_id) < 3:
             # msg = ("정기예금 회전 시스템을 작동합니다. 종료를 원한다면 \'종료\'를 입력해주세요\n"
             #         "1. 질문하기(일반모델)\n"
@@ -206,6 +209,8 @@ def user_purpose_handler(message, say):
         else:
             msg = (f"<@{user_id}> 권한이 없습니다. 종료합니다")
             send_direct_message_to_user(user_id, msg)
+    elif purpose == "일대일미팅":
+        print("여기다가 코딩 ㄱㄱㄱㄱㄱㄱㄱㄱㄱㄱㄱㄱㄱㄱㄱ 성훈 이번주에 자기 파트너가 누구인지 조회만 하면 될듯~!")
     else:
         msg = (f"<@{user_id}> 없는 기능입니다. 다시 입력해주세요")
         send_direct_message_to_user(user_id, msg)
