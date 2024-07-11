@@ -11,8 +11,13 @@ credentials = service_account.Credentials.from_service_account_file(
         config.kakao_json_key_path, scopes=SCOPES)
 service = build('calendar', 'v3', credentials=credentials)
 
+# 2024-01-01 10:00
 def string_to_strptime(date_string):
     return datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M")
+
+# 2024.01.01 10:00:00
+def string_to_strptime_on_row_data(row_date_string):
+    return datetime.datetime.strptime(row_date_string, "%Y.%m.%d %H:%M:%S")
 
 def set_out_of_office_event(user_id, start_date, end_date, summary='Out of Office', email=''):
     # 날짜 문자열을 datetime 객체로 변환
@@ -92,5 +97,6 @@ def delete_out_of_office_event(user_id, start_date, end_date):
 
 # 예시 사용법
 # 자신의 user_id가 들어간다고 생각하기
-set_out_of_office_event("U05R7FD8Y85", '2024-07-13 09:00', '2024-07-13 19:00')
+# set_out_of_office_event("U05R7FD8Y85", '2024-07-13 09:00', '2024-07-13 19:00')
 # delete_out_of_office_event("U05R7FD8Y85", '2024-07-13 09:00', '2024-07-13 19:00')
+print(string_to_strptime_on_row_data('2024.05.05 10:00:00'))

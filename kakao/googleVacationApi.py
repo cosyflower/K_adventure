@@ -171,6 +171,8 @@ def delete_row_to_sheet(spreadsheet, sheet_number, row_data):
 
 def delete_data(spreadsheet_id, sheet_number, row_data):
     delete_row_to_sheet(get_spreadsheet(spreadsheet_id, config.kakao_json_key_path), sheet_number, row_data)
+    # 캘린더에서 해제해야 한다
+    print(f"row data: {row_data}")
 
 def get_real_name_by_user_id(user_id, json_path='users_info.json'):
     with open(json_path, 'r', encoding='utf-8') as file:
@@ -479,7 +481,7 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
         msg = (f"<@{user_id}>의 휴가 삭제를 진행중입니다. 잠시만 기다려주세요.")
         send_direct_message_to_user(user_id, msg)
         for num in cancel_sequence_list:
-            deletion_occured = delete_data(spreadsheet_id, 1, found_data_list[num-1])
+            delete_data(spreadsheet_id, 1, found_data_list[num-1])
         
         msg = (f"<@{user_id}>의 휴가 삭제를 진행중입니다. 휴가 삭제를 완료했습니다.")
         send_direct_message_to_user(user_id, msg)
