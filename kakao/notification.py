@@ -10,6 +10,8 @@ from googleVacationApi import  get_today_vacation_data
 from term_deposit_rotation import extract_deposit_df
 from formatting import get_current_year, create_leave_string
 from googleVacationApi import get_spreadsheet_id_in_folder
+from onebyone import get_or_create_1on1_spreadsheet, get_spreadsheet_service, find_spreadsheet_in_shared_drive, update_spreadsheet_on_oneByone, match_people, get_name_list_from_json
+from security_system import update_authority
 import pandas as pd
 
 
@@ -49,6 +51,60 @@ def notify_today_vacation_info():
     for data in formatted_vacation_data:
         send_slack_message(channel_id, data)
 
+def notify_one_by_one_partner():
+    # New matching
+    update_authority()
+    update_spreadsheet_on_oneByone(match_people(get_name_list_from_json()))
+    
+    # return 지워야 정상동작함
+    return
+
+    spreadsheet_id = get_or_create_1on1_spreadsheet()
+    sheets_serivce, drive_service = get_spreadsheet_service()
+    
+    # Determine the title for the new spreadsheet
+    current_year = datetime.now().year
+    new_title = f"{current_year}1on1"
+    
+    # spreadsheet_id
+    spreadsheet_id = find_spreadsheet_in_shared_drive(drive_service, new_title, config.shared_drive_id)
+
+    sheet_metadata = sheets_serivce.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+    sheets = sheet_metadata.get('sheets', [])
+    last_sheet = sheets[-1]
+    last_sheet_id = last_sheet['properties']['sheetId']
+    last_sheet_name = last_sheet['properties']['title']
+
+    # Retrieve data from the last sheet
+    range_name = f"{last_sheet_name}!A:C"  # Adjust the range as per your data layout
+    result = sheets_serivce.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
+    values = result.get('values', [])
+    
+    # Remove the first row (header)
+    if values:
+        values = values[1:]
+
+    # values 내 모든 데이터를 모두 조회할거야
+    # 하나의 행에서 두번째 데이터에는 슬랙 아이디가 존재하는 상황
+    # 해당 슬랙 아이디에게 다이렉트 메세지를 보낼거야. 내용은 해당 행에서의 세번째 데이터를 담아서 보낼거야
+    """
+    client = WebClient(token=config.bot_token_id)
+
+    # 모든 행을 조회하여 슬랙 다이렉트 메시지 전송
+    for row in values:
+        slack_id = row[1]
+        message_content = row[2]
+        
+        try:
+            response = client.chat_postMessage(
+                channel=slack_id,
+                text=f"매칭 대상은 {message_content}입니다"
+            )
+            print(f"Message sent to {slack_id}: {message_content}")
+        except SlackApiError as e:
+            print(f"Error sending message to {slack_id}: {e.response['error']}")
+    """
+
 def notify_deposit_info():
     user1 = config.deposity_user1_id
     user2 = config.deposity_user2_id
@@ -68,6 +124,7 @@ def notify_deposit_info():
 
 if __name__ == "__main__":
     notify_deposit_info()
+
 """
 # 스케줄러 기능 활성화 하는 방법
 schedule.every().day.at("08:00").do(notify_today_vacation_info())

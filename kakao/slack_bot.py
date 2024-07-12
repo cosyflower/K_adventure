@@ -21,7 +21,7 @@ from security_system import security_system_user_function_handler, security_syst
 from rosebot import rose_bot_handler
 from term_deposit_rotation import deposit_rotation_system_handler, deposit_rotation_system_low_model_handler, deposit_rotation_system_high_model_handler
 # Testing for vacation
-from notification import notify_today_vacation_info, notify_deposit_info
+from notification import notify_today_vacation_info, notify_deposit_info, notify_one_by_one_partner
 from formatting import process_user_input
 from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler
 from directMessageApi import send_direct_message_to_user
@@ -55,9 +55,18 @@ def check_the_user_purpose(user_input,user_id):
 app = App(token=config.bot_token_id)
 
 # Scheduler 관련 함수 정의
-# 매일 오전 8시에 notify_today_vacation_info 함수 실행
-schedule.every().day.at("08:00").do(notify_today_vacation_info)
+# 평일 오전 8시에 notify_today_vacation_info 함수 실행
+schedule.every().monday.at("08:00").do(notify_today_vacation_info)
+schedule.every().tuesday.at("08:00").do(notify_today_vacation_info)
+schedule.every().wednesday.at("08:00").do(notify_today_vacation_info)
+schedule.every().thursday.at("08:00").do(notify_today_vacation_info)
+schedule.every().friday.at("08:00").do(notify_today_vacation_info)
+
 schedule.every().day.at("08:00").do(notify_deposit_info)
+
+# 시트 생성 후 다이렉트 메세지 전송시도하지 않은 상태 (실제 배포시 테스트 진행하기)
+schedule.every().day.at("08:00").do(notify_one_by_one_partner)
+
 # 스케줄러 실행 함수
 def run_scheduler():
     while True:
@@ -85,8 +94,8 @@ cancel_vacation_status = {}
 @app.event("message")
 def handle_message_events(event, say):
     user_id = event['user']
-    user_input = event['text']    
-    
+    user_input = event['text']
+
     if user_id not in user_states:
         user_purpose_handler(event, say) # 안내 문구 출력 - 알맞은 user_states[user_id] 배정하는 역할
     else: # 슬랙봇을 실행한 상황에 user_states[user_id]를 부여받은 상황일 때 진행
@@ -125,22 +134,6 @@ def handle_message_events(event, say):
             deposit_rotation_system_low_model_handler(event, say, user_states)
         elif user_states[user_id] == 'deposit_rotation_waiting_high_chatgpt_input':
             deposit_rotation_system_high_model_handler(event, say, user_states)
-        ######################### 1 on 1 ################################
-        # elif user_states[user_id] == 'one_by_one':
-            # 업데이트 하는 시점 생각해야 함
-            # 현재 입력을 한번 더 해야 아래의 코드가 실행됨
-            # update_authority() 관련해서 문의하고
-            # update_spreadsheet_on_oneByone(match_people(get_name_list_from_json()))
-            # find_oneByone_handler(event, say, user_states)
-            # msg = (f"<@{user_id}> 일대일매칭 기능을 진행합니다. 최신 매칭 대상을 조회합니다.\n")
-            # send_direct_message_to_user(user_id, msg)
-
-            # partner = find_oneByone(user_id, user_states)
-            # # 삭제 예정
-            # print(f"partner : {partner}")
-            # msg = (f"<@{user_id}> 매칭 대상은 : {partner}입니다. 일대일매칭 기능을 종료합니다\n")
-            # send_direct_message_to_user(user_id, msg)
-            # del user_states[user_id]
 
 
 @app.event("app_mention")

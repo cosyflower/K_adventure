@@ -479,7 +479,4 @@ def update_authority():
         if user_id in user_info_dict:
             user_info_dict[user_id]['authority'] = new_authority
     with open('users_info.json', 'w', encoding='utf-8') as json_file:
-        json.dump(user_info_dict, json_file, ensure_ascii=False, indent=4)
-
-
-    
+        json.dump(user_info_dict, json_file, ensure_ascii=False, indent=4)    

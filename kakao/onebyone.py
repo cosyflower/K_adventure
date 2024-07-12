@@ -19,21 +19,19 @@ from directMessageApi import send_direct_message_to_user
 template_file_id = config.oneByone_id
 
 # 전역 변수로 used_pairs 선언
-used_pairs = set()
+
 
 # users_info에 등록된 사람들의 이름을 가지고 리스트를 반환하는 함수
 def get_name_list_from_json(file_path='users_info.json'):
-    # 권한 정보 업데이트 하기, 추가된 경우 
     # update_authority()
-    # JSON 파일을 열고 데이터를 읽음
     with open(file_path, 'r', encoding='utf-8') as file:
         users_data = json.load(file)
 
-    # bot 이 반영되어 있지 않은 애들만 append()
+    # bot admin이 반영되어 있지 않은 애들만 append()
     names = []
     for id in users_data:
         name = users_data[id].get('name')
-        if users_data[id].get('authority') <= 3 and 'bot' not in name:
+        if users_data[id].get('authority') <= 3 and 'bot' not in name and 'admin' not in name:
             names.append(users_data[id].get('name'))
     return names
 
@@ -46,7 +44,6 @@ def get_slack_id_from_json(name_str, file_path='users_info.json'):
     with open(file_path, 'r', encoding='utf-8') as file:
         users_data = json.load(file)
 
-    # bot 이 반영되어 있지 않은 애들만
     for id in users_data:
         name = users_data[id].get('name')
         if users_data[id].get('authority') <= 3 and name_str == name:
@@ -162,6 +159,39 @@ def match_people(people):
     
     matches = []
     already_matched = set()
+
+    used_pairs = set()
+    sheets_service, drive_service = get_spreadsheet_service()
+    
+    # Determine the title for the new spreadsheet
+    current_year = datetime.now().year
+    new_title = f"{current_year}1on1"
+    
+    # Check if the spreadsheet already exists
+    spreadsheet_id = find_spreadsheet_in_shared_drive(drive_service, new_title, config.shared_drive_id)
+    
+    if not spreadsheet_id:
+        # Copy the template spreadsheet to create a new one
+        spreadsheet_id = copy_spreadsheet(drive_service, template_file_id, new_title)
+        print(f'Spreadsheet "{new_title}" created with ID: {spreadsheet_id}')
+    else:
+        print(f'Spreadsheet "{new_title}" found with ID: {spreadsheet_id}')
+
+    sheet_metadata = sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+    sheets = sheet_metadata.get('sheets', [])
+
+    for sheet in sheets:
+        sheet_name = sheet.get("properties", {}).get("title")
+        range_name = f'{sheet_name}!A:Z'  # 필요한 범위 지정, 여기서는 A:Z까지
+        result = sheets_service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
+        values = result.get('values', [])
+
+        # 첫 번째 행을 제외한 나머지 데이터 가져오기
+        if values:
+            data_without_header = values[1:]  # 첫 번째 행 제거
+            for row in data_without_header:
+                if len(row) >= 3:  # 행에 최소한 세 개의 열이 있는지 확인
+                    used_pairs.add((row[0], row[2]))  # 첫 번째 열과 세 번째 열 데이터 추가
     
     # 이미 매칭된 사람들을 기록
     for pair in used_pairs:
@@ -254,18 +284,6 @@ def find_oneByone_handler(message, say, user_states):
     user_id = message['user']
     user_input = message['text']
 
-
-    # 1on1 파일 접속
-    # 데이터 개수 확인 (가장 마지막 시트의 데이터 개수 확인)
-    # 인원 상 변동이 있는지 확인
-    # 인원 상 변동이 있는 경우
-
-
-    ### 변동이 없는 경우 
-
-
-    processed_input = process_user_input(user_input)
-
     partner = find_oneByone(user_id)
 
     print(f"partner : {partner}")
@@ -273,8 +291,6 @@ def find_oneByone_handler(message, say, user_states):
     send_direct_message_to_user(user_id, msg)
     del user_states[user_id]
     
-
-
 
 def find_oneByone(user_id):
     # Determine the title for the new spreadsheet
@@ -306,3 +322,5 @@ def find_oneByone(user_id):
                 return row[2]
             else:
                 print("check code!!!")
+
+# update_spreadsheet_on_oneByone(match_people(get_name_list_from_json()))
