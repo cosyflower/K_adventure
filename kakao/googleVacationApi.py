@@ -80,7 +80,6 @@ def get_spreadsheet_id_in_folder(file_name, folder_id):
                                    includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
     
-    print(items)
     if not items:
         print(f"No files found with name: {file_name} in folder: {folder_id}")
         return None
@@ -104,7 +103,6 @@ def add_row_to_sheet(spreadsheet, sheet_number, row_data): ## spreadsheet에 row
 
 def append_data_past(spreadsheet_id, sheet_number, row_data):
     add_row_to_sheet(get_spreadsheet(spreadsheet_id, config.kakao_json_key_path), sheet_number, row_data)
-    print("Data appended")
 
 def append_data(spreadsheet_id, new_row_data):
     """
@@ -130,17 +128,13 @@ def append_data(spreadsheet_id, new_row_data):
     range_name = f'{sheet_name}!A1:Z'
     result = sheet.values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
     values = result.get('values', [])
-    
-    print(len(values))
 
     if len(values) == 1:
         # 데이터가 없는 경우 5번째 행부터 추가
         range_to_append = f'{sheet_name}!A5'
-        print("5번째에")
     else:
         # 데이터가 있는 경우 마지막 행에 이어서 추가
         range_to_append = f'{sheet_name}!A{len(values) + 1}'
-        print("이어서")
     # 데이터 추가 요청
     body = {
         'values': [new_row_data]
@@ -151,7 +145,6 @@ def append_data(spreadsheet_id, new_row_data):
         valueInputOption='USER_ENTERED',
         body=body
     ).execute()
-    print(f"Data appended to range {range_to_append}")
 
 def delete_row_to_sheet(spreadsheet, sheet_number, row_data):
     # row_data는 단일 레코드가 들어온다고 생각하기
@@ -167,7 +160,6 @@ def delete_row_to_sheet(spreadsheet, sheet_number, row_data):
     for idx, row in enumerate(all_rows):
         if row == row_data:
             sheet.delete_rows(idx + 1)
-            print(f"Row {idx + 1} has been deleted.")
 
 def delete_data(spreadsheet_id, sheet_number, row_data):
     delete_row_to_sheet(get_spreadsheet(spreadsheet_id, config.kakao_json_key_path), sheet_number, row_data)
@@ -232,8 +224,6 @@ def get_today_vacation_data(spreadsheet_id, json_keyfile_path):
     # 오늘 날짜 구하기 (YYYY-MM-DD 형식)
     today = datetime.today()
     today_str = today.strftime('%Y. %-m. %-d')
-    print(f"today is {today_str}\n")
-
     # 오늘의 날짜와 휴가 시작 날짜가 같은 데이터 필터링
     today_vacation_data = []
     
@@ -270,10 +260,8 @@ def is_file_exists_in_directory(directory_id, file_name):
 
         
         if files:
-            print(f"파일 '{file_name}'이(가) 디렉토리 내에 존재합니다.")
             return True
         else:
-            print(f"파일 '{file_name}'이(가) 디렉토리 내에 존재하지 않습니다.")
             return False
     
     except HttpError as error:
@@ -299,8 +287,6 @@ def copy_gdrive_spreadsheet(template_file_id, new_filename, save_folder_id):
 
     # 파일 복사
     new_file = drive_service.files().copy(fileId=template_file_id, body=file_metadata,supportsAllDrives=True).execute()
-
-    print(f"File copied to Google Drive with ID: {new_file.get('id')}")
 # ---------------------------- #
 # ---------------------------- #
 
@@ -311,7 +297,6 @@ def get_remained_vacation(message, say, user_states,  user_vacation_info, user_v
     user_input = message['text']
     
     search_file_name = create_leave_string(get_current_year())
-    print(search_file_name)
     spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
     
     if spreadsheet_id == None:
@@ -548,30 +533,21 @@ def input_vacation_specific_reason(message, say, user_vacation_info, user_vacati
 
 #### 휴가 개인 이메일 입력받기
 def input_vacation_email(message, say, user_vacation_info, user_vacation_status):
-    print("input_vacation_email() called")
+    
     user_id = message['user']
     user_input = message['text']
     # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
     email = process_and_extract_email(user_input)
 
     if is_valid_email(email):
-        print("올바른 이메일 형식")
         user_vacation_info[user_id].append(email) # 변환 모듈
         msg = (f"<@{user_id}>님 휴가 신청 진행중입니다. <@{user_id}>님의 휴가 신청 이메일은 {email} 입니다.\n\n")
         send_direct_message_to_user(user_id, msg)
 
-        print(user_vacation_info[user_id])
-        print(user_vacation_status[user_id])
-
         user_vacation_status[user_id] = "pre-confirmed"
     else:
-        print("올바르지 않은 이메일 형식입니다")
         msg = (f"<@{user_id}>님 휴가 신청 진행중입니다. <{email}>올바르지 않은 이메일 형식입니다. 다시 입력하세요\n\n")
         send_direct_message_to_user(user_id, msg)
-
-        print(user_vacation_info[user_id])
-        print(user_vacation_status[user_id])
-
 
 def is_confirmed(confirm_sequence):
     if(confirm_sequence == '0'):
@@ -782,13 +758,6 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             email
         ])
 
-        # print(f"{new_row_data}\n")
-
-        # DB 반영하기 전, 개인휴가 안식휴가에 대해서 if 조건을 추가해야 한다
-        # 개인휴가 혹은 안식 휴가라면 - 잔여 휴가 정보를 가지고 온다
-        # 선택한 휴가 종류 연차면 1, 반차면 0.5, 반반차면 0.25로 구분
-        # 잔여 휴가 < 휴가 종류 인 경우 신청 불가 사유를 알려주고  종료
-        # 종료 시 아래의 del 가지고 오고 return 할 것
         search_file_name = get_proper_file_name(new_row_data)
         if is_file_exists_in_directory(config.dummy_vacation_directory_id, search_file_name) is False:
             # print("파일생성시작")

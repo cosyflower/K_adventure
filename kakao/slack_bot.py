@@ -26,6 +26,7 @@ from formatting import process_user_input
 from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler
 from directMessageApi import send_direct_message_to_user
 from config import dummy_vacation_directory_id
+from onebyone import find_oneByone_handler, update_spreadsheet_on_oneByone, match_people, get_name_list_from_json, find_oneByone
 # slack bot system
 
 
@@ -85,12 +86,7 @@ cancel_vacation_status = {}
 def handle_message_events(event, say):
     user_id = event['user']
     user_input = event['text']    
-    # 사용자 명령어 인식 프로세스
-    processed_input = process_user_input(user_input)
-    # user_states 상태 확인 - 없으면 생성이 되지 않았습니다 출력 
-    # if processed_input =='test':
-    #     print(user_input)
-    #     return
+    
     if user_id not in user_states:
         user_purpose_handler(event, say) # 안내 문구 출력 - 알맞은 user_states[user_id] 배정하는 역할
     else: # 슬랙봇을 실행한 상황에 user_states[user_id]를 부여받은 상황일 때 진행
@@ -129,6 +125,23 @@ def handle_message_events(event, say):
             deposit_rotation_system_low_model_handler(event, say, user_states)
         elif user_states[user_id] == 'deposit_rotation_waiting_high_chatgpt_input':
             deposit_rotation_system_high_model_handler(event, say, user_states)
+        ######################### 1 on 1 ################################
+        # elif user_states[user_id] == 'one_by_one':
+            # 업데이트 하는 시점 생각해야 함
+            # 현재 입력을 한번 더 해야 아래의 코드가 실행됨
+            # update_authority() 관련해서 문의하고
+            # update_spreadsheet_on_oneByone(match_people(get_name_list_from_json()))
+            # find_oneByone_handler(event, say, user_states)
+            # msg = (f"<@{user_id}> 일대일매칭 기능을 진행합니다. 최신 매칭 대상을 조회합니다.\n")
+            # send_direct_message_to_user(user_id, msg)
+
+            # partner = find_oneByone(user_id, user_states)
+            # # 삭제 예정
+            # print(f"partner : {partner}")
+            # msg = (f"<@{user_id}> 매칭 대상은 : {partner}입니다. 일대일매칭 기능을 종료합니다\n")
+            # send_direct_message_to_user(user_id, msg)
+            # del user_states[user_id]
+
 
 @app.event("app_mention")
 def handle_message_events(event, say):
@@ -210,7 +223,15 @@ def user_purpose_handler(message, say):
             msg = (f"<@{user_id}> 권한이 없습니다. 종료합니다")
             send_direct_message_to_user(user_id, msg)
     elif purpose == "일대일미팅":
-        print("여기다가 코딩 ㄱㄱㄱㄱㄱㄱㄱㄱㄱㄱㄱㄱㄱㄱㄱ 성훈 이번주에 자기 파트너가 누구인지 조회만 하면 될듯~!")
+        # 바로 실행 - user_states[user_id] 반영하지 않음
+        msg = (f"<@{user_id}> 일대일매칭 기능을 진행합니다. 최신 매칭 대상을 조회합니다.\n")
+        send_direct_message_to_user(user_id, msg)
+        
+        partner = find_oneByone(user_id)
+        # 삭제 예정
+        print(f"partner : {partner}")
+        msg = (f"<@{user_id}> 매칭 대상은 : {partner}입니다. 일대일매칭 기능을 종료합니다\n")
+        send_direct_message_to_user(user_id, msg)
     else:
         msg = (f"<@{user_id}> 없는 기능입니다. 다시 입력해주세요")
         send_direct_message_to_user(user_id, msg)

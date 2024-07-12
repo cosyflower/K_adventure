@@ -67,6 +67,8 @@ dummy_vacation_template_id = '1090B_3K-uuCO0GfBF8CfbllCM1QgqKx_14OalWQInoo'
 dummy_vacation_directory_id = '0ADXn4EWBStqjUk9PVA'
 
 google_calendar_id = 'zero@kakaoventures.co.kr'
+oneByone_id = '18zf8OvSEAVvWyh0M234eK1bYG3dkATpTAQixwI0GK7s'
+shared_drive_id = '0ADXn4EWBStqjUk9PVA'
 # # TEST
 # all_bot_channel = 'C07264YTB7X'
 # dummy_vacation_template_id = '1V3Er20zNHmpOOtiljJcExiF8Fk5cxsNP7-V8JD7mjZk'
