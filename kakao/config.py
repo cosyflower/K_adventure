@@ -62,7 +62,7 @@ app_token_id = 'xapp-1-A07704ULQCB-7261083472928-4240d3f4a5a807b855af54ae306a57f
 # app_token_id = 'xapp-1-A072N1TECNN-7089950489011-4fa8538d3daed24db4a9195dc7ffe6a2041c7e6f76502e8cba875b96f082d468' # user_token_id
 
 # KAKAO
-all_bot_channel = 'C03AGDJ01P0'
+all_bot_channel = 'C032MTUL8BT'
 dummy_vacation_template_id = '1090B_3K-uuCO0GfBF8CfbllCM1QgqKx_14OalWQInoo'
 dummy_vacation_directory_id = '0ADXn4EWBStqjUk9PVA'
 
