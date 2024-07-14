@@ -86,15 +86,19 @@ def rose_bot_handler(message, say, user_states):
                 send_direct_message_to_user(user_id, msg)
                 del user_states[user_id]
             elif user_input == "7": ## 1on1
-                msg = (f"<@{user_id}> 일대일매칭 기능을 진행합니다. 최신 매칭 대상을 조회합니다.\n")
-                send_direct_message_to_user(user_id, msg)
-                
-                partner = find_oneByone(user_id)
-                # 삭제 예정
-                print(f"partner : {partner}")
-                msg = (f"<@{user_id}> 매칭 대상은 : {partner}입니다. 일대일매칭 기능을 종료합니다\n")
-                send_direct_message_to_user(user_id, msg)
-                del user_states[user_id]
+                if get_user_authority(user_id) < 3:
+                    msg = (f"<@{user_id}> 일대일매칭 기능을 진행합니다. 최신 매칭 대상을 조회합니다.\n")
+                    send_direct_message_to_user(user_id, msg)
+                    partner = find_oneByone(user_id)
+                    # # 삭제 예정
+                    # print(f"partner : {partner}")
+                    msg = (f"<@{user_id}> 매칭 대상은 : {partner}입니다. 일대일매칭 기능을 종료합니다\n")
+                    send_direct_message_to_user(user_id, msg)
+                    del user_states[user_id]
+                else:
+                    msg = (f"<@{user_id}> 권한이 없습니다.")
+                    send_direct_message_to_user(user_id, msg)
+                    del user_states[user_id]
             else:
                 msg = (f"<@{user_id}> 잘못된 숫자를 입력했습니다. 다시 입력해주세요.\n")
                 send_direct_message_to_user(user_id, msg)

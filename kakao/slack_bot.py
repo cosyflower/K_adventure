@@ -216,15 +216,19 @@ def user_purpose_handler(message, say):
             msg = (f"<@{user_id}> 권한이 없습니다. 종료합니다")
             send_direct_message_to_user(user_id, msg)
     elif purpose == "일대일미팅":
-        # 바로 실행 - user_states[user_id] 반영하지 않음
-        msg = (f"<@{user_id}> 일대일매칭 기능을 진행합니다. 최신 매칭 대상을 조회합니다.\n")
-        send_direct_message_to_user(user_id, msg)
-        
-        partner = find_oneByone(user_id)
-        # 삭제 예정
-        print(f"partner : {partner}")
-        msg = (f"<@{user_id}> 매칭 대상은 : {partner}입니다. 일대일매칭 기능을 종료합니다\n")
-        send_direct_message_to_user(user_id, msg)
+        if get_user_authority(user_id) < 4:
+            # 바로 실행 - user_states[user_id] 반영하지 않음
+            msg = (f"<@{user_id}> 일대일매칭 기능을 진행합니다. 최신 매칭 대상을 조회합니다.\n")
+            send_direct_message_to_user(user_id, msg)
+            
+            partner = find_oneByone(user_id)
+            # # 삭제 예정
+            # print(f"partner : {partner}")
+            msg = (f"<@{user_id}> 매칭 대상은 : {partner}입니다. 일대일매칭 기능을 종료합니다\n")
+            send_direct_message_to_user(user_id, msg)
+        else:
+            msg = (f"<@{user_id}> 권한이 없습니다. 종료합니다")
+            send_direct_message_to_user(user_id, msg)
     else:
         msg = (f"<@{user_id}> 없는 기능입니다. 다시 입력해주세요")
         send_direct_message_to_user(user_id, msg)
