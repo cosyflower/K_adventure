@@ -139,7 +139,7 @@ def get_or_create_1on1_spreadsheet(template_file_id = config.oneByone_id):
         if not spreadsheet_id:
             # Copy the template spreadsheet to create a new one
             spreadsheet_id = copy_spreadsheet(drive_service, template_file_id, new_title)
-            print(f'Spreadsheet "{new_title}" created with ID: {spreadsheet_id}')
+            # print(f'Spreadsheet "{new_title}" created with ID: {spreadsheet_id}')
         else:
             print(f'Spreadsheet "{new_title}" found with ID: {spreadsheet_id}')
         
@@ -148,7 +148,7 @@ def get_or_create_1on1_spreadsheet(template_file_id = config.oneByone_id):
         return spreadsheet_id
     
     except HttpError as error:
-        print(f'An error occurred: {error}')
+        # print(f'An error occurred: {error}')
         return None
 
 def match_people(people):
@@ -173,7 +173,7 @@ def match_people(people):
     if not spreadsheet_id:
         # Copy the template spreadsheet to create a new one
         spreadsheet_id = copy_spreadsheet(drive_service, template_file_id, new_title)
-        print(f'Spreadsheet "{new_title}" created with ID: {spreadsheet_id}')
+        # print(f'Spreadsheet "{new_title}" created with ID: {spreadsheet_id}')
     else:
         print(f'Spreadsheet "{new_title}" found with ID: {spreadsheet_id}')
 
@@ -276,9 +276,6 @@ def update_spreadsheet_on_oneByone(match_data):
         body=body
     ).execute()
 
-    #삭제용
-    print("1 on1 1 매칭 완료!!")
-
 
 def find_oneByone_handler(message, say, user_states):
     user_id = message['user']
@@ -286,7 +283,7 @@ def find_oneByone_handler(message, say, user_states):
 
     partner = find_oneByone(user_id)
 
-    print(f"partner : {partner}")
+    # print(f"partner : {partner}")
     msg = (f"<@{user_id}> 매칭 대상은 : {partner}입니다. 일대일매칭 기능을 종료합니다\n")
     send_direct_message_to_user(user_id, msg)
     del user_states[user_id]

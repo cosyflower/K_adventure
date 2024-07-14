@@ -62,7 +62,7 @@ schedule.every().wednesday.at("08:00").do(notify_today_vacation_info)
 schedule.every().thursday.at("08:00").do(notify_today_vacation_info)
 schedule.every().friday.at("08:00").do(notify_today_vacation_info)
 
-schedule.every().day.at("08:00").do(notify_deposit_info)
+# schedule.every().day.at("08:00").do(notify_deposit_info)
 
 # 시트 생성 후 다이렉트 메세지 전송시도하지 않은 상태 (실제 배포시 테스트 진행하기)
 schedule.every().day.at("08:00").do(notify_one_by_one_partner)
