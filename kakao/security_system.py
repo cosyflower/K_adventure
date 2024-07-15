@@ -28,13 +28,13 @@ def security_system_user_function_handler(message, say, user_states, security_sy
                     authority_name = ""
                     if info['authority'] == 1:
                         authority_name = "투자팀"
-                        comment = comment + f"{i}. id: {info['id']}, name: {info['name']}, authority: {authority_name}\n"
+                        comment = comment + f"{i+1}. name: {info['name']}, authority: {authority_name}\n"
                     elif info['authority'] == 2:
                         authority_name = "임직원"
-                        comment = comment + f"{i}. id: {info['id']}, name: {info['name']}, authority: {authority_name}\n"
+                        comment = comment + f"{i+1}. name: {info['name']}, authority: {authority_name}\n"
                     elif info['authority'] == 3:
                         authority_name = "인턴"
-                        comment = comment + f"{i}. id: {info['id']}, name: {info['name']}, authority: {authority_name}\n"
+                        comment = comment + f"{i+1}. name: {info['name']}, authority: {authority_name}\n"
                     # else:
                     #     authority_name = "미정"
                     #comment = comment + f"{i}. id: {info['id']}, name: {info['name']}, authority: {authority_name}\n"
@@ -354,6 +354,7 @@ def security_system_advisor_authority_delete_handler(message, say, user_states, 
             send_direct_message_to_user(user_id, msg)
             user_states[user_id] = 'security_system_advisor_authority_delete'
 
+#####################################################################################################################################################################
 
 def get_user_authority(user_id):
     with open("users_info.json", 'r', encoding='utf-8') as file:
@@ -453,6 +454,14 @@ def get_channel_users(channel_id):
 
     return users_info
 ## 새로운 사람 들어 왔을 때 이 함수 사용
+
+def special_authority(user):
+    name = user.get('name', '').lower()
+    display_name = user.get('display_name', '').lower()
+    if any(keyword in name for keyword in ["_", "simple", "bot"]) or any(keyword in display_name for keyword in ["_", "simple", "bot"]):
+        return 4
+    return None
+
 def update_authority():
 
     management = get_channel_users(management_channel_id)
@@ -462,16 +471,31 @@ def update_authority():
 
     user_info_dict = {}
     for user in management:
-        user_info_dict[user['id']] = {**user, 'authority': 1}
+        authority = special_authority(user)
+        if authority is None:
+            authority = 1
+        user_info_dict[user['id']] = {**user, 'authority': authority}
+
     for user in executives:
         if user['id'] not in user_info_dict:
-            user_info_dict[user['id']] = {**user, 'authority': 2}
+            authority = special_authority(user)
+            if authority is None:
+                authority = 2
+            user_info_dict[user['id']] = {**user, 'authority': authority}
+
     for user in intern:
         if user['id'] not in user_info_dict:
-            user_info_dict[user['id']] = {**user, 'authority': 3} 
+            authority = special_authority(user)
+            if authority is None:
+                authority = 3
+            user_info_dict[user['id']] = {**user, 'authority': authority}
+
     for user in all_user:
         if user['id'] not in user_info_dict:
-            user_info_dict[user['id']] = {**user, 'authority': 4}
+            authority = special_authority(user)
+            if authority is None:
+                authority = 4
+            user_info_dict[user['id']] = {**user, 'authority': authority}
 
     with open("authority_change_list.json", 'r') as file:
         authority_change_list = json.load(file)
