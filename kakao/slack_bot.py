@@ -96,6 +96,9 @@ def handle_message_events(event, say):
     user_id = event['user']
     user_input = event['text']
 
+    if process_user_input(user_input) == 'test':
+        notify_one_by_one_partner()
+
     if user_id not in user_states:
         user_purpose_handler(event, say) # 안내 문구 출력 - 알맞은 user_states[user_id] 배정하는 역할
     else: # 슬랙봇을 실행한 상황에 user_states[user_id]를 부여받은 상황일 때 진행

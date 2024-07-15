@@ -28,10 +28,11 @@ def get_name_list_from_json(file_path='users_info.json'):
         users_data = json.load(file)
 
     # bot admin이 반영되어 있지 않은 애들만 append()
+    # 권한이 2이하인 사람들만 반영한다
     names = []
     for id in users_data:
         name = users_data[id].get('name')
-        if users_data[id].get('authority') <= 3 and 'bot' not in name and 'admin' not in name:
+        if users_data[id].get('authority') <= 2 and 'bot' not in name and 'admin' not in name:
             names.append(users_data[id].get('name'))
     return names
 
