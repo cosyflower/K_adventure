@@ -140,8 +140,8 @@ def get_or_create_1on1_spreadsheet(template_file_id = config.oneByone_id):
             # Copy the template spreadsheet to create a new one
             spreadsheet_id = copy_spreadsheet(drive_service, template_file_id, new_title)
             # print(f'Spreadsheet "{new_title}" created with ID: {spreadsheet_id}')
-        else:
-            print(f'Spreadsheet "{new_title}" found with ID: {spreadsheet_id}')
+        # else:
+        #     print(f'get_or_create_1on1() called - Spreadsheet "{new_title}" found with ID: {spreadsheet_id}')
         
         # Add a new sheet to the spreadsheet
         add_new_sheet(sheets_service, spreadsheet_id)
@@ -167,15 +167,15 @@ def match_people(people):
     current_year = datetime.now().year
     new_title = f"{current_year}1on1"
     
-    # Check if the spreadsheet already exists
+    # used_pairs()에 지난 매칭 기록을 저장합니다
     spreadsheet_id = find_spreadsheet_in_shared_drive(drive_service, new_title, config.shared_drive_id)
     
     if not spreadsheet_id:
         # Copy the template spreadsheet to create a new one
         spreadsheet_id = copy_spreadsheet(drive_service, template_file_id, new_title)
         # print(f'Spreadsheet "{new_title}" created with ID: {spreadsheet_id}')
-    else:
-        print(f'Spreadsheet "{new_title}" found with ID: {spreadsheet_id}')
+    # else:
+    #     print(f'match people() called and Spreadsheet "{new_title}" found with ID: {spreadsheet_id}')
 
     sheet_metadata = sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
     sheets = sheet_metadata.get('sheets', [])
@@ -276,6 +276,7 @@ def update_spreadsheet_on_oneByone(match_data):
         body=body
     ).execute()
 
+    return spreadsheet_id
 
 def find_oneByone_handler(message, say, user_states):
     user_id = message['user']

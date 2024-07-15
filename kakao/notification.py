@@ -28,11 +28,11 @@ def send_slack_message(channel_id, text):
 def notify_today_vacation_info():
     channel_id = config.all_bot_channel
 
-    search_file_name = create_leave_string(get_current_year)
+    search_file_name = create_leave_string(get_current_year())
     spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
     
     if spreadsheet_id == None:
-        msg = ("현재 연도를 기준으로 신청한 휴가 내역이 없습니다.\n")
+        msg = ("휴가 스프레드 시트를 재확인해주세요.\n")
         send_slack_message(channel_id, msg)    
         msg = ("금일 휴가 조회를 종료합니다.\n\n")
         send_slack_message(channel_id, msg)
@@ -50,21 +50,19 @@ def notify_today_vacation_info():
     
     for data in formatted_vacation_data:
         send_slack_message(channel_id, data)
+    send_slack_message(channel_id, "금일 휴가 조회를 종료합니다")
+
 
 def notify_one_by_one_partner():
     # New matching
     update_authority()
-    update_spreadsheet_on_oneByone(match_people(get_name_list_from_json()))
+    spreadsheet_id = update_spreadsheet_on_oneByone(match_people(get_name_list_from_json()))
 
-    spreadsheet_id = get_or_create_1on1_spreadsheet()
     sheets_serivce, drive_service = get_spreadsheet_service()
     
     # Determine the title for the new spreadsheet
     current_year = datetime.now().year
     new_title = f"{current_year}1on1"
-    
-    # spreadsheet_id
-    spreadsheet_id = find_spreadsheet_in_shared_drive(drive_service, new_title, config.shared_drive_id)
 
     sheet_metadata = sheets_serivce.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
     sheets = sheet_metadata.get('sheets', [])
@@ -84,10 +82,11 @@ def notify_one_by_one_partner():
     # values 내 모든 데이터를 모두 조회할거야
     # 하나의 행에서 두번째 데이터에는 슬랙 아이디가 존재하는 상황
     # 해당 슬랙 아이디에게 다이렉트 메세지를 보낼거야. 내용은 해당 행에서의 세번째 데이터를 담아서 보낼거야
-    
+
     client = WebClient(token=config.bot_token_id)
 
     # 모든 행을 조회하여 슬랙 다이렉트 메시지 전송
+    
     for row in values:
         slack_id = row[1]
         message_content = row[2]
@@ -95,11 +94,12 @@ def notify_one_by_one_partner():
         try:
             response = client.chat_postMessage(
                 channel=slack_id,
-                text=f"매칭 대상은 {message_content}입니다"
+                text=f"금주 1on1 매칭 대상은 {message_content}입니다"
             )
-            print(f"Message sent to {slack_id}: {message_content}")
+            # print(f"Message sent to {slack_id}: {message_content}")
         except SlackApiError as e:
             print(f"Error sending message to {slack_id}: {e.response['error']}")
+    
 
 def notify_deposit_info():
     user1 = config.deposity_user1_id
