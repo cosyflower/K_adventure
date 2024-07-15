@@ -21,7 +21,7 @@ def security_system_user_function_handler(message, say, user_states, security_sy
             if user_input==1: # 전체 사용자 권한 조회
                 msg = (f"<@{user_id}> 전체 사용자 권한을 조회합니다")
                 send_direct_message_to_user(user_id, msg)
-                comment = ""
+                comment = "\n"
                 with open("users_info.json", 'r', encoding='utf-8') as file:
                     user_info_list = json.load(file)
                 for i, (id, info) in enumerate(user_info_list.items()):

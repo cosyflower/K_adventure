@@ -56,16 +56,16 @@ app = App(token=config.bot_token_id)
 
 # Scheduler 관련 함수 정의
 # 평일 오전 8시에 notify_today_vacation_info 함수 실행
-schedule.every().monday.at("08:00").do(notify_today_vacation_info)
-schedule.every().tuesday.at("08:00").do(notify_today_vacation_info)
-schedule.every().wednesday.at("08:00").do(notify_today_vacation_info)
-schedule.every().thursday.at("08:00").do(notify_today_vacation_info)
-schedule.every().friday.at("08:00").do(notify_today_vacation_info)
+# schedule.every().monday.at("08:00").do(notify_today_vacation_info)
+# schedule.every().tuesday.at("08:00").do(notify_today_vacation_info)
+# schedule.every().wednesday.at("08:00").do(notify_today_vacation_info)
+# schedule.every().thursday.at("08:00").do(notify_today_vacation_info)
+# schedule.every().friday.at("08:00").do(notify_today_vacation_info)
 
 # schedule.every().day.at("08:00").do(notify_deposit_info)
 
 # 시트 생성 후 다이렉트 메세지 전송시도하지 않은 상태 (실제 배포시 테스트 진행하기)
-schedule.every().day.at("08:00").do(notify_one_by_one_partner)
+# schedule.every().day.at("08:00").do(notify_one_by_one_partner)
 
 # 스케줄러 실행 함수
 def run_scheduler():

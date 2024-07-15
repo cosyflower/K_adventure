@@ -46,7 +46,7 @@
         "name": "simplepoll",
         "real_name": "Simple Poll",
         "display_name": "",
-        "authority": 2
+        "authority": 4
     },
     "U032MU0HZH7": {
         "id": "U032MU0HZH7",
@@ -137,21 +137,21 @@
         "name": "wf_bot_a069gcdubfy",
         "real_name": "선택적 복지 REMIND",
         "display_name": "",
-        "authority": 2
+        "authority": 4
     },
     "U076KMVNLJK": {
         "id": "U076KMVNLJK",
         "name": "zerobot",
         "real_name": "제로봇",
         "display_name": "",
-        "authority": 2
+        "authority": 4
     },
     "U0328R301BQ": {
         "id": "U0328R301BQ",
         "name": "birthdaybot",
         "real_name": "BirthdayBot",
         "display_name": "",
-        "authority": 3
+        "authority": 4
     },
     "U032HNW23PW": {
         "id": "U032HNW23PW",
@@ -207,13 +207,20 @@
         "name": "wf_bot_a078m5h14te",
         "real_name": "베이스캠프",
         "display_name": "",
-        "authority": 3
+        "authority": 4
     },
     "U07AHSD5CA0": {
         "id": "U07AHSD5CA0",
         "name": "emily",
         "real_name": "Emily.​kv 최은솔",
         "display_name": "Emily.kv 최은솔",
+        "authority": 3
+    },
+    "U07C71VB3KQ": {
+        "id": "U07C71VB3KQ",
+        "name": "bety",
+        "real_name": "bety",
+        "display_name": "bety",
         "authority": 3
     },
     "USLACKBOT": {
