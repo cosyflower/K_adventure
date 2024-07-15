@@ -96,6 +96,7 @@ def handle_message_events(event, say):
     user_id = event['user']
     user_input = event['text']
 
+    # Test - Should be deleted!!
     if process_user_input(user_input) == 'test':
         notify_one_by_one_partner()
 

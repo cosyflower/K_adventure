@@ -83,6 +83,7 @@ def notify_one_by_one_partner():
     # 하나의 행에서 두번째 데이터에는 슬랙 아이디가 존재하는 상황
     # 해당 슬랙 아이디에게 다이렉트 메세지를 보낼거야. 내용은 해당 행에서의 세번째 데이터를 담아서 보낼거야
 
+    """
     client = WebClient(token=config.bot_token_id)
 
     # 모든 행을 조회하여 슬랙 다이렉트 메시지 전송
@@ -99,6 +100,7 @@ def notify_one_by_one_partner():
             # print(f"Message sent to {slack_id}: {message_content}")
         except SlackApiError as e:
             print(f"Error sending message to {slack_id}: {e.response['error']}")
+    """
     
 
 def notify_deposit_info():
