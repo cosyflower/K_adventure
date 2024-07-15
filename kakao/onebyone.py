@@ -18,9 +18,6 @@ from directMessageApi import send_direct_message_to_user
 # Example usage
 template_file_id = config.oneByone_id
 
-# 전역 변수로 used_pairs 선언
-
-
 # users_info에 등록된 사람들의 이름을 가지고 리스트를 반환하는 함수
 def get_name_list_from_json(file_path='users_info.json'):
     # update_authority()
