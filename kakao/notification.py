@@ -13,6 +13,7 @@ from googleVacationApi import get_spreadsheet_id_in_folder
 from onebyone import get_or_create_1on1_spreadsheet, get_spreadsheet_service, find_spreadsheet_in_shared_drive, update_spreadsheet_on_oneByone, match_people, get_name_list_from_json
 from security_system import update_authority
 import pandas as pd
+import json
 
 
 def send_slack_message(channel_id, text):
@@ -39,19 +40,41 @@ def notify_today_vacation_info():
         return
     
     json_keyfile_path = config.kakao_json_key_path
-    send_slack_message(channel_id, "금일 휴가자 정보를 조회합니다. 잠시만 기다려주세요.\n")
+    # send_slack_message(channel_id, "금일 휴가자 정보를 조회합니다. 잠시만 기다려주세요.\n")
     today_vacation_data = get_today_vacation_data(spreadsheet_id, json_keyfile_path)
-    
-    if len(today_vacation_data) == 0:
-        send_slack_message(channel_id, "금일 휴가자 정보가 존재하지 않습니다. 금일 휴가 조회를 종료합니다")
-        return
-    
-    formatted_vacation_data = format_vacation_data(today_vacation_data)
-    
-    for data in formatted_vacation_data:
-        send_slack_message(channel_id, data)
-    send_slack_message(channel_id, "금일 휴가 조회를 종료합니다")
 
+    # Vacation requested and transformed
+    formatted_vacation_data = format_vacation_data(today_vacation_data)
+    client = WebClient(token=config.bot_token_id)
+
+    # user_info and authority <= 3
+    # update_authority()
+    with open("users_info.json", 'r', encoding='utf-8') as file:
+        users_data = json.load(file)
+
+    # bot admin이 반영되어 있지 않은 애들만 append()
+    # 권한이 3이하인 사람들만 반영한다
+    user_ids = []
+    for id in users_data:
+        name = users_data[id].get('name')
+        if users_data[id].get('authority') <= 3 and 'bot' not in name and 'admin' not in name:
+            user_ids.append(users_data[id].get('id'))
+
+    # dm to all users
+    if len(today_vacation_data) == 0:
+        vacation_msg = "휴가자가 없을 때 출력할 멘트"
+    else:
+        vacation_msg = formatted_vacation_data
+    
+
+    for slack_id in user_ids:
+        try:
+            response = client.chat_postMessage(
+                channel=slack_id,
+                text= "금일 휴가자 목록을 조회합니다\n" + vacation_msg + "휴가자 조회를 종료합니다."
+            )
+        except SlackApiError as e:
+            print(f"Error sending message to {slack_id}: {e.response['error']}")
 
 def notify_one_by_one_partner():
     # New matching

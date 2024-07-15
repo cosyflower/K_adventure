@@ -91,7 +91,12 @@ user_vacation_info = {}
 # 휴가 취소 프로세스
 cancel_vacation_status = {}
 
-@app.event("message")
+# 다이렉트 메시지에서만 호출되도록 필터링하는 함수
+def message_im_events(event, next):
+    if event.get("channel_type") == "im":
+        next()
+
+@app.event("message", middleware=[message_im_events])
 def handle_message_events(event, say):
     user_id = event['user']
     user_input = event['text']
@@ -99,6 +104,7 @@ def handle_message_events(event, say):
     # Test - Should be deleted!!
     if process_user_input(user_input) == 'test':
         notify_one_by_one_partner()
+        return
 
     if user_id not in user_states:
         user_purpose_handler(event, say) # 안내 문구 출력 - 알맞은 user_states[user_id] 배정하는 역할
@@ -138,7 +144,10 @@ def handle_message_events(event, say):
             deposit_rotation_system_low_model_handler(event, say, user_states)
         elif user_states[user_id] == 'deposit_rotation_waiting_high_chatgpt_input':
             deposit_rotation_system_high_model_handler(event, say, user_states)
-
+            
+@app.event("message")
+def handle_message_events(body, logger):
+    logger.info(body)
 
 @app.event("app_mention")
 def handle_message_events(event, say):
@@ -146,7 +155,7 @@ def handle_message_events(event, say):
     user_input = event['text']
     ### 사용자 명령어 인식 프로세스
     user_input = process_user_input(user_input)
-    send_direct_message_to_user(user_id, user_input)
+    # send_direct_message_to_user(user_id, user_input)
 
 def user_purpose_handler(message, say):
     user_id = message['user']
