@@ -85,7 +85,7 @@ def get_spreadsheet_id_in_folder(file_name, folder_id):
         return None
     else:
         for item in items:
-            print(f"Found file: {item['name']} (ID: {item['id']})")
+            # print(f"Found file: {item['name']} (ID: {item['id']})")
             return item['id']
         
 def add_row_to_sheet(spreadsheet, sheet_number, row_data): ## spreadsheet에 row_data를 append 한다
