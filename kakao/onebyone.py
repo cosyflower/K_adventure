@@ -18,6 +18,7 @@ from directMessageApi import send_direct_message_to_user
 # Example usage
 template_file_id = config.oneByone_id
 
+
 # users_info에 등록된 사람들의 이름을 가지고 리스트를 반환하는 함수
 def get_name_list_from_json(file_path='users_info.json'):
     # update_authority()
@@ -152,13 +153,8 @@ def get_or_create_1on1_spreadsheet(template_file_id = config.oneByone_id):
 def match_people(people):
     if not people:
         return []
-    
-    random.shuffle(people)
-    
-    matches = []
-    already_matched = set()
 
-    used_pairs = set()
+    already_matched = set()
     sheets_service, drive_service = get_spreadsheet_service()
     
     # Determine the title for the new spreadsheet
@@ -169,7 +165,6 @@ def match_people(people):
     spreadsheet_id = find_spreadsheet_in_shared_drive(drive_service, new_title, config.shared_drive_id)
     
     if not spreadsheet_id:
-        # Copy the template spreadsheet to create a new one
         spreadsheet_id = copy_spreadsheet(drive_service, template_file_id, new_title)
         # print(f'Spreadsheet "{new_title}" created with ID: {spreadsheet_id}')
     # else:
@@ -189,58 +184,48 @@ def match_people(people):
             data_without_header = values[1:]  # 첫 번째 행 제거
             for row in data_without_header:
                 if len(row) >= 3:  # 행에 최소한 세 개의 열이 있는지 확인
-                    used_pairs.add((row[0], row[2]))  # 첫 번째 열과 세 번째 열 데이터 추가
+                    already_matched.add((row[0], row[2]))  # 첫 번째 열과 세 번째 열 데이터 추가
     
-    # 이미 매칭된 사람들을 기록
-    for pair in used_pairs:
-        already_matched.update(pair)
-    
-    n = len(people)
+    matches = []
     unmatched = set(people)
     
-    for i in range(n):
-        person = people[i]
-        if person in already_matched:
-            continue  # 이미 매칭된 사람은 건너뜀
-        for j in range(i + 1, n):
-            if people[j] in already_matched:
-                continue  # 이미 매칭된 사람은 건너뜀
-            pair = tuple(sorted((person, people[j])))
-            if pair not in used_pairs:
-                used_pairs.add(pair)
-                matches.append(pair)
-                unmatched.discard(person)
-                unmatched.discard(people[j])
-                already_matched.add(person)
-                already_matched.add(people[j])
-                break
-        else:
-            # 매칭되지 않은 사람은 자신과 매칭
-            if n % 2 != 0 and (person, person) not in used_pairs:
-                used_pairs.add((person, person))
-                matches.append((person, person))
-                unmatched.discard(person)
-                already_matched.add(person)
+    while len(unmatched) > 1:
+        person = unmatched.pop()
+        potential_matches = list(unmatched - {p for p in unmatched if (person, p) in already_matched or (p, person) in already_matched})
+        
+        if not potential_matches:
+            unmatched.add(person)
+            break
+        
+        match = random.choice(potential_matches)
+        unmatched.remove(match)
+        matches.append((person, match))
+        already_matched.add((person, match))
     
-    # 매칭되지 않은 사람들이 있는지 확인하고 중복 허용하여 매칭
     if unmatched:
-        unmatched_list = list(unmatched)
-        for i in range(0, len(unmatched_list), 2):
-            if i + 1 < len(unmatched_list):
-                pair = tuple(sorted((unmatched_list[i], unmatched_list[i + 1])))
-                used_pairs.add(pair)
-                matches.append(pair)
+        remaining_person = unmatched.pop()
+        if len(people) % 2 == 1:
+            matches.append((remaining_person, remaining_person))
+        else:
+            possible_matches = list(set(people) - {remaining_person})
+            for match in possible_matches:
+                if (remaining_person, match) not in already_matched and (match, remaining_person) not in already_matched:
+                    matches.append((remaining_person, match))
+                    already_matched.add((remaining_person, match))
+                    break
             else:
-                # 남은 사람이 홀수인 경우 자기 자신과 매칭
-                pair = (unmatched_list[i], unmatched_list[i])
-                used_pairs.add(pair)
-                matches.append(pair)
-    
+                # 중복을 허용하여 매칭
+                random_match = random.choice(possible_matches)
+                matches.append((remaining_person, random_match))
+                already_matched.add((remaining_person, random_match))
+
     # 역방향 매칭 추가하기
-    reverse_matches = [(y, x) for x, y in matches if x != y]
+    reverse_matches = [(y, x) for x, y in matches if x != y and (y, x) not in matches]
     matches.extend(reverse_matches)
     
     return matches
+
+
 
 # Google Sheets에 데이터를 작성하는 함수
 def update_spreadsheet_on_oneByone(match_data):

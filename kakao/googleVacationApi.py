@@ -221,22 +221,25 @@ def get_today_vacation_data(spreadsheet_id, json_keyfile_path):
     sheet = spreadsheet.worksheets()[0]
     # 모든 데이터 얻기
     all_data = sheet.get_all_values()
-    # 오늘 날짜 구하기 (YYYY-MM-DD 형식)
     today = datetime.today()
-    today_str = today.strftime('%Y. %-m. %-d')
+    today_str = today.strftime('%Y. %m. %d').replace(' 0', ' ')  # 불필요한 0 제거
     # 오늘의 날짜와 휴가 시작 날짜가 같은 데이터 필터링
     today_vacation_data = []
     
     for data in all_data:
         start_date = data[2].strip("' ")
-        extracted_date = start_date.split()[0:3]
-        extracted_date = ' '.join(extracted_date).strip()
+        # 날짜 부분만 추출하여 datetime 객체로 변환
+        try:
+            date_part = ' '.join(start_date.split()[:3])
+            parsed_date = datetime.strptime(date_part, '%Y. %m. %d')
+            parsed_date_str = parsed_date.strftime('%Y. %m. %d').replace(' 0', ' ')
+        except ValueError:
+            continue  # 잘못된 날짜 형식은 무시합니다
 
-        if extracted_date == today_str:
+        if parsed_date_str == today_str:
             today_vacation_data.append(data)
 
     return today_vacation_data
-
 
 """
 기능 : 휴가 데이터 정보 중 시작 연도를 확인 - 시작 연도의 파일이 존재하는지 확인 - 존재하지 않으면 해당 파일을 형성하는 함수

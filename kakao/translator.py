@@ -91,7 +91,7 @@ def format_vacation_data(vacation_data):
         else:
             date_str = f"{start_date.strftime('%Y-%m-%d %H:%M')} - {end_date.strftime('%Y-%m-%d %H:%M')}"
         
-        formatted_str = f"신청자: {applicant}\n휴가 날짜: {date_str}\n휴가 종류: {vacation_type} - {vacation_reason}\n"
+        formatted_str = f"\n신청자: {applicant}\n시간: {date_str}\n휴가 종류: {vacation_type} - {vacation_reason}\n"
         formatted_data.append(formatted_str)
     
     return formatted_data

@@ -40,7 +40,6 @@ def notify_today_vacation_info():
         return
     
     json_keyfile_path = config.kakao_json_key_path
-    # send_slack_message(channel_id, "금일 휴가자 정보를 조회합니다. 잠시만 기다려주세요.\n")
     today_vacation_data = get_today_vacation_data(spreadsheet_id, json_keyfile_path)
 
     # Vacation requested and transformed
@@ -48,7 +47,6 @@ def notify_today_vacation_info():
     client = WebClient(token=config.bot_token_id)
 
     # user_info and authority <= 3
-    # update_authority()
     with open("users_info.json", 'r', encoding='utf-8') as file:
         users_data = json.load(file)
 
@@ -62,19 +60,21 @@ def notify_today_vacation_info():
 
     # dm to all users
     if len(today_vacation_data) == 0:
-        vacation_msg = "휴가자가 없을 때 출력할 멘트"
+        vacation_msg = "연차 사용이 없는 날입니다. 다들 좋은 하루 되셔요!"
     else:
-        vacation_msg = formatted_vacation_data
-    
+        formatted_data = '\n'.join(formatted_vacation_data)
+        vacation_msg = f"금일 휴가자 명단입니다\n\n{formatted_data}"
 
     for slack_id in user_ids:
         try:
             response = client.chat_postMessage(
                 channel=slack_id,
-                text= "금일 휴가자 목록을 조회합니다\n" + vacation_msg + "휴가자 조회를 종료합니다."
+                text= vacation_msg
             )
         except SlackApiError as e:
             print(f"Error sending message to {slack_id}: {e.response['error']}")
+    
+    print("휴가 DM 보내기 완료! 배포 결과를 확인하세요!!")
 
 def notify_one_by_one_partner():
     # New matching
@@ -105,27 +105,28 @@ def notify_one_by_one_partner():
     # values 내 모든 데이터를 모두 조회할거야
     # 하나의 행에서 두번째 데이터에는 슬랙 아이디가 존재하는 상황
     # 해당 슬랙 아이디에게 다이렉트 메세지를 보낼거야. 내용은 해당 행에서의 세번째 데이터를 담아서 보낼거야
-
-    """
     client = WebClient(token=config.bot_token_id)
 
     # 모든 행을 조회하여 슬랙 다이렉트 메시지 전송
-    
     for row in values:
         slack_id = row[1]
-        message_content = row[2]
+        partner_name = row[2]
         
         try:
             response = client.chat_postMessage(
                 channel=slack_id,
-                text=f"금주 1on1 매칭 대상은 {message_content}입니다"
+                text=f"안녕하세요, 이번주 금요일에 진행할 1on1 미팅 안내 드립니다.\n"
+                f"이번주는 Esther와(과) 함께 피드백을 주고 받으면 어떨까요?\n"
+                f"1on1을 어떻게 해야 하는지 막막하다면, 아래 링크의 'KV 사람들이 말하는 법'을 참고하시기 바랍니다.\n"
+                f"https://kakaoventures.oopy.io/how-to-speak \n"
+                f"꼭 레몬베이스에 기록하는 것 잊지 마시고요.금주 1on1 매칭 대상은 {partner_name}입니다"
             )
-            # print(f"Message sent to {slack_id}: {message_content}")
         except SlackApiError as e:
             print(f"Error sending message to {slack_id}: {e.response['error']}")
-    """
-    
 
+    print("1on1 DM 보내기 완료! 배포 결과를 확인하세요!!")
+    
+    
 def notify_deposit_info():
     user1 = config.deposity_user1_id
     user2 = config.deposity_user2_id

@@ -56,16 +56,16 @@ app = App(token=config.bot_token_id)
 
 # Scheduler 관련 함수 정의
 # 평일 오전 8시에 notify_today_vacation_info 함수 실행
-# schedule.every().monday.at("08:00").do(notify_today_vacation_info)
-# schedule.every().tuesday.at("08:00").do(notify_today_vacation_info)
-# schedule.every().wednesday.at("08:00").do(notify_today_vacation_info)
-# schedule.every().thursday.at("08:00").do(notify_today_vacation_info)
-# schedule.every().friday.at("08:00").do(notify_today_vacation_info)
+schedule.every().monday.at("08:00").do(notify_today_vacation_info)
+schedule.every().tuesday.at("08:00").do(notify_today_vacation_info)
+schedule.every().wednesday.at("08:00").do(notify_today_vacation_info)
+schedule.every().thursday.at("08:00").do(notify_today_vacation_info)
+schedule.every().friday.at("08:00").do(notify_today_vacation_info)
 
 # schedule.every().day.at("08:00").do(notify_deposit_info)
 
 # 시트 생성 후 다이렉트 메세지 전송시도하지 않은 상태 (실제 배포시 테스트 진행하기)
-# schedule.every().day.at("08:00").do(notify_one_by_one_partner)
+schedule.every().monday.at("08:00").do(notify_one_by_one_partner)
 
 # 스케줄러 실행 함수
 def run_scheduler():
@@ -102,9 +102,10 @@ def handle_message_events(event, say):
     user_input = event['text']
 
     # Test - Should be deleted!!
-    if process_user_input(user_input) == 'test':
-        notify_one_by_one_partner()
-        return
+    # test 용 함수 - "test" 입력하면 내가 원하는 함수 호출
+    # if process_user_input(user_input) == 'test':
+    #     notify_today_vacation_info()
+    #     return
 
     if user_id not in user_states:
         user_purpose_handler(event, say) # 안내 문구 출력 - 알맞은 user_states[user_id] 배정하는 역할
@@ -144,7 +145,7 @@ def handle_message_events(event, say):
             deposit_rotation_system_low_model_handler(event, say, user_states)
         elif user_states[user_id] == 'deposit_rotation_waiting_high_chatgpt_input':
             deposit_rotation_system_high_model_handler(event, say, user_states)
-            
+
 @app.event("message")
 def handle_message_events(body, logger):
     logger.info(body)
