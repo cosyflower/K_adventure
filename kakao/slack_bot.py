@@ -146,9 +146,20 @@ def handle_message_events(event, say):
         elif user_states[user_id] == 'deposit_rotation_waiting_high_chatgpt_input':
             deposit_rotation_system_high_model_handler(event, say, user_states)
 
+# Function to handle channel messages with specific keywords
 @app.event("message")
-def handle_message_events(body, logger):
-    logger.info(body)
+def handle_channel_messages(event, say):
+    channel_type = event.get("channel_type")
+    text = event.get("text")
+    
+    if channel_type != "im" and ("로제봇" in text or "도와줘" in text):
+        channel_id = event['channel']
+        say(text="DM으로 답변드리겠습니다.", channel=channel_id)
+        user_purpose_handler(event, say)
+
+# @app.event("message")
+# def handle_message_events(body, logger):
+#     logger.info(body)
 
 @app.event("app_mention")
 def handle_message_events(event, say):
