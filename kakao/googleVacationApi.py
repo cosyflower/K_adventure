@@ -23,6 +23,7 @@ import io
 import os
 import shutil
 import re
+import copy
 
 from translator import to_specific_date, format_vacation_info, to_cancel_sequence_list, convert_type_value, \
     format_vacation_data
@@ -367,9 +368,24 @@ def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, 
     
             seq = 1
             for result in found_data_list:
-                msg = (f"{seq}. {format_vacation_info(result)}")
-                send_direct_message_to_user(user_id, msg)
-                seq += 1
+                start_date = result[2]
+                # 현재 날짜 이후 휴가만 조회 가능
+                start_date = start_date.replace("오전", "AM")
+                start_date = start_date.replace("오후", "PM")
+
+                start_date = datetime.strptime(start_date, '%Y. %m. %d %p %I:%M:%S')
+                now = datetime.now()
+
+                if start_date <= now:
+                    continue
+                else:
+                    msg = (f"{seq}. {format_vacation_info(result)}")
+                    send_direct_message_to_user(user_id, msg)
+                    seq += 1
+
+                # msg = (f"{seq}. {format_vacation_info(result)}")
+                # send_direct_message_to_user(user_id, msg)
+                # seq += 1
             
             msg = (f"<@{user_id}>님 휴가 관련 프로그램을 종료합니다.\n\n")
             send_direct_message_to_user(user_id, msg)
@@ -385,6 +401,7 @@ def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, 
                 del user_vacation_status[user_id]
             user_states[user_id] = 'request_vacation'
             msg = (f"<@{user_id}>님 휴가 신청을 시작합니다. 휴가 시작 날짜와 시간을 입력해주세요.\n"
+                   "*[유의] 연차를 신청하는 경우 휴가 시작 시간은 오전 9시로 작성하세요*\n"
                 "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 입력하세요\n"
                 "[예시] 2024-04-04 18:00\n"
                 )
@@ -438,6 +455,7 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
     # 시트 번호가 적절하지 않은 경우 예외 처리를 진행한다
     
     try:
+        # valid_data_list = [] delete
         found_data_list = find_data_by_userId(spreadsheet_id, 1, user_id, 1)
     except ValueError as e:
         msg = (f"Unvalid sheet_number: {e}")
@@ -450,37 +468,74 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
             "종료를 원하시면 \'종료\'를 입력해주세요"
             ) # 문구 추가
         send_direct_message_to_user(user_id, msg)
+
         for result in found_data_list:
-            msg = (f"{seq}. {format_vacation_info(result)}")
-            send_direct_message_to_user(user_id, msg)
-            seq += 1
+            start_date = result[2]
+            # 현재 날짜 이후 휴가만 삭제 가능
+            start_date = start_date.replace("오전", "AM")
+            start_date = start_date.replace("오후", "PM")
+
+            start_date = datetime.strptime(start_date, '%Y. %m. %d %p %I:%M:%S')
+            now = datetime.now()
+
+            if start_date <= now:
+                continue
+            else:
+                msg = (f"{seq}. {format_vacation_info(result)}")
+                send_direct_message_to_user(user_id, msg)
+                seq += 1
+                
         cancel_vacation_status[user_id] = 'waiting_cancel_sequence'
-        return
     
-    if cancel_vacation_status[user_id] == 'waiting_cancel_sequence':
+    elif cancel_vacation_status[user_id] == 'waiting_cancel_sequence':
         input_cancel_sequence(message, say, cancel_vacation_status, spreadsheet_id)
-    
-    if cancel_vacation_status[user_id] == 'waiting_deleting':
-        # 1 / 1, 2 / 1,2 -> [] 리스트 형태로 변환해주고 - 변환하면서 예외처리 진행 - 선택한 휴가 맞는지 한번 더 출력
-        ready_for_delete_list = cleaned_user_input
-        cancel_sequence_list = to_cancel_sequence_list(ready_for_delete_list)
-        msg = (f"<@{user_id}>의 휴가 삭제를 진행중입니다. 잠시만 기다려주세요.")
-        send_direct_message_to_user(user_id, msg)
-        for num in cancel_sequence_list:
-            delete_data(spreadsheet_id, 1, found_data_list[num-1])
-            delete_out_of_office_event(user_id, found_data_list[num-1][2], found_data_list[num-1][3])
 
-        msg = (f"<@{user_id}>의 휴가 삭제를 진행중입니다. 휴가 삭제를 완료했습니다.")
-        send_direct_message_to_user(user_id, msg)
     
-        # 구글 캘린더에 떠 있는 부재중 알림을 해제해야 함
+        if cancel_vacation_status[user_id] == 'waiting_deleting':
+            # 1 / 1, 2 / 1,2 -> [] 리스트 형태로 변환해주고 - 변환하면서 예외처리 진행 - 선택한 휴가 맞는지 한번 더 출력
+            ready_for_delete_list = cleaned_user_input
+            cancel_sequence_list = to_cancel_sequence_list(ready_for_delete_list)
+            msg = (f"<@{user_id}>의 휴가 삭제를 진행중입니다. 잠시만 기다려주세요.")
+            send_direct_message_to_user(user_id, msg)
 
-        del cancel_vacation_status[user_id]
-        del user_states[user_id]
-        # user_states[user_id] = 'vacation_tracker'
-        # msg = (f"<@{user_id}>님의 휴가 프로그램 실행중입니다. 조회는 1번, 추가는 2번, 삭제는 3번을, 종료를 원하시면 \"종료\"를 입력하세요\n")
-        send_direct_message_to_user(user_id, msg)
-        # 휴가 추가는 1, 취소는 2를 누르도록 진행한다
+
+            valid_data_list = []
+
+            for result in found_data_list:
+                start_date = result[2]
+                # 현재 날짜 이후 휴가만 삭제 가능
+                start_date = start_date.replace("오전", "AM")
+                start_date = start_date.replace("오후", "PM")
+
+                start_date = datetime.strptime(start_date, '%Y. %m. %d %p %I:%M:%S')
+                now = datetime.now()
+
+                if start_date <= now:
+                    continue
+                else:
+                    valid_data_list.append(result)
+
+            found_data_list = valid_data_list
+
+            for num in cancel_sequence_list:
+                #print
+                print(f"num : {num}")
+                print(f" found_data_list len : {len(found_data_list)}")
+
+                delete_data(spreadsheet_id, 1, found_data_list[num-1])
+                delete_out_of_office_event(user_id, found_data_list[num-1][2], found_data_list[num-1][3])
+
+            msg = (f"<@{user_id}>의 휴가 삭제를 진행중입니다. 휴가 삭제를 완료했습니다.")
+            # send_direct_message_to_user(user_id, msg)
+        
+            # 구글 캘린더에 떠 있는 부재중 알림을 해제해야 함
+
+            del cancel_vacation_status[user_id]
+            del user_states[user_id]
+            # user_states[user_id] = 'vacation_tracker'
+            # msg = (f"<@{user_id}>님의 휴가 프로그램 실행중입니다. 조회는 1번, 추가는 2번, 삭제는 3번을, 종료를 원하시면 \"종료\"를 입력하세요\n")
+            send_direct_message_to_user(user_id, msg)
+            # 휴가 추가는 1, 취소는 2를 누르도록 진행한다
 
 ##### 휴가 종류를 입력받는다
 def input_vacation_type(message, say, user_vacation_info, user_vacation_status):
@@ -628,12 +683,15 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         if is_valid_date(start_date):
             user_vacation_info[user_id].append(start_date)
             msg = (f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종료 날짜와 시간을 입력해주세요.\n"
+                   "*[유의] 연차를 신청하는 경우 휴가 종료 시간은 오후 6시(18시)로 작성하세요*\n"
                 "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 입력하세요\n"
                 "[예시] 2024-04-04 18:00\n"
                 )
             send_direct_message_to_user(user_id, msg)
         else:
-            msg = ("잘못된 형식입니다. 휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로 다시 입력해주세요.")
+            msg = ("잘못된 형식입니다. 휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로 다시 입력해주세요.\n"
+            "*[유의] 연차를 신청하는 경우 휴가 시작 시간은 오전 9시로 작성하세요*\n"
+            )
             send_direct_message_to_user(user_id, msg)
             user_vacation_status[user_id] = 'pending'
     elif user_vacation_status[user_id] == 'pending': # 다시 시작 날짜부터 받는다 
@@ -641,13 +699,16 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         if is_valid_date(start_date):
             user_vacation_info[user_id].append(start_date)
             msg = (f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종료 날짜와 시간을 입력해주세요.\n"
+                "*[유의] 연차를 신청하는 경우 휴가 종료 시간은 오후 6시(18시)로 작성하세요*\n"
                 "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 작성해주세요\n"
                 "[예시] 2024-01-01 19:00\n"
                 )
             send_direct_message_to_user(user_id, msg)
             user_vacation_status[user_id] = 'requesting'
         else:
-            msg = (f"<@{user_id}>님 휴가 시작 날짜와 시간을 다시 입력해주세요 YYYY-MM-DD HH:MM 형태로 입력하세요 \n\n")
+            msg = (f"<@{user_id}>님 휴가 시작 날짜와 시간을 다시 입력해주세요 YYYY-MM-DD HH:MM 형태로 입력하세요\n"
+                   "*[유의] 연차를 신청하는 경우 휴가 시작 시간은 오전 9시로 작성하세요*\n\n"
+                   )
             send_direct_message_to_user(user_id, msg)
     elif user_vacation_status[user_id] == 'requesting': # 시작 날짜 문제가 없는 상황 - 종료 날짜를 입력받는다
         end_date = process_user_input(cleaned_user_input)
@@ -659,7 +720,9 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             send_direct_message_to_user(user_id, msg)
             user_vacation_status[user_id] = 'waiting_vacation_type'
         else:
-            msg = ("잘못된 형식입니다. 휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로 다시 입력해주세요.")
+            msg = ("잘못된 형식입니다. 휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로 다시 입력해주세요.\n"
+                   "*[유의] 연차를 신청하는 경우 휴가 시작 시간은 오전 9시로 작성하세요*\n"
+                   )
             send_direct_message_to_user(user_id, msg)
             user_vacation_info[user_id] = []
             user_vacation_status[user_id] = 'pending'
