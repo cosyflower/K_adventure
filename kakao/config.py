@@ -1,6 +1,6 @@
 ## 정기예금 회전시스템 ##
 # KAKAO
-deposit_id = '' ###### 수정필요
+deposit_id = '1R4QfCN9Ltb-_AAYdJcdNwoBb5EfPvSBl8aVa2MYuues' ###### 수정필요
 deposit_channel_id = 'C05G8E1E7U0' ##### 수정필요
 deposity_user1_id = "U0332HZ9AAW" # rose
 deposity_user2_id = "U033GU3M99Q" # raina

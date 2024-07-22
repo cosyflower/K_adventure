@@ -143,8 +143,8 @@ def handle_message_events(event, say):
             deposit_rotation_system_handler(event, say, user_states)
         elif user_states[user_id] == 'deposit_rotation_waiting_low_chatgpt_input':
             deposit_rotation_system_low_model_handler(event, say, user_states)
-        elif user_states[user_id] == 'deposit_rotation_waiting_high_chatgpt_input':
-            deposit_rotation_system_high_model_handler(event, say, user_states)
+        # elif user_states[user_id] == 'deposit_rotation_waiting_high_chatgpt_input':
+        #     deposit_rotation_system_high_model_handler(event, say, user_states)
 
 # Function to handle channel messages with specific keywords
 @app.event("message")
@@ -228,13 +228,13 @@ def user_purpose_handler(message, say):
         user_states[user_id] = 'rosebot_waiting_only_number'
     elif purpose == "정기예금회전시스템":
         if get_user_authority(user_id) < 3:
-            # msg = ("정기예금 회전 시스템을 작동합니다. 종료를 원한다면 \'종료\'를 입력해주세요\n"
-            #         "1. 질문하기(일반모델)\n"
-            #         "2. 질문하기(상위모델)\n"
-            #         # "3. 최종 만기일이 다가온 정기예금 상품조회\n"
-            #     )
-            # send_direct_message_to_user(user_id, msg)
-            # user_states[user_id] = 'deposit_rotation_waiting_only_number'
+            msg = ("정기예금 회전 시스템을 작동합니다. 종료를 원한다면 \'종료\'를 입력해주세요\n"
+                    "1. 질문하기\n"
+                    # "2. 질문하기(상위모델)\n"
+                    # "3. 최종 만기일이 다가온 정기예금 상품조회\n"
+                )
+            send_direct_message_to_user(user_id, msg)
+            user_states[user_id] = 'deposit_rotation_waiting_only_number'
             msg = "공사중...종료합니다"
             send_direct_message_to_user(user_id, msg)
         else:
