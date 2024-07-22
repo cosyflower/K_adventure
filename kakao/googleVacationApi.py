@@ -527,7 +527,6 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
 
             msg = (f"<@{user_id}>의 휴가 삭제를 진행중입니다. 휴가 삭제를 완료했습니다.")
             # send_direct_message_to_user(user_id, msg)
-        
             # 구글 캘린더에 떠 있는 부재중 알림을 해제해야 함
 
             del cancel_vacation_status[user_id]
@@ -886,8 +885,8 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         set_out_of_office_event(user_id, 
                                 string_to_strptime(user_vacation_info[user_id][0]),
                                 string_to_strptime(user_vacation_info[user_id][1]),
-                                summary= "휴가로 인한 부재중",
-                                email= email
+                                summary= type,
+                                email= email,
                                 )
         
         msg = (f"<@{user_id}>의 휴가 신청을 완료합니다. 휴가 / 연차 서비스를 종료합니다.\n")

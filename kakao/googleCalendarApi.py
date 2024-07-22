@@ -36,7 +36,6 @@ def set_out_of_office_event(user_id, start_date, end_date, summary='Out of Offic
     # 캘린더 이벤트 생성
     event = {
         'summary': summary,
-        'description': f'User {user_id} is out of office. Email: {email}',
         'start': {
             'dateTime': start_datetime,
             'timeZone': 'Asia/Seoul',
@@ -45,8 +44,9 @@ def set_out_of_office_event(user_id, start_date, end_date, summary='Out of Offic
             'dateTime': end_datetime,
             'timeZone': 'Asia/Seoul',
         },
-        'transparency': 'transparent',
-        'visibility': 'private'
+        'transparency': 'opaque',
+        'visibility': 'private',
+        'eventType': 'outOfOffice'
     }
 
     # 캘린더 ID 출력 (디버깅용)
@@ -88,11 +88,11 @@ def delete_out_of_office_event(user_id, start_date, end_date):
 
         events = events_result.get('items', [])
         for event in events:
-            if f'User {user_id}' in event.get('description', ''):
+            if event.get('eventType') == 'outOfOffice':
                 # 이벤트 삭제
                 try:
                     service.events().delete(calendarId=config.google_calendar_id, eventId=event['id']).execute()
-                    print(f"Event deleted: {event['summary']}")
+                    print(f"Out of Office event deleted: {event['summary']}")
                 except Exception as e:
                     print(f"An error occurred while deleting the event: {e}")
     except Exception as e:

@@ -60,10 +60,10 @@ def notify_today_vacation_info():
 
     # dm to all users
     if len(today_vacation_data) == 0:
-        vacation_msg = "연차 사용이 없는 날입니다. 다들 좋은 하루 되셔요!"
+        vacation_msg = ":palm_tree:연차 사용이 없는 날입니다. 다들 좋은 하루 되셔요!"
     else:
         formatted_data = '\n'.join(formatted_vacation_data)
-        vacation_msg = f"금일 휴가자 명단입니다\n\n{formatted_data}"
+        vacation_msg = f":palm_tree:금일 휴가자 명단입니다\n\n{formatted_data}"
 
     for slack_id in user_ids:
         try:
