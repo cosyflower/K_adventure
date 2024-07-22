@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+import holidays
 
 ###### 새로 추가된 validator.py 파일
 ##### 해당 파일에서는 검증 관련 함수만 넣을 예정
@@ -131,3 +132,18 @@ def is_number(input_string):
     # $        : 문자열의 끝
     pattern = r'^-?\d+(\.\d+)?$'
     return re.match(pattern, input_string)
+
+def is_holiday(date_str):
+    # 입력된 문자열을 datetime 객체로 변환
+    date_obj = datetime.strptime(date_str, '%Y-%m-%d %H:%M')
+
+    # 대한민국의 공휴일을 가져옴
+    kr_holidays = holidays.KR()
+
+    # 날짜가 공휴일, 대체 공휴일 또는 주말인지 확인
+    if date_obj.date() in kr_holidays:
+        return True, f"공휴일: {kr_holidays.get(date_obj.date())}"
+    elif date_obj.weekday() >= 5:  # 5: 토요일, 6: 일요일
+        return True, "주말"
+    else:
+        return False, None

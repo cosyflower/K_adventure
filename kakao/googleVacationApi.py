@@ -28,7 +28,7 @@ import copy
 from translator import to_specific_date, format_vacation_info, to_cancel_sequence_list, convert_type_value, \
     format_vacation_data
 from validator import is_valid_date, is_valid_vacation_sequence, is_valid_vacation_reason_sequence, \
-is_valid_email, is_valid_confirm_sequence, is_valid_cancel_sequence, is_valid_vacation_purpose
+is_valid_email, is_valid_confirm_sequence, is_valid_cancel_sequence, is_valid_vacation_purpose, is_holiday
 from user_commend import VACATION_SEQUENCE_TO_TYPE, VACATION_SEQUENCE_TO_REASON
 from formatting import process_user_input, get_proper_file_name, create_leave_string, get_current_year, process_and_extract_email
 from directMessageApi import send_direct_message_to_user
@@ -680,6 +680,10 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         user_vacation_status[user_id] = 'requesting'
         start_date = process_user_input(cleaned_user_input)
         if is_valid_date(start_date):
+            if is_holiday(start_date):
+                msg = (f"신청한 휴가 시작 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
+                send_direct_message_to_user(user_id, msg)
+
             user_vacation_info[user_id].append(start_date)
             msg = (f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종료 날짜와 시간을 입력해주세요.\n"
                    "*[유의] 연차를 신청하는 경우 휴가 종료 시간은 오후 6시(18시)로 작성하세요*\n"
@@ -696,6 +700,10 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
     elif user_vacation_status[user_id] == 'pending': # 다시 시작 날짜부터 받는다 
         start_date = process_user_input(cleaned_user_input)
         if is_valid_date(start_date):
+            if is_holiday(start_date):
+                msg = (f"신청한 휴가 시작 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
+                send_direct_message_to_user(user_id, msg)
+
             user_vacation_info[user_id].append(start_date)
             msg = (f"<@{user_id}>님 휴가 신청 진행중입니다. 휴가 종료 날짜와 시간을 입력해주세요.\n"
                 "*[유의] 연차를 신청하는 경우 휴가 종료 시간은 오후 6시(18시)로 작성하세요*\n"
@@ -711,7 +719,12 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             send_direct_message_to_user(user_id, msg)
     elif user_vacation_status[user_id] == 'requesting': # 시작 날짜 문제가 없는 상황 - 종료 날짜를 입력받는다
         end_date = process_user_input(cleaned_user_input)
+
         if is_valid_date(end_date, comparison_date_str=user_vacation_info[user_id][0]):
+            if is_holiday(end_date):
+                msg = (f"신청한 휴가 종료 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
+                send_direct_message_to_user(user_id, msg)
+
             user_vacation_info[user_id].append(end_date)
             start_date = user_vacation_info[user_id][0]
             end_date = user_vacation_info[user_id][1]
