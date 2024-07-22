@@ -70,9 +70,9 @@ def rose_bot_handler(message, say, user_states):
                         )
                     send_direct_message_to_user(user_id, msg)
                     user_states[user_id] = 'deposit_rotation_waiting_only_number'
-                    msg = "공사중...종료합니다"
-                    send_direct_message_to_user(user_id, msg)
-                    del user_states[user_id]
+                    # msg = "공사중...종료합니다"
+                    # send_direct_message_to_user(user_id, msg)
+                    # del user_states[user_id]
                 else:
                     msg = (f"<@{user_id}>님은 권한이 없습니다.")
                     send_direct_message_to_user(user_id, msg)

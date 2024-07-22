@@ -4,7 +4,7 @@ import gspread
 import chatgpt
 import json
 import requests
-from config import deposit_id
+from config import deposit_id, kakao_json_key_path
 from openai import OpenAI
 import pandas as pd
 import gspread
@@ -68,14 +68,14 @@ def deposit_rotation_system_low_model_handler(message, say, user_states):
     user_input = message['text']
     user_input = process_user_input(user_input)
     if user_input == '종료':
-        msg = (f"<@{user_id}> 정기예금 회전 시스템을 종료합니다.\n")
+        msg = (f"정기예금 회전 시스템을 종료합니다.\n")
         send_direct_message_to_user(user_id, msg)
         del user_states[user_id]
     else:
-        msg = (f"<@{user_id}> 답변을 준비중입니다...\n")
+        msg = (f"답변을 준비중입니다...\n")
         send_direct_message_to_user(user_id, msg)
         answer = qna_chatgpt_low_model(user_input)
-        msg = (f"<@{user_id}> {answer}\n 답변이 완료되었습니다.")
+        msg = (f"{answer}\n 종료합니다.")
         send_direct_message_to_user(user_id, msg)
         del user_states[user_id]
 
@@ -96,25 +96,25 @@ def deposit_rotation_system_low_model_handler(message, say, user_states):
 #         del user_states[user_id]
 
 def qna_chatgpt_low_model(user_input):
-    try:
-        prompt = ""
-        client = OpenAI(api_key='sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
-        response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {
-            "role": "system",
-            "content": prompt
-            },
-            {
-            "role": "user",
-            "content": deposit_data_to_json() + "\n" + user_input
-            }
-        ],)
-        output = response.choices[0].message.content
-    except Exception as e:
-        print(f"qna_chatgpt_low_model chatgpt error: {e}")
-        return "서버 오류로 인해 사용이 불가능합니다 잠시후 다시 이용해 주세요"
+    # try:
+    prompt = ""
+    client = OpenAI(api_key='sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
+    response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[
+        {
+        "role": "system",
+        "content": prompt
+        },
+        {
+        "role": "user",
+        "content": deposit_data_to_json() + "\n" + user_input
+        }
+    ],)
+    output = response.choices[0].message.content
+    # except Exception as e:
+    #     print(f"qna_chatgpt_low_model chatgpt error: {e}")
+    #     return "서버 오류로 인해 사용이 불가능합니다 잠시후 다시 이용해 주세요"
     return output
 
 # def qna_chatgpt_high_model(user_input):
@@ -141,7 +141,7 @@ def qna_chatgpt_low_model(user_input):
 
 def extract_deposit_df():
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('kakao-test-422905-9ed51f908a0f.json', scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name(kakao_json_key_path, scope)
     client = gspread.authorize(creds)
     spreadsheet_id = deposit_id
     spreadsheet = client.open_by_key(spreadsheet_id)
@@ -182,7 +182,7 @@ def extract_deposit_df():
 
 def deposit_data_to_json():
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('kakao-test-422905-9ed51f908a0f.json', scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name(kakao_json_key_path, scope)
     client = gspread.authorize(creds)
     spreadsheet_id = deposit_id
     spreadsheet = client.open_by_key(spreadsheet_id)
@@ -230,15 +230,14 @@ def fill_missing_values(df):
 
 def convert_to_json(df):
     records = []
-    grouped = df.groupby(['거래지점', '종류', '계좌번호', '최초금액','시트명'])
+    grouped = df.groupby(['거래지점', '계좌번호', '최초금액','스프레드시트명'])
 
     for name, group in grouped:
         금융기관 = group.iloc[0]['금융기관']
         거래지점 = name[0]
-        종류 = name[1]
-        계좌번호 = name[2]
-        최초금액 = name[3]
-        시트명 = name[4]
+        계좌번호 = name[1]
+        최초금액 = name[2]
+        시트명 = name[3]
         
         data = []
         for _, row in group.iterrows():
@@ -246,7 +245,7 @@ def convert_to_json(df):
                 "신규일": row["신규일"],
                 "만기일": row["만기일"],
                 "금리": row["금리"],
-                "해지원금": row["해지 원금"],
+                "해지원금": row["해지원금"],
                 "이자": row["이자"],
                 "기타": row["기타"],
                 "중도해지유무": row["중도해지유무"]
@@ -265,5 +264,4 @@ def convert_to_json(df):
     return json.dumps(records, indent=4,ensure_ascii=False)
 
 if __name__ == "__main__":
-    print(deposit_data_to_json())
     print(extract_deposit_df())
