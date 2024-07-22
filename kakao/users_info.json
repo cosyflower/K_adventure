@@ -46,7 +46,7 @@
         "name": "simplepoll",
         "real_name": "Simple Poll",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U032MU0HZH7": {
         "id": "U032MU0HZH7",
@@ -137,21 +137,21 @@
         "name": "wf_bot_a069gcdubfy",
         "real_name": "선택적 복지 REMIND",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U076KMVNLJK": {
         "id": "U076KMVNLJK",
         "name": "zerobot",
         "real_name": "제로봇",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U0328R301BQ": {
         "id": "U0328R301BQ",
         "name": "birthdaybot",
         "real_name": "BirthdayBot",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U032HNW23PW": {
         "id": "U032HNW23PW",
@@ -207,7 +207,7 @@
         "name": "wf_bot_a078m5h14te",
         "real_name": "베이스캠프",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U07AHSD5CA0": {
         "id": "U07AHSD5CA0",
@@ -223,12 +223,19 @@
         "display_name": "bety.kv 김민정",
         "authority": 3
     },
+    "U07D7AFPMN2": {
+        "id": "U07D7AFPMN2",
+        "name": "kacey",
+        "real_name": "kacey",
+        "display_name": "kacey",
+        "authority": 3
+    },
     "USLACKBOT": {
         "id": "USLACKBOT",
         "name": "slackbot",
         "real_name": "Slackbot",
         "display_name": "Slackbot",
-        "authority": 4
+        "authority": 5
     },
     "U031UM1TVT9": {
         "id": "U031UM1TVT9",
@@ -249,7 +256,7 @@
         "name": "google_calendar",
         "real_name": "Google Calendar",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U0326CB8XPX": {
         "id": "U0326CB8XPX",
@@ -354,7 +361,7 @@
         "name": "kmk",
         "real_name": "김민규",
         "display_name": "김민규_프로이드",
-        "authority": 4
+        "authority": 5
     },
     "U0341QJT01X": {
         "id": "U0341QJT01X",
@@ -375,7 +382,7 @@
         "name": "kh.jeong",
         "real_name": "정권호_제이앤피메디",
         "display_name": "정권호_JNPMEDI",
-        "authority": 4
+        "authority": 5
     },
     "U034BRG6SUD": {
         "id": "U034BRG6SUD",
@@ -417,7 +424,7 @@
         "name": "ardor",
         "real_name": "노유헌_이모코그",
         "display_name": "Yoo-Hun Noh",
-        "authority": 4
+        "authority": 5
     },
     "U034H2R86N8": {
         "id": "U034H2R86N8",
@@ -452,7 +459,7 @@
         "name": "reminder_bot",
         "real_name": "Reminder Bot",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U0371660KU5": {
         "id": "U0371660KU5",
@@ -529,14 +536,14 @@
         "name": "tally_forms",
         "real_name": "Tally Forms",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U03HNA54ZU3": {
         "id": "U03HNA54ZU3",
         "name": "eddie_bot",
         "real_name": "Eddie bot",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U03LC49ALKF": {
         "id": "U03LC49ALKF",
@@ -557,7 +564,7 @@
         "name": "pr",
         "real_name": "",
         "display_name": "PR_kakaoventures",
-        "authority": 4
+        "authority": 5
     },
     "U03ME4MGTEW": {
         "id": "U03ME4MGTEW",
@@ -662,7 +669,7 @@
         "name": "1on1_bot",
         "real_name": "",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U056BDK7D5F": {
         "id": "U056BDK7D5F",
@@ -683,35 +690,35 @@
         "name": "google_sheets_workflo",
         "real_name": "Google Sheets Workflow Steps",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U05CZ5GQTCM": {
         "id": "U05CZ5GQTCM",
         "name": "wb_bot_a05cz5gqg9k",
         "real_name": "",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U05D4FF4E8L": {
         "id": "U05D4FF4E8L",
         "name": "wb_bot_a05cmgbnxfh",
         "real_name": "",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U05DRPXEXFA": {
         "id": "U05DRPXEXFA",
         "name": "wb_bot_a05cvd9pc86",
         "real_name": "",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U05FZSAHGRM": {
         "id": "U05FZSAHGRM",
         "name": "wb_bot_a05gecsfnry",
         "real_name": "PR 리마인더",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U05GDD90USK": {
         "id": "U05GDD90USK",
@@ -725,7 +732,7 @@
         "name": "google_sheets",
         "real_name": "Google Sheets",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U05GUV67HB9": {
         "id": "U05GUV67HB9",
@@ -739,14 +746,14 @@
         "name": "wf_bot_a05gtuqpnls",
         "real_name": "VAP - 카벤 패밀리 연결 수요 조사봇",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U05H1MH72HX": {
         "id": "U05H1MH72HX",
         "name": "wf_bot_a05hcnj694g",
         "real_name": "",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U05H9C88GSF": {
         "id": "U05H9C88GSF",
@@ -781,7 +788,7 @@
         "name": "wf_bot_a05pyat8tew",
         "real_name": "사후관리자 변경 여부",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U05RWGX3CTY": {
         "id": "U05RWGX3CTY",
@@ -802,7 +809,7 @@
         "name": "wf_bot_a063yq5qpaq",
         "real_name": "회수보고서 작성",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U065B4R1VB7": {
         "id": "U065B4R1VB7",
@@ -816,7 +823,7 @@
         "name": "wf_bot_a068gen64a2",
         "real_name": "위클리보고 공유",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U069A4U62G6": {
         "id": "U069A4U62G6",
@@ -830,14 +837,14 @@
         "name": "day_off_scheduler_app",
         "real_name": "Day off scheduler app",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U06A4HG26KS": {
         "id": "U06A4HG26KS",
         "name": "wf_bot_a069flfmsnp",
         "real_name": "주간 회의 알리미",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U06EJAU6GD6": {
         "id": "U06EJAU6GD6",
@@ -851,7 +858,7 @@
         "name": "wf_bot_a06njvdg63d",
         "real_name": "예약 메시지 전송",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U06Q07CP6UW": {
         "id": "U06Q07CP6UW",
@@ -865,7 +872,7 @@
         "name": "roze_bot",
         "real_name": "로제봇",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U06T0Q6HGQN": {
         "id": "U06T0Q6HGQN",
@@ -879,6 +886,6 @@
         "name": "wf_bot_a077a9fpsrz",
         "real_name": "Send a scheduled message",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     }
 }

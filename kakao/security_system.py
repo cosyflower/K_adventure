@@ -84,7 +84,7 @@ def security_system_user_function_handler(message, say, user_states, security_sy
                         elif user_data['authority'] == 3:
                             authority_name = "인턴"
                             user_details.append({'real_name': user_data['real_name'], 'name': user_data['name'], 'id': user_data['id'], 'authority_name': authority_name, 'authority': user_data['authority']})
-                        else:
+                        elif user_data['authority'] == 4:
                             authority_name = "미정"
                             user_details.append({'real_name': user_data['real_name'], 'name': user_data['name'], 'id': user_data['id'], 'authority_name': authority_name, 'authority': user_data['authority']})
                     choice = ""
