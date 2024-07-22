@@ -13,7 +13,7 @@ def rose_bot_handler(message, say, user_states):
     user_input = process_user_input(user_input)
 
     if user_input == '종료':
-        msg = (f"<@{user_id}> 로제봇 시스템을 종료합니다.\n")
+        msg = (f"로제봇 시스템을 종료합니다.\n")
         send_direct_message_to_user(user_id, msg)
         del user_states[user_id]
         return
@@ -21,7 +21,7 @@ def rose_bot_handler(message, say, user_states):
         if user_input.isdigit():
             if user_input == "1": ## 휴가신청시스템
                 if get_user_authority(user_id) < 4:
-                    msg = (f"<@{user_id}> 휴가시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
+                    msg = (f"휴가시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
                         "1. 신청된 휴가 조회\n"
                         "2. 신규 휴가 신청\n"
                         "3. 기존 휴가 삭제\n"
@@ -31,12 +31,12 @@ def rose_bot_handler(message, say, user_states):
                     send_direct_message_to_user(user_id, msg)
                     user_states[user_id] = 'vacation_purpose_handler'
                 else:
-                    msg = (f"<@{user_id}> 권한이 없습니다. 종료합니다")
+                    msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "2": ## 보안시스템
                 if get_user_authority(user_id) < 4:
-                    msg = (f"<@{user_id}> 보안시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
+                    msg = (f"보안시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
                         "1. 전체 사용자 권한 조회\n"
                         "2. 신규 사용자 권한 배정\n"
                         "3. 내 권한 조회\n"
@@ -49,16 +49,16 @@ def rose_bot_handler(message, say, user_states):
                     send_direct_message_to_user(user_id, msg)
                     user_states[user_id] = 'security_system_waiting_function_number'
                 else:
-                    msg = (f"<@{user_id}> 권한이 없습니다. 종료합니다")
+                    msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "3": ## 문서 4종 생성
                 if get_user_authority(user_id) < 3:
-                    msg = (f"<@{user_id}> 문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
+                    msg = (f"<@{user_id}>님은 문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
                     send_direct_message_to_user(user_id, msg)
                     user_states[user_id] = 'docx_generating_waiting_company_name'
                 else:
-                    msg = (f"<@{user_id}> 권한이 없습니다. 종료합니다")
+                    msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "4": ## 정기예금 회전 시스템
@@ -74,37 +74,37 @@ def rose_bot_handler(message, say, user_states):
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
                 else:
-                    msg = (f"<@{user_id}> 권한이 없습니다.")
+                    msg = (f"<@{user_id}>님은 권한이 없습니다.")
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "5": ## 회수 상황판
-                msg = (f"<@{user_id}> 공사중입니다. 종료합니다.\n")
+                msg = (f"공사중입니다. 종료합니다.\n")
                 send_direct_message_to_user(user_id, msg)
                 del user_states[user_id]
             elif user_input == "6": ## 검색
-                msg = (f"<@{user_id}> 공사중입니다. 종료합니다\n")
+                msg = (f"공사중입니다. 종료합니다\n")
                 send_direct_message_to_user(user_id, msg)
                 del user_states[user_id]
             elif user_input == "7": ## 1on1
                 if get_user_authority(user_id) < 3:
-                    msg = (f"<@{user_id}> 일대일매칭 기능을 진행합니다. 최신 매칭 대상을 조회합니다.\n")
+                    msg = (f"일대일매칭 기능을 진행합니다. 최신 매칭 대상을 조회합니다.\n")
                     send_direct_message_to_user(user_id, msg)
                     partner = find_oneByone(user_id)
                     # # 삭제 예정
                     # print(f"partner : {partner}")
-                    msg = (f"<@{user_id}> 매칭 대상은 : {partner}입니다. 일대일매칭 기능을 종료합니다\n")
+                    msg = (f"<@{user_id}>님의 매칭 대상은 : {partner}입니다. 일대일매칭 기능을 종료합니다\n")
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
                 else:
-                    msg = (f"<@{user_id}> 권한이 없습니다.")
+                    msg = (f"<@{user_id}>님은 권한이 없습니다.")
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             else:
-                msg = (f"<@{user_id}> 잘못된 숫자를 입력했습니다. 다시 입력해주세요.\n")
+                msg = (f"잘못된 숫자를 입력했습니다. 다시 입력해주세요.\n")
                 send_direct_message_to_user(user_id, msg)
                 user_states[user_id] = 'rosebot_waiting_only_number'
         else:
-            msg = (f"<@{user_id}> 숫자만 입력해주세요. 다시 입력해주세요.")
+            msg = (f"숫자만 입력해주세요. 다시 입력해주세요.")
             send_direct_message_to_user(user_id, msg)
             user_states[user_id] = 'rosebot_waiting_only_number'
             return
