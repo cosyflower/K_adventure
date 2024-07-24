@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 import holidays
 
 ###### 새로 추가된 validator.py 파일
@@ -147,3 +147,29 @@ def is_holiday(date_str):
         return True, "주말"
     else:
         return False, None
+
+# 시작 날짜 ~ 종료 날짜 내 휴일이 존재하는지, 존재한다면 몇 일이 존재하는지 확인하는 함수
+def count_holidays(start_date_str, end_date_str):
+    # 시작 날짜와 종료 날짜를 datetime 객체로 변환
+    start_date = datetime.strptime(start_date_str, '%Y-%m-%d %H:%M')
+    end_date = datetime.strptime(end_date_str, '%Y-%m-%d %H:%M')
+    
+    # 날짜 범위 내의 휴일 수를 세기 위한 변수 초기화 + 휴가 신청 총 날짜 세기
+    vacation_count = 0
+    holiday_count = 0
+    holiday_details = []
+
+    # 시작 날짜부터 종료 날짜까지의 모든 날짜를 확인
+    current_date = start_date
+    while current_date <= end_date:
+        # 현재 날짜가 휴일인지 확인
+        vacation_count += 1
+        is_holiday_flag, holiday_name = is_holiday(current_date.strftime('%Y-%m-%d %H:%M'))
+        if is_holiday_flag:
+            holiday_count += 1
+            holiday_details.append(f"{current_date.strftime('%Y-%m-%d')}: {holiday_name}")
+        
+        # 다음 날짜로 이동
+        current_date += timedelta(days=1)
+    
+    return vacation_count, holiday_count, holiday_details

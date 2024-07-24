@@ -1,5 +1,7 @@
 from datetime import datetime
 
+# google spreadsheet에 저장되는 형태로 문자열을 변환
+# input: 2024-05-05 10:00 <-> output: 2024. 05. 05 오전 10:00:00
 def to_specific_date(date_str):
     # 문자열을 datetime 객체로 변환
     date_obj = datetime.strptime(date_str, '%Y-%m-%d %H:%M')
