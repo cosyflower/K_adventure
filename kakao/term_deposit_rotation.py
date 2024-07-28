@@ -138,6 +138,62 @@ def qna_chatgpt_low_model(user_input):
 #         print(f"qna_chatgpt_high_model chatgpt error: {e}")
 #         return "서버 오류로 인해 사용이 불가능합니다 잠시후 다시 이용해 주세요"
 #     return output
+def update_deposit_df():
+    scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name(kakao_json_key_path, scope)
+    client = gspread.authorize(creds)
+    spreadsheet_id = deposit_id
+    spreadsheet = client.open_by_key(spreadsheet_id)
+
+    # '##...+'_미수금액' 시트명 존재하는지 확인
+    for sheet in spreadsheet.worksheets():
+        sheet_name = sheet.title
+        if sheet_name.startswith('##'):
+            # 새로운 시트 이름 생성
+            new_sheet_name = sheet_name[2:] + '_미수금액'
+            # 새로운 시트가 존재하지 않는 경우 추가
+            if new_sheet_name not in [ws.title for ws in spreadsheet.worksheets()]:
+                new_sheet = spreadsheet.add_worksheet(title=new_sheet_name, rows="100", cols="20")
+                # 새로운 시트에 컬럼 이름 추가
+                columns = ['금융기관', '거래지점', '계좌번호', '신규일', '만기일', '최초금액', '금리', '해지원금', '이자', '기타', '중도해지유무', '미수금액']
+                new_sheet.append_row(columns)
+    
+    # 금리 해지원금 이자 기타 중도해지 유무 까지만 반영한 데이터를 추가한다
+
+    # deposit_info는 ['금융기관', '거래지점', '계좌번호', '신규일', '만기일', '최초금액', '금리', '해지원금', '이자', '기타', '중도해지유무', '시트명'] 으로 구성된 데이터
+    deposit_info = extract_deposit_df()
+
+    # 1. deposit_info의 각각의 데이터를 순회합니다.
+    # 2. 시트명 컬럼의 값을 먼저 파악한다
+    # 3. 시트명 컬럼의 값 + '_미수금액' 시트명으로 이동합니다
+    # 4. 이자를 계산합니다. 이자는 신규일과 만기일이 몇 개월 차이가 나는지를 먼저 확인합니다. 신규일과 만기일 각각의 달을 확인하여 차이를 구합니다.
+    # 5. 최초금액 * 이자 * 신규일의 달과 만기일의 달 차이 / 12 값을 '이자'컬럼에 저장합니다 
+    # 6. 해지원금은 최초금액과 동일하게 저장합니다
+    # 7. 미수금액은 이자와 동일하게 저장합니다
+    # 8. 데이터를 해당 시트에 추가합니다.
+    # deposit_info의 데이터를 순회합니다.
+    for index, row in deposit_info.iterrows():
+        sheet_name = row['시트명'] + '_미수금액'
+        
+        # 신규일과 만기일의 달 차이를 계산합니다.
+        start_date = datetime.strptime(row['신규일'], '%Y-%m-%d')
+        end_date = datetime.strptime(row['만기일'], '%Y-%m-%d')
+        month_difference = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
+
+        # 이자, 해지원금, 미수금액 계산
+        # %제외해야 하고 소수로 변환할 수 있어야 한다
+        interest = row['최초금액'] * row['금리'] * month_difference / 12
+        row['이자'] = interest
+        row['해지원금'] = row['최초금액']
+        row['미수금액'] = interest
+
+        # 데이터를 추가합니다.
+        new_sheet.append_row([
+            row['금융기관'], row['거래지점'], row['계좌번호'], row['신규일'], row['만기일'], 
+            row['최초금액'], row['금리'], row['해지원금'], row['이자'], row['기타'], 
+            row['중도해지유무'], row['미수금액']
+        ])
+
 
 def extract_deposit_df():
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -166,10 +222,18 @@ def extract_deposit_df():
             
             # Append to the final DataFrame
             final_df = pd.concat([final_df, df], ignore_index=True)
-    current_time = datetime.now()
+
+    # 오늘 날짜의 월을 구합니다.
+    current_month = datetime.now().month
+
+    # '신규일'과 '만기일'을 datetime 형식으로 변환합니다.
     final_df['신규일'] = pd.to_datetime(final_df['신규일'])
     final_df['만기일'] = pd.to_datetime(final_df['만기일'])
-    final_df = final_df[(final_df['신규일'] <= current_time) & (final_df['만기일'] >= current_time)]
+
+    # '신규일'과 '만기일'의 월을 기준으로 필터링합니다.
+    final_df = final_df[(final_df['신규일'].dt.month <= current_month) & (final_df['만기일'].dt.month > current_month)]
+
+    # '신규일'과 '만기일'을 다시 문자열 형식으로 변환합니다.
     final_df['신규일'] = final_df['신규일'].dt.strftime('%Y-%m-%d')
     final_df['만기일'] = final_df['만기일'].dt.strftime('%Y-%m-%d')
     # final_df['만기일'] = pd.to_datetime(final_df['만기일'])
@@ -218,14 +282,15 @@ def replace_nan_with_empty_string(df):
     return df.replace(np.nan, "", inplace=False)
 
 def drop_empty_rows(df):
-    df.replace("", np.nan, inplace=True)
+    for col in df.columns:
+        df[col] = df[col].map(lambda x: np.nan if x == "" else x)
     return df.dropna(how='all')
 
 def fill_missing_values(df):
-    df["금융기관"] = df["금융기관"].fillna(method='ffill')
-    df["거래지점"] = df["거래지점"].fillna(method='ffill')
-    df["계좌번호"] = df["계좌번호"].fillna(method='ffill')
-    df["최초금액"] = df["최초금액"].fillna(method='ffill')
+    df["금융기관"] = df["금융기관"].ffill()
+    df["거래지점"] = df["거래지점"].ffill()
+    df["계좌번호"] = df["계좌번호"].ffill()
+    df["최초금액"] = df["최초금액"].ffill()
     return df
 
 def convert_to_json(df):
