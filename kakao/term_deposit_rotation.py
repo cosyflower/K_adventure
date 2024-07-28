@@ -138,6 +138,38 @@ def qna_chatgpt_low_model(user_input):
 #         print(f"qna_chatgpt_high_model chatgpt error: {e}")
 #         return "서버 오류로 인해 사용이 불가능합니다 잠시후 다시 이용해 주세요"
 #     return output
+
+def valid_deposit_df():
+    scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name(kakao_json_key_path, scope)
+    client = gspread.authorize(creds)
+    spreadsheet_id = deposit_id
+    spreadsheet = client.open_by_key(spreadsheet_id)
+
+    # 미수금액 시트만 조회한다
+    # 시작일, 만기일 조건을 확인하여 해당되지 않은 행만 확인한다
+    for sheet in spreadsheet.worksheets():
+        sheet_name = sheet.title
+        if '미수금액' in sheet_name:
+            checking_sheet = spreadsheet.worksheet(sheet_name)
+            data = checking_sheet.get_all_records()
+
+            # DataFrame으로 변환하여 시작일과 만기일을 확인
+            df = pd.DataFrame(data)
+            for index, row in df.iterrows():
+                start_date = datetime.strptime(row['신규일'], '%Y-%m-%d')
+                end_date = datetime.strptime(row['만기일'], '%Y-%m-%d')
+                current_date = datetime.now()
+
+                # 시작일과 만기일 조건을 확인
+                if not (start_date <= current_date < end_date):
+                    # 조건에 해당되지 않는 경우 '미수금액'을 0으로 업데이트
+                    df.at[index, '미수금액'] = 0
+
+            # DataFrame을 리스트로 변환하여 시트에 업데이트
+            updated_data = df.values.tolist()
+            checking_sheet.update('A2', updated_data)
+
 def update_deposit_df():
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
     creds = ServiceAccountCredentials.from_json_keyfile_name(kakao_json_key_path, scope)
@@ -156,15 +188,12 @@ def update_deposit_df():
                 new_sheet = spreadsheet.add_worksheet(title=new_sheet_name, rows="100", cols="20")
                 # 새로운 시트에 컬럼 이름 추가
                 columns = ['금융기관', '거래지점', '계좌번호', '신규일', '만기일', '최초금액', '금리', '해지원금', '이자', '기타', '중도해지유무', '미수금액']
-                new_sheet.append_row(columns)
-    
-    # 금리 해지원금 이자 기타 중도해지 유무 까지만 반영한 데이터를 추가한다
+                new_sheet.append_row(columns)    
 
     # deposit_info는 ['금융기관', '거래지점', '계좌번호', '신규일', '만기일', '최초금액', '금리', '해지원금', '이자', '기타', '중도해지유무', '시트명'] 으로 구성된 데이터
     deposit_info = extract_deposit_df()
 
     # 1. deposit_info의 각각의 데이터를 순회합니다.
-    # 2. 시트명 컬럼의 값을 먼저 파악한다
     # 3. 시트명 컬럼의 값 + '_미수금액' 시트명으로 이동합니다
     # 4. 이자를 계산합니다. 이자는 신규일과 만기일이 몇 개월 차이가 나는지를 먼저 확인합니다. 신규일과 만기일 각각의 달을 확인하여 차이를 구합니다.
     # 5. 최초금액 * 이자 * 신규일의 달과 만기일의 달 차이 / 12 값을 '이자'컬럼에 저장합니다 
@@ -174,26 +203,28 @@ def update_deposit_df():
     # deposit_info의 데이터를 순회합니다.
     for index, row in deposit_info.iterrows():
         sheet_name = row['시트명'] + '_미수금액'
-        
+        new_sheet = spreadsheet.worksheet(sheet_name)
         # 신규일과 만기일의 달 차이를 계산합니다.
         start_date = datetime.strptime(row['신규일'], '%Y-%m-%d')
         end_date = datetime.strptime(row['만기일'], '%Y-%m-%d')
         month_difference = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
 
+        # 금리를 숫자로 변환 (백분율 제거 및 소수로 변환)
+        interest_rate = float(row['금리'].strip('%')) / 100
+
         # 이자, 해지원금, 미수금액 계산
-        # %제외해야 하고 소수로 변환할 수 있어야 한다
-        interest = row['최초금액'] * row['금리'] * month_difference / 12
+        interest = row['최초금액'] * interest_rate * month_difference / 12
         row['이자'] = interest
         row['해지원금'] = row['최초금액']
         row['미수금액'] = interest
 
         # 데이터를 추가합니다.
+        # 금육기관 - 거래지점 - 계좌번호 - 신규일 - 만기일 - 최초금액 - 금리 - 해지원금 - 이자 - 기타 - 중도해지유무 - 미수금액
         new_sheet.append_row([
             row['금융기관'], row['거래지점'], row['계좌번호'], row['신규일'], row['만기일'], 
             row['최초금액'], row['금리'], row['해지원금'], row['이자'], row['기타'], 
             row['중도해지유무'], row['미수금액']
         ])
-
 
 def extract_deposit_df():
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
