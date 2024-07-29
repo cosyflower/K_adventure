@@ -28,6 +28,7 @@ import pandas as pd
 import json
 import numpy as np
 from directMessageApi import send_direct_message_to_user
+from translator import clean_and_convert_to_int
 
 def deposit_rotation_system_handler(message, say, user_states):
     user_id = message['user']
@@ -168,7 +169,16 @@ def valid_deposit_df():
 
             # DataFrame을 리스트로 변환하여 시트에 업데이트
             updated_data = df.values.tolist()
-            checking_sheet.update('A2', updated_data)
+            checking_sheet.update(updated_data, 'A2')
+
+def update_or_append_row(sheet, new_row):
+    existing_data = sheet.get_all_values()
+    for i, row in enumerate(existing_data):
+        # 계좌번호를 기준으로 동일한 데이터를 찾음 (필요에 따라 다른 열을 비교 기준으로 사용 가능)
+        if row[2] == new_row[2]:  # 계좌번호 열을 비교
+            sheet.update(f'A{i+1}', [new_row])  # 기존 행을 업데이트
+            return
+    sheet.append_row(new_row)  # 새로운 행 추가
 
 def update_deposit_df():
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -193,14 +203,6 @@ def update_deposit_df():
     # deposit_info는 ['금융기관', '거래지점', '계좌번호', '신규일', '만기일', '최초금액', '금리', '해지원금', '이자', '기타', '중도해지유무', '시트명'] 으로 구성된 데이터
     deposit_info = extract_deposit_df()
 
-    # 1. deposit_info의 각각의 데이터를 순회합니다.
-    # 3. 시트명 컬럼의 값 + '_미수금액' 시트명으로 이동합니다
-    # 4. 이자를 계산합니다. 이자는 신규일과 만기일이 몇 개월 차이가 나는지를 먼저 확인합니다. 신규일과 만기일 각각의 달을 확인하여 차이를 구합니다.
-    # 5. 최초금액 * 이자 * 신규일의 달과 만기일의 달 차이 / 12 값을 '이자'컬럼에 저장합니다 
-    # 6. 해지원금은 최초금액과 동일하게 저장합니다
-    # 7. 미수금액은 이자와 동일하게 저장합니다
-    # 8. 데이터를 해당 시트에 추가합니다.
-    # deposit_info의 데이터를 순회합니다.
     for index, row in deposit_info.iterrows():
         sheet_name = row['시트명'] + '_미수금액'
         new_sheet = spreadsheet.worksheet(sheet_name)
@@ -213,18 +215,17 @@ def update_deposit_df():
         interest_rate = float(row['금리'].strip('%')) / 100
 
         # 이자, 해지원금, 미수금액 계산
-        interest = row['최초금액'] * interest_rate * month_difference / 12
+        input_money = clean_and_convert_to_int(row['최초금액'])
+        interest = input_money * interest_rate * month_difference / 12
         row['이자'] = interest
         row['해지원금'] = row['최초금액']
         row['미수금액'] = interest
 
         # 데이터를 추가합니다.
         # 금육기관 - 거래지점 - 계좌번호 - 신규일 - 만기일 - 최초금액 - 금리 - 해지원금 - 이자 - 기타 - 중도해지유무 - 미수금액
-        new_sheet.append_row([
-            row['금융기관'], row['거래지점'], row['계좌번호'], row['신규일'], row['만기일'], 
-            row['최초금액'], row['금리'], row['해지원금'], row['이자'], row['기타'], 
-            row['중도해지유무'], row['미수금액']
-        ])
+        new_data = [ row['금융기관'], row['거래지점'], row['계좌번호'], row['신규일'], row['만기일'], row['최초금액'], row['금리'], row['해지원금'], row['이자'], row['기타'], row['중도해지유무'], row['미수금액'] ]
+        update_or_append_row(new_sheet, new_data)    
+        print("One Completed!")
 
 def extract_deposit_df():
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -360,4 +361,4 @@ def convert_to_json(df):
     return json.dumps(records, indent=4,ensure_ascii=False)
 
 if __name__ == "__main__":
-    print(extract_deposit_df())
+    print(update_deposit_df())

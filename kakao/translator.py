@@ -97,3 +97,9 @@ def format_vacation_data(vacation_data):
         formatted_data.append(formatted_str)
     
     return formatted_data
+
+def clean_and_convert_to_int(value):
+    # 문자열에서 쉼표 제거
+    cleaned_value = value.replace(',', '')
+    # 정수로 변환
+    return int(cleaned_value)
