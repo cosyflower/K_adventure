@@ -16,7 +16,7 @@ deposity_user3_id = "U045ZS96B7V" # esther
 ## 보안 시스템 ##
 # KAKAO
 advisor_id = "U032BJQJMJQ"  # eddie
-management_channel_id = "C05G8E1E7U0"
+management_channel_id = "C06G2JL72CR"
 executives_channel_id = "C034T75P2RF"
 intern_channel_id = "C032MTUL8BT"
 # # TEST
