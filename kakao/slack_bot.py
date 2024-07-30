@@ -56,13 +56,18 @@ app = App(token=config.bot_token_id)
 
 # Scheduler 관련 함수 정의
 # 평일 오전 8시에 notify_today_vacation_info 함수 실행
+
 schedule.every().monday.at("08:00").do(notify_today_vacation_info)
 schedule.every().tuesday.at("08:00").do(notify_today_vacation_info)
 schedule.every().wednesday.at("08:00").do(notify_today_vacation_info)
 schedule.every().thursday.at("08:00").do(notify_today_vacation_info)
 schedule.every().friday.at("08:00").do(notify_today_vacation_info)
 
-# schedule.every().day.at("08:00").do(notify_deposit_info)
+schedule.every().monday.at("08:00").do(notify_deposit_info)
+schedule.every().tuesday.at("08:00").do(notify_deposit_info)
+schedule.every().wednesday.at("08:00").do(notify_deposit_info)
+schedule.every().thursday.at("08:00").do(notify_deposit_info)
+schedule.every().friday.at("08:00").do(notify_deposit_info)
 
 # 2주마다 월요일 오전 8시에 작업을 실행하도록 스케줄 설정
 schedule.every(2).weeks.at("08:00").monday.do(notify_one_by_one_partner)
@@ -111,13 +116,15 @@ def handle_message_events(event, say):
     if user_id not in user_states:
         user_purpose_handler(event, say) # 안내 문구 출력 - 알맞은 user_states[user_id] 배정하는 역할
     else: # 슬랙봇을 실행한 상황에 user_states[user_id]를 부여받은 상황일 때 진행
+        #########################   재시작(로제봇)    ########################################
+        if process_user_input(user_input) == '재시작':
+            user_states[user_id] == 'rosebot_waiting_only_number'
+            rose_bot_handler(event, say, user_states)
         #########################   문서4종시스템    ########################################
-        if user_states[user_id] == 'docx_generating_waiting_company_name': 
+        elif user_states[user_id] == 'docx_generating_waiting_company_name': 
             docx_generating_company_name_handler(event, say, user_states, inv_list_info, inv_info)
         elif user_states[user_id] == 'docx_generating_waiting_inv_choice':
             docx_generating_inv_choice_handler(event, say, user_states, inv_list_info, inv_info)
-        # elif user_states[user_id] == 'docx_generating_waiting_docx_category':
-        #     docx_generating_docx_category_handler(event, say, user_states, inv_list_info, inv_info)
         #########################   보안시스템    ########################################
         elif user_states[user_id] == 'security_system_waiting_function_number':
             security_system_user_function_handler(event, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list)
@@ -144,8 +151,6 @@ def handle_message_events(event, say):
             deposit_rotation_system_handler(event, say, user_states)
         elif user_states[user_id] == 'deposit_rotation_waiting_low_chatgpt_input':
             deposit_rotation_system_low_model_handler(event, say, user_states)
-        # elif user_states[user_id] == 'deposit_rotation_waiting_high_chatgpt_input':
-        #     deposit_rotation_system_high_model_handler(event, say, user_states)
 
 # Function to handle channel messages with specific keywords
 @app.event("message")
@@ -176,7 +181,7 @@ def user_purpose_handler(message, say):
     user_input = process_user_input(user_input)
     purpose = check_the_user_purpose(user_input,user_id)
 
-    if purpose == "문서 4종":
+    if purpose == "문서4종":
         if get_user_authority(user_id) < 3:
             msg = (f"문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
             send_direct_message_to_user(user_id, msg)

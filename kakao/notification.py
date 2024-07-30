@@ -14,6 +14,7 @@ from onebyone import get_or_create_1on1_spreadsheet, get_spreadsheet_service, fi
 from security_system import update_authority
 import pandas as pd
 import json
+from directMessageApi import send_direct_message_to_user
 
 
 def send_slack_message(channel_id, text):
