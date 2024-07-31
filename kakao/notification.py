@@ -150,14 +150,18 @@ def notify_deposit_info():
     deposit_df = extract_deposit_df()
     send_slack_message(channel_id, "예금 정보를 조회 중입니다...\n")
     deposit_df['만기일'] = pd.to_datetime(deposit_df['만기일'])
-    # 현재 날짜와 만기일이 4일 이내인 행 필터링
-    today = datetime.now()
-    threshold_date = today + timedelta(days=4)
-    filtered_df = deposit_df[deposit_df['만기일'] <= threshold_date]
-    if filtered_df.empty:
-        send_slack_message(channel_id, "3일 이내로 만기 예정된 상품이 없습니다")
+    today = datetime.datetime.now()
+    is_friday = today.weekday() == 4
+    if is_friday:
+        threshold_dates = [today + timedelta(days=i) for i in range(4, 7)]
+        filtered_df = deposit_df[deposit_df['만기일'].isin(threshold_dates)]
     else:
-        send_slack_message(channel_id, f"<@{user1}> <@{user2}> <@{user3}> 3일 이내로 만기 예정된 상품의 정보는 다음과 같습니다\n{filtered_df}")
+        threshold_date = today + timedelta(days=4)
+        filtered_df = deposit_df[deposit_df['만기일'] == threshold_date]
+    if filtered_df.empty:
+        send_slack_message(channel_id, "4일 이내로 만기 예정된 상품이 없습니다")
+    else:
+        send_slack_message(channel_id, f"<@{user1}> <@{user2}> <@{user3}> 4일 이내로 만기 예정된 상품의 정보는 다음과 같습니다\n{filtered_df}")
 
 if __name__ == "__main__":
     # notify_deposit_info()

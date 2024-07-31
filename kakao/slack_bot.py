@@ -64,7 +64,7 @@ schedule.every().thursday.at("08:00").do(notify_today_vacation_info)
 schedule.every().friday.at("08:00").do(notify_today_vacation_info)
 
 schedule.every().monday.at("08:00").do(notify_deposit_info)
-schedule.every().tuesday.at("17:24").do(notify_deposit_info)
+schedule.every().tuesday.at("08:00").do(notify_deposit_info)
 schedule.every().wednesday.at("08:00").do(notify_deposit_info)
 schedule.every().thursday.at("08:00").do(notify_deposit_info)
 schedule.every().friday.at("08:00").do(notify_deposit_info)
