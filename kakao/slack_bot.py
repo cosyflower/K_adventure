@@ -32,7 +32,7 @@ from onebyone import find_oneByone_handler, update_spreadsheet_on_oneByone, matc
 
 # testing for validating on generating docx
 import gspread
-import datetime
+from datetime import datetime, timedelta
 
 def check_the_user_purpose(user_input,user_id):
     user_input = user_input.replace(" ","")
@@ -69,8 +69,15 @@ schedule.every().wednesday.at("08:00").do(notify_deposit_info)
 schedule.every().thursday.at("08:00").do(notify_deposit_info)
 schedule.every().friday.at("08:00").do(notify_deposit_info)
 
+# 월요일 오전 8시에 실행하는 작업을 설정
+def oneByonePerTwoWeeks():
+    notify_one_by_one_partner()
+    # 2주 후 다시 스케줄링
+    next_run = datetime.now() + timedelta(weeks=2)
+    schedule.every().monday.at("08:00").do(oneByonePerTwoWeeks)
+
 # 2주마다 월요일 오전 8시에 작업을 실행하도록 스케줄 설정
-# schedule.every(2).weeks.at("08:00").monday.do(notify_one_by_one_partner)
+schedule.every().monday.at("08:00").do(oneByonePerTwoWeeks)
 
 # 스케줄러 실행 함수
 def run_scheduler():
@@ -119,12 +126,13 @@ def handle_message_events(event, say):
         if user_input == '재시작':
             msg = ("슬랙봇 시스템을 작동합니다. 무엇을 도와드릴까요? 종료를 원한다면 \'종료\'를 입력해주세요\n"
                 "1. 휴가 신청\n"
-                "2. 보안 시스템\n"
+                "2. 인사 총무\n"
                 "3. 문서 작성\n"
                 "4. 정기예금 회전 시스템\n"
                 "5. 회수 상황판\n"
                 "6. 검색\n"
                 "7. 1on1\n"
+                "8. 보안 시스템\n"
             )
             send_direct_message_to_user(user_id, msg)
             user_states[user_id] = 'rosebot_waiting_only_number'

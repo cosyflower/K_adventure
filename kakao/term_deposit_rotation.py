@@ -140,6 +140,47 @@ def qna_chatgpt_low_model(user_input):
 #         return "서버 오류로 인해 사용이 불가능합니다 잠시후 다시 이용해 주세요"
 #     return output
 
+def get_pending_payments_per_month():
+    scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name(kakao_json_key_path, scope)
+    client = gspread.authorize(creds)
+    spreadsheet_id = deposit_id
+    spreadsheet = client.open_by_key(spreadsheet_id)
+
+    sheet = spreadsheet.worksheet('본계정_미수금액')
+    # 첫번째 행을 제외한 데이터를 가지고 온다
+    data = sheet.get_all_values()[1:]
+
+    return data
+
+def get_pending_payments_per_quarter():
+    scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name(kakao_json_key_path, scope)
+    client = gspread.authorize(creds)
+    spreadsheet_id = deposit_id
+    spreadsheet = client.open_by_key(spreadsheet_id)
+
+    # 미수금액 이라는 문자열이 포함된 시트만 확인
+    # 본계정_미수금액을 제외한 나머지 시트의 모든 데이터를 반환한다
+    # 결과를 저장할 리스트
+    all_data = []
+
+    # 스프레드시트 내 모든 시트를 가져옴
+    worksheets = spreadsheet.worksheets()
+
+    # 각 시트를 순회하면서 "미수금액"이 포함된 시트를 확인
+    for sheet in worksheets:
+        if "미수금액" in sheet.title and sheet.title != "본계정_미수금액":
+            # 첫번째 행을 제외한 데이터를 가지고 온다 
+            data = sheet.get_all_values()[1:]
+            all_data.append({
+                "sheet_name": sheet.title,
+                "data": data
+            })
+            all_data.append("delimeter")
+
+    return all_data
+
 def valid_deposit_df():
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
     creds = ServiceAccountCredentials.from_json_keyfile_name(kakao_json_key_path, scope)
@@ -222,7 +263,7 @@ def update_deposit_df():
         row['미수금액'] = interest
 
         # 데이터를 추가합니다.
-        # 금육기관 - 거래지점 - 계좌번호 - 신규일 - 만기일 - 최초금액 - 금리 - 해지원금 - 이자 - 기타 - 중도해지유무 - 미수금액
+        # 금융기관 - 거래지점 - 계좌번호 - 신규일 - 만기일 - 최초금액 - 금리 - 해지원금 - 이자 - 기타 - 중도해지유무 - 미수금액
         new_data = [ row['금융기관'], row['거래지점'], row['계좌번호'], row['신규일'], row['만기일'], row['최초금액'], row['금리'], row['해지원금'], row['이자'], row['기타'], row['중도해지유무'], row['미수금액'] ]
         update_or_append_row(new_sheet, new_data)    
         print("One Completed!")

@@ -15,6 +15,7 @@ from security_system import update_authority
 import pandas as pd
 import json
 from directMessageApi import send_direct_message_to_user
+from term_deposit_rotation import get_pending_payments_per_month, get_pending_payments_per_quarter
 
 
 def send_slack_message(channel_id, text):
@@ -126,8 +127,21 @@ def notify_one_by_one_partner():
             print(f"Error sending message to {slack_id}: {e.response['error']}")
 
     print("1on1 DM 보내기 완료! 배포 결과를 확인하세요!!")
+
+def notify_pending_payments_per_month():
+    result = get_pending_payments_per_month()
     
-    
+    # 각각의 데이터를 출력하되 어떤 형태로 출력하면 좋을지
+    # 예시) ['우리은행 ', '판교테크노밸리금융센터', '1020-867-606019', '2024-06-13', '2024-09-13', '1,000,000,000', '3.69%', '1,000,000,000', '9225000', '', '', '9225000']
+    # 금융기관 - 거래지점 - 계좌번호 - 신규일 - 만기일 - 최초금액 - 금리 - 해지원금 - 이자 - 기타 - 중도해지유무 - 미수금액
+
+def notify_pending_payments_per_quarter():
+    result = get_pending_payments_per_quarter()
+    # Divide with 'delimeter'
+    # 각각의 데이터를 출력하되 어떤 형태로 출력하면 좋을지
+    # 예시) ['우리은행 ', '판교테크노밸리금융센터', '1020-867-606019', '2024-06-13', '2024-09-13', '1,000,000,000', '3.69%', '1,000,000,000', '9225000', '', '', '9225000']
+    # 금융기관 - 거래지점 - 계좌번호 - 신규일 - 만기일 - 최초금액 - 금리 - 해지원금 - 이자 - 기타 - 중도해지유무 - 미수금액
+
 def notify_deposit_info():
     user1 = config.deposity_user1_id
     user2 = config.deposity_user2_id
@@ -146,7 +160,9 @@ def notify_deposit_info():
         send_slack_message(channel_id, f"<@{user1}> <@{user2}> <@{user3}> 3일 이내로 만기 예정된 상품의 정보는 다음과 같습니다\n{filtered_df}")
 
 if __name__ == "__main__":
-    notify_deposit_info()
+    # notify_deposit_info()
+    notify_pending_payments_per_month()
+    # notify_pending_payments_per_quarter()
 
 """
 # 스케줄러 기능 활성화 하는 방법

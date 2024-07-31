@@ -34,24 +34,10 @@ def rose_bot_handler(message, say, user_states):
                     msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
-            elif user_input == "2": ## 보안시스템
-                if get_user_authority(user_id) < 4:
-                    msg = (f"보안시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
-                        "1. 전체 사용자 권한 조회\n"
-                        "2. 신규 사용자 권한 배정\n"
-                        "3. 내 권한 조회\n"
-                        "4. 권한이 변경된 사용자 조회([임시]관리자 전용)\n"
-                        "5. 권한 업데이트([임시]관리자 전용)\n"
-                        "6. 임시 관리자 배정(관리자 전용)\n"
-                        "7. 임시 관리자 목록 조회(관리자 전용)\n"
-                        "8. 임시 관리자 회수(관리자 전용)\n(종료를 원하시면 '종료'를 입력해주세요)"
-                        )
-                    send_direct_message_to_user(user_id, msg)
-                    user_states[user_id] = 'security_system_waiting_function_number'
-                else:
-                    msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
-                    send_direct_message_to_user(user_id, msg)
-                    del user_states[user_id]
+            elif user_input == "2": ## 인사 총무
+                msg = (f"공사중입니다. 종료합니다.\n")
+                send_direct_message_to_user(user_id, msg)
+                del user_states[user_id]
             elif user_input == "3": ## 문서 4종 생성
                 if get_user_authority(user_id) < 3:
                     msg = (f"<@{user_id}>님은 문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
@@ -97,6 +83,24 @@ def rose_bot_handler(message, say, user_states):
                     del user_states[user_id]
                 else:
                     msg = (f"<@{user_id}>님은 권한이 없습니다.")
+                    send_direct_message_to_user(user_id, msg)
+                    del user_states[user_id]
+            elif user_input == "8": ## 보안시스템
+                if get_user_authority(user_id) < 4:
+                    msg = (f"보안시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
+                        "1. 전체 사용자 권한 조회\n"
+                        "2. 신규 사용자 권한 배정\n"
+                        "3. 내 권한 조회\n"
+                        "4. 권한이 변경된 사용자 조회([임시]관리자 전용)\n"
+                        "5. 권한 업데이트([임시]관리자 전용)\n"
+                        "6. 임시 관리자 배정(관리자 전용)\n"
+                        "7. 임시 관리자 목록 조회(관리자 전용)\n"
+                        "8. 임시 관리자 회수(관리자 전용)\n(종료를 원하시면 '종료'를 입력해주세요)"
+                        )
+                    send_direct_message_to_user(user_id, msg)
+                    user_states[user_id] = 'security_system_waiting_function_number'
+                else:
+                    msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             else:
