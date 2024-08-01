@@ -40,7 +40,7 @@ def rose_bot_handler(message, say, user_states):
                 del user_states[user_id]
             elif user_input == "3": ## 문서 4종 생성
                 if get_user_authority(user_id) < 3:
-                    msg = (f"<@{user_id}>님은 문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
+                    msg = (f"문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
                     send_direct_message_to_user(user_id, msg)
                     user_states[user_id] = 'docx_generating_waiting_company_name'
                 else:

@@ -265,14 +265,15 @@ def user_purpose_handler(message, say):
             send_direct_message_to_user(user_id, msg)
     elif purpose == "로제봇":
         msg = ("슬랙봇 시스템을 작동합니다. 무엇을 도와드릴까요? 종료를 원한다면 \'종료\'를 입력해주세요\n"
-            "1. 휴가 신청\n"
-            "2. 보안 시스템\n"
-            "3. 문서 작성\n"
-            "4. 정기예금 회전 시스템\n"
-            "5. 회수 상황판\n"
-            "6. 검색\n"
-            "7. 1on1\n"
-        )
+                "1. 휴가 신청\n"
+                "2. 인사 총무\n"
+                "3. 문서 작성\n"
+                "4. 정기예금 회전 시스템\n"
+                "5. 회수 상황판\n"
+                "6. 검색\n"
+                "7. 1on1\n"
+                "8. 보안 시스템\n"
+            )
         send_direct_message_to_user(user_id, msg)
         user_states[user_id] = 'rosebot_waiting_only_number'
     elif purpose == "정기예금회전시스템":

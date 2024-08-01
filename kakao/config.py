@@ -40,9 +40,11 @@ fileB_id = '15LA_kjBo4H2C6arweRWHG8xLZzaeEvIfXfLbb7Za4uc' # 투자심의위원�
 fileC_id = '1VF-uUBifpa9-Vxp5pTljTMLNRuTuSJpY1kB29nwN9YI' # 준법사항 체크리스트(벤처투자조합)
 fileD_id = '1KLO2imQPAfNNKhiIHyBya5EUw1c0zOAj9rfOoW-4bnk' # 투자집행품의서
 fileABCD_parent_folder_id = '1bwpRq4c9Z9KBNME6mGZYdDbFwyU0fOuJ'
-bot_token_id = 'xoxb-3089907656241-7223743768631-AE5H1vmrnFTGf2zN4sDcT1GB'
-app_token_id = 'xapp-1-A07704ULQCB-7261083472928-4240d3f4a5a807b855af54ae306a57f0869263ca0272ae52351335a895611f2d'
-# # TEST
+# bot_token_id = 'xoxb-3089907656241-7223743768631-AE5H1vmrnFTGf2zN4sDcT1GB'
+# app_token_id = 'xapp-1-A07704ULQCB-7261083472928-4240d3f4a5a807b855af54ae306a57f0869263ca0272ae52351335a895611f2d'
+bot_token_id = 'xoxb-3089907656241-7525379921233-4Kr4mDow3dL63DWv1tQj0jG3'
+app_token_id = 'xapp-1-A07EN2XNGKH-7525338460209-6f48103f1d9195b6d9ae9b7ce532bcfad61779459d001bab46dc481880379f5d'
+
 # kakao_json_key_path = 'kakao-test-422905-9ed51f908a0f.json'
 # db_1_id = '1z0sPy8gau8AtfiX1iCstJbV25B9MN0x7TndIt308qgg'
 # db_2_id = ''
@@ -94,3 +96,8 @@ shared_drive_id = '0ADXn4EWBStqjUk9PVA'
 # fileABCD_parent_folder_id = '1bwpRq4c9Z9KBNME6mGZYdDbFwyU0fOuJ'
 # app_token_id = 'xoxb-3089907656241-7223743768631-AE5H1vmrnFTGf2zN4sDcT1GB'
 # user_token_id = 'xapp-1-A07704ULQCB-7261083472928-4240d3f4a5a807b855af54ae306a57f0869263ca0272ae52351335a895611f2d'
+
+
+# new_bot
+# app_token_id = xapp-1-A07EN2XNGKH-7525338460209-6f48103f1d9195b6d9ae9b7ce532bcfad61779459d001bab46dc481880379f5d
+# bot_token_id = xoxb-3089907656241-7525379921233-4Kr4mDow3dL63DWv1tQj0jG3
