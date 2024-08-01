@@ -16,6 +16,7 @@ import pandas as pd
 import json
 from directMessageApi import send_direct_message_to_user
 from term_deposit_rotation import get_pending_payments_per_month, get_pending_payments_per_quarter
+import math
 
 
 def send_slack_message(channel_id, text):
@@ -129,18 +130,56 @@ def notify_one_by_one_partner():
     print("1on1 DM 보내기 완료! 배포 결과를 확인하세요!!")
 
 def notify_pending_payments_per_month():
+    # ['우리은행  정기예금 1020-867-606019', '1,000,000,000', '3.69%', '2024-06-13', '2024-08-01', '49', '4940163.934']
     result = get_pending_payments_per_month()
-    
-    # 각각의 데이터를 출력하되 어떤 형태로 출력하면 좋을지
-    # 예시) ['우리은행 ', '판교테크노밸리금융센터', '1020-867-606019', '2024-06-13', '2024-09-13', '1,000,000,000', '3.69%', '1,000,000,000', '9225000', '', '', '9225000']
-    # 금융기관 - 거래지점 - 계좌번호 - 신규일 - 만기일 - 최초금액 - 금리 - 해지원금 - 이자 - 기타 - 중도해지유무 - 미수금액
+
+    # result에 담긴 데이터를 하나씩 순회합니다
+    # 각 데이터를 한번씩 출력합니다
+    # 각 데이터의 6번째 값들의 합을 구합니다. 이 때 값에 소수점이 있는 경우 내림을 취하고 합을 구합니다
+    # 6번째 값들의 합은 순회를 마친 다음 최종적으로 1번 출력합니다 
+    # 최종 출력 멘트는 "현재일을 기준으로 미수금액의 총합은 {합}입니다" 로 작성합니다
+    # 6번째 값들의 합을 구하기 위한 변수 초기화
+    total_sum = 0
+    send_slack_message(config.deposit_channel_id, "월별 미수 금액 리스트를 출력합니다")
+
+    # result에 담긴 데이터를 하나씩 순회합니다
+    for data in result:
+        # 각 데이터를 한번씩 출력합니다
+        # ['우리은행  정기예금 1020-867-606019', '1,000,000,000', '3.69%', '2024-06-13', '2024-08-01', '49', '4940163.934']
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        if current_date == data[3]:
+            send_slack_message(config.deposit_channel_id, data)
+            # 각 데이터의 6번째 값 (인덱스로는 5번째)을 가져옵니다
+            amount = float(data[6])
+            # 소수점이 있는 경우 내림을 취합니다
+            amount = math.floor(amount)
+            # 값을 합산합니다
+            total_sum += amount
+
+    send_slack_message(config.deposit_channel_id, f"현재일을 기준으로 미수금액의 총합은 {"{:,}".format(total_sum)}입니다")
 
 def notify_pending_payments_per_quarter():
-    result = get_pending_payments_per_quarter()
-    # Divide with 'delimeter'
-    # 각각의 데이터를 출력하되 어떤 형태로 출력하면 좋을지
-    # 예시) ['우리은행 ', '판교테크노밸리금융센터', '1020-867-606019', '2024-06-13', '2024-09-13', '1,000,000,000', '3.69%', '1,000,000,000', '9225000', '', '', '9225000']
-    # 금융기관 - 거래지점 - 계좌번호 - 신규일 - 만기일 - 최초금액 - 금리 - 해지원금 - 이자 - 기타 - 중도해지유무 - 미수금액
+    all_data = get_pending_payments_per_quarter()
+    total_sum = 0
+
+    send_slack_message(config.deposit_channel_id, "분기별 미수 금액 리스트를 출력합니다")
+
+    for element in all_data:
+        if isinstance(element, dict) and "data" in element:
+            data = element["data"]
+            current_date = datetime.now().strftime('%Y-%m-%d')
+            if data and current_date == data[3]:
+                send_slack_message(config.deposit_channel_id, data)
+                # if data:  # data 리스트가 비어있지 않다면
+                last_row = data[-1]  # 마지막 행을 가져옴
+                last_value = float(last_row[-1])  # 마지막 값을 가져옴 (소수점 처리 가능성 고려)
+                # 소수일 경우 내림 처리
+                last_value = math.floor(last_value)
+                # 합계에 더하기
+                total_sum += last_value
+    
+    send_slack_message(config.deposit_channel_id, f"현재일을 기준으로 미수금액의 총합은  {"{:,}".format(total_sum)}입니다")
+
 
 def notify_deposit_info():
     user1 = config.deposity_user1_id
@@ -163,10 +202,10 @@ def notify_deposit_info():
     else:
         send_slack_message(channel_id, f"<@{user1}> <@{user2}> <@{user3}> 4일 이내로 만기 예정된 상품의 정보는 다음과 같습니다\n{filtered_df}")
 
-if __name__ == "__main__":
-    # notify_deposit_info()
-    notify_pending_payments_per_month()
-    # notify_pending_payments_per_quarter()
+# if __name__ == "__main__":
+#     # notify_deposit_info()
+#     # notify_pending_payments_per_month()
+#     notify_pending_payments_per_quarter()
 
 """
 # 스케줄러 기능 활성화 하는 방법

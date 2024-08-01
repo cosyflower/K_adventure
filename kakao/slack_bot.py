@@ -27,6 +27,7 @@ from googleVacationApi import request_vacation_handler, cancel_vacation_handler,
 from directMessageApi import send_direct_message_to_user
 from config import dummy_vacation_directory_id
 from onebyone import find_oneByone_handler, update_spreadsheet_on_oneByone, match_people, get_name_list_from_json, find_oneByone
+from notification import notify_pending_payments_per_month, notify_pending_payments_per_quarter
 # slack bot system
 
 
@@ -68,6 +69,32 @@ schedule.every().tuesday.at("08:00").do(notify_deposit_info)
 schedule.every().wednesday.at("08:00").do(notify_deposit_info)
 schedule.every().thursday.at("08:00").do(notify_deposit_info)
 schedule.every().friday.at("08:00").do(notify_deposit_info)
+
+# notify_pending_payments_per_month() 함수를 월말에 알림
+# notify_pending_payments_per_quarter() 함수를 3,6,9,12월말에 알림
+def is_last_day_of_month():
+    # 오늘이 월말인지 확인
+    today = datetime.today()
+    next_day = today.replace(day=today.day + 1)
+    return today.month != next_day.month
+
+def is_last_day_of_quarter():
+    # 오늘이 분기말인지 확인 (3, 6, 9, 12월의 말일)
+    today = datetime.today()
+    if today.month in [3, 6, 9, 12]:
+        next_day = today.replace(day=today.day + 1)
+        return today.month != next_day.month
+    return False
+
+# 스케줄 설정 - per month 8:00
+schedule.every().day.at("08:00").do(
+    lambda: notify_pending_payments_per_month() if is_last_day_of_month() else None
+)
+
+# per quarter 8:00
+schedule.every().day.at("08:00").do(
+    lambda: notify_pending_payments_per_quarter() if is_last_day_of_quarter() else None
+)
 
 # 월요일 오전 8시에 실행하는 작업을 설정
 def oneByonePerTwoWeeks():

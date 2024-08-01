@@ -29,6 +29,7 @@ import json
 import numpy as np
 from directMessageApi import send_direct_message_to_user
 from translator import clean_and_convert_to_int
+import time
 
 def deposit_rotation_system_handler(message, say, user_states):
     user_id = message['user']
@@ -216,9 +217,12 @@ def update_or_append_row(sheet, new_row):
     existing_data = sheet.get_all_values()
     for i, row in enumerate(existing_data):
         # 계좌번호를 기준으로 동일한 데이터를 찾음 (필요에 따라 다른 열을 비교 기준으로 사용 가능)
-        if row[2] == new_row[2]:  # 계좌번호 열을 비교
-            sheet.update(f'A{i+1}', [new_row])  # 기존 행을 업데이트
-            return
+        if row[4] == new_row[4] and row[0] == new_row[0]:  # 계산 기준일 비교
+            sheet.update(
+                range_name=f'A{i+1}',  # 범위를 지정하는 인자
+                values=[new_row]       # 업데이트할 데이터
+            )
+            
     sheet.append_row(new_row)  # 새로운 행 추가
 
 def update_deposit_df():
@@ -238,35 +242,48 @@ def update_deposit_df():
             if new_sheet_name not in [ws.title for ws in spreadsheet.worksheets()]:
                 new_sheet = spreadsheet.add_worksheet(title=new_sheet_name, rows="100", cols="20")
                 # 새로운 시트에 컬럼 이름 추가
-                columns = ['금융기관', '거래지점', '계좌번호', '신규일', '만기일', '최초금액', '금리', '해지원금', '이자', '기타', '중도해지유무', '미수금액']
-                new_sheet.append_row(columns)    
+                columns = ['가입유형', '정기예금 가입액', '이자율', '가입일', '계산기준일', '경과일수', '이자 금액']
+                new_sheet.append_row(columns)
 
     # deposit_info는 ['금융기관', '거래지점', '계좌번호', '신규일', '만기일', '최초금액', '금리', '해지원금', '이자', '기타', '중도해지유무', '시트명'] 으로 구성된 데이터
     deposit_info = extract_deposit_df()
 
     for index, row in deposit_info.iterrows():
+        # 시트명을 '시트명_미수금액'으로 설정
         sheet_name = row['시트명'] + '_미수금액'
         new_sheet = spreadsheet.worksheet(sheet_name)
-        # 신규일과 만기일의 달 차이를 계산합니다.
+
+        # 계산 기준일 - 현재 날짜로 설정
+        calc_date = datetime.now()
+        
+        # 신규일을 datetime 형식으로 변환
         start_date = datetime.strptime(row['신규일'], '%Y-%m-%d')
-        end_date = datetime.strptime(row['만기일'], '%Y-%m-%d')
-        month_difference = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
-
-        # 금리를 숫자로 변환 (백분율 제거 및 소수로 변환)
+        
+        # 경과 일수 계산
+        days_difference = (calc_date - start_date).days
+        
+        # 이자율을 숫자로 변환 (백분율 제거 및 소수로 변환)
         interest_rate = float(row['금리'].strip('%')) / 100
+        
+        # 연도의 일수 (윤년 고려)
+        year_days = 366 if start_date.year % 4 == 0 and (start_date.year % 100 != 0 or start_date.year % 400 == 0) else 365
+        
+        # 이자 금액 계산
+        interest_amount = interest_rate * days_difference * float(clean_and_convert_to_int(row['최초금액'])) / year_days
+        
+        new_row = []
+        new_row.append(row['금융기관'] + ' ' + '정기예금' + ' ' + row['계좌번호'])
+        new_row.append(row['최초금액'])
+        new_row.append(row['금리'])
+        new_row.append(row['신규일'])
+        new_row.append(calc_date.strftime('%Y-%m-%d'))
+        new_row.append(days_difference)
+        new_row.append(interest_amount)
 
-        # 이자, 해지원금, 미수금액 계산
-        input_money = clean_and_convert_to_int(row['최초금액'])
-        interest = input_money * interest_rate * month_difference / 12
-        row['이자'] = interest
-        row['해지원금'] = row['최초금액']
-        row['미수금액'] = interest
+        update_or_append_row(new_sheet, new_row)
+        time.sleep(1)  # 1초 딜레이 추가
 
-        # 데이터를 추가합니다.
-        # 금융기관 - 거래지점 - 계좌번호 - 신규일 - 만기일 - 최초금액 - 금리 - 해지원금 - 이자 - 기타 - 중도해지유무 - 미수금액
-        new_data = [ row['금융기관'], row['거래지점'], row['계좌번호'], row['신규일'], row['만기일'], row['최초금액'], row['금리'], row['해지원금'], row['이자'], row['기타'], row['중도해지유무'], row['미수금액'] ]
-        update_or_append_row(new_sheet, new_data)    
-        print("One Completed!")
+    print("One Completed!")
 
 def extract_deposit_df():
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -303,8 +320,11 @@ def extract_deposit_df():
     final_df['신규일'] = pd.to_datetime(final_df['신규일'])
     final_df['만기일'] = pd.to_datetime(final_df['만기일'])
 
-    # '신규일'과 '만기일'의 월을 기준으로 필터링합니다.
-    final_df = final_df[(final_df['신규일'].dt.month <= current_month) & (final_df['만기일'].dt.month > current_month)]
+    # 현재 날짜를 얻습니다.
+    current_date = datetime.now()
+
+    # '신규일'과 '만기일' 사이에 있는 행들을 필터링합니다.
+    final_df = final_df[(final_df['신규일'] <= current_date) & (final_df['만기일'] > current_date)]
 
     # '신규일'과 '만기일'을 다시 문자열 형식으로 변환합니다.
     final_df['신규일'] = final_df['신규일'].dt.strftime('%Y-%m-%d')
@@ -400,6 +420,3 @@ def convert_to_json(df):
         records.append(record)
     # return json.dumps(records, ensure_ascii=False)
     return json.dumps(records, indent=4,ensure_ascii=False)
-
-if __name__ == "__main__":
-    print(update_deposit_df())
