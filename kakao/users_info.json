@@ -83,13 +83,6 @@
         "display_name": "Zero.kv 김영무",
         "authority": 1
     },
-    "U076KMVNLJK": {
-        "id": "U076KMVNLJK",
-        "name": "zerobot",
-        "real_name": "제로봇",
-        "display_name": "",
-        "authority": 5
-    },
     "U07FFB5T36V": {
         "id": "U07FFB5T36V",
         "name": "rosebot",
@@ -887,6 +880,13 @@
         "real_name": "",
         "display_name": "",
         "authority": 4
+    },
+    "U076KMVNLJK": {
+        "id": "U076KMVNLJK",
+        "name": "zerobot",
+        "real_name": "",
+        "display_name": "",
+        "authority": 5
     },
     "U0777FQJEKF": {
         "id": "U0777FQJEKF",

@@ -135,6 +135,9 @@ def message_im_events(event, next):
     if event.get("channel_type") == "im":
         next()
 
+
+from validator import is_holiday
+
 @app.event("message", middleware=[message_im_events])
 def handle_message_events(event, say):
     user_id = event['user']
@@ -142,8 +145,8 @@ def handle_message_events(event, say):
     # Test - Should be deleted!!
     # test 용 함수 - "test" 입력하면 내가 원하는 함수 호출
     if process_user_input(user_input) == 'test':
-        msg = ":palm_tree:"
-        send_direct_message_to_user(user_id, msg)
+        res = is_holiday('2024-08-02 09:00')
+        print(res)
         return
 
     if user_id not in user_states:

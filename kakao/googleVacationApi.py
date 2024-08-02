@@ -518,10 +518,6 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
             found_data_list = valid_data_list
 
             for num in cancel_sequence_list:
-                #print
-                print(f"num : {num}")
-                print(f" found_data_list len : {len(found_data_list)}")
-
                 delete_data(spreadsheet_id, 1, found_data_list[num-1])
                 delete_out_of_office_event(user_id, found_data_list[num-1][2], found_data_list[num-1][3])
 
@@ -680,33 +676,32 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         user_vacation_status[user_id] = 'requesting'
         start_date = process_user_input(cleaned_user_input)
         if is_valid_date(start_date):
-            if is_holiday(start_date):
-                msg = (f":exclamation: 신청한 휴가 시작 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
-                send_direct_message_to_user(user_id, msg)
+            # holiday_on, holiday_type = is_holiday(start_date)
+            # if holiday_on is True:
+            #     msg = (f":exclamation: 신청한 휴가 시작 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
+            #     send_direct_message_to_user(user_id, msg)
 
             user_vacation_info[user_id].append(start_date)
             msg = (f"휴가 신청 진행중입니다. *휴가 종료 날짜와 시간을* 입력해주세요.\n"
-                   "*[유의] 연차를 신청하는 경우 휴가 종료 시간은 오후 6시(18시)로 작성하세요*\n"
                 "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 입력하세요\n"
                 "[예시] 2024-04-04 18:00\n"
                 )
             send_direct_message_to_user(user_id, msg)
         else:
             msg = (":x: 잘못된 형식입니다. *휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로* 다시 입력해주세요.\n"
-            "*[유의] 연차를 신청하는 경우 휴가 시작 시간은 오전 9시로 작성하세요*\n"
             )
             send_direct_message_to_user(user_id, msg)
             user_vacation_status[user_id] = 'pending'
     elif user_vacation_status[user_id] == 'pending': # 다시 시작 날짜부터 받는다 
         start_date = process_user_input(cleaned_user_input)
         if is_valid_date(start_date):
-            if is_holiday(start_date):
-                msg = (f":exclamation: 신청한 휴가 시작 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
-                send_direct_message_to_user(user_id, msg)
+            # holiday_on, holiday_type = is_holiday(start_date)
+            # if holiday_on is True:
+            #     msg = (f":exclamation: 신청한 휴가 시작 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
+            #     send_direct_message_to_user(user_id, msg)
 
             user_vacation_info[user_id].append(start_date)
             msg = (f"휴가 신청 진행중입니다. *휴가 종료 날짜와 시간을* 입력해주세요.\n"
-                "*[유의] 연차를 신청하는 경우 휴가 종료 시간은 오후 6시(18시)로 작성하세요*\n"
                 "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 작성해주세요\n"
                 "[예시] 2024-01-01 19:00\n"
                 )
@@ -714,17 +709,16 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             user_vacation_status[user_id] = 'requesting'
         else:
             msg = (f"*휴가 시작 날짜와 시간을 다시 입력해주세요 YYYY-MM-DD HH:MM 형태로 입력하세요*\n"
-                   "*[유의] 연차를 신청하는 경우 휴가 시작 시간은 오전 9시로 작성하세요*\n\n"
                    )
             send_direct_message_to_user(user_id, msg)
     elif user_vacation_status[user_id] == 'requesting': # 시작 날짜 문제가 없는 상황 - 종료 날짜를 입력받는다
         end_date = process_user_input(cleaned_user_input)
 
         if is_valid_date(end_date, comparison_date_str=user_vacation_info[user_id][0]):
-            if is_holiday(end_date):
-                msg = (f":exclamation: 신청한 휴가 종료 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
-                send_direct_message_to_user(user_id, msg)
-
+            # holiday_on, holiday_type = is_holiday(end_date)
+            # if holiday_on is True:
+            #     msg = (f":exclamation: 신청한 휴가 시작 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
+            #     send_direct_message_to_user(user_id, msg)
             user_vacation_info[user_id].append(end_date)
             start_date = user_vacation_info[user_id][0]
             end_date = user_vacation_info[user_id][1]
@@ -921,7 +915,7 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         
         msg = (f":white_check_mark: 휴가 신청을 완료합니다. 휴가 / 연차 서비스를 종료합니다.\n")
         send_direct_message_to_user(user_id, msg)
-        
+
         # 신청을 마무리하면 관련 모든 정보를 삭제한다
         del user_states[user_id]
         del user_vacation_info[user_id]
