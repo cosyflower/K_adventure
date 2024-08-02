@@ -10,7 +10,7 @@ from googleVacationApi import  get_today_vacation_data
 from term_deposit_rotation import extract_deposit_df
 from formatting import get_current_year, create_leave_string
 from googleVacationApi import get_spreadsheet_id_in_folder
-from onebyone import get_or_create_1on1_spreadsheet, get_spreadsheet_service, find_spreadsheet_in_shared_drive, update_spreadsheet_on_oneByone, match_people, get_name_list_from_json
+from onebyone import get_or_create_1on1_spreadsheet, get_spreadsheet_service, find_spreadsheet_in_shared_drive, update_spreadsheet_on_oneByone, match_people, get_name_list_from_json, is_valid_week_oneByone
 from security_system import update_authority
 import pandas as pd
 import json
@@ -80,9 +80,13 @@ def notify_today_vacation_info():
     print("휴가 DM 보내기 완료! 배포 결과를 확인하세요!!")
 
 def notify_one_by_one_partner():
-    # New matching
+    # 14일 이상 차이가 나지 않은 경우에는 아무것도 하지 않음
+    if not is_valid_week_oneByone():
+        return
+
     update_authority()
     spreadsheet_id = update_spreadsheet_on_oneByone(match_people(get_name_list_from_json()))
+    
 
     sheets_serivce, drive_service = get_spreadsheet_service()
     

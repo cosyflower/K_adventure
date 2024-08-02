@@ -70,6 +70,9 @@ schedule.every().wednesday.at("08:00").do(notify_deposit_info)
 schedule.every().thursday.at("08:00").do(notify_deposit_info)
 schedule.every().friday.at("08:00").do(notify_deposit_info)
 
+# 2주마다 월요일 오]전 8시에 작업을 실행하도록 스케줄 설정
+schedule.every().monday.at("08:00").do(notify_one_by_one_partner)
+
 # notify_pending_payments_per_month() 함수를 월말에 알림
 # notify_pending_payments_per_quarter() 함수를 3,6,9,12월말에 알림
 def is_last_day_of_month():
@@ -95,16 +98,6 @@ schedule.every().day.at("08:00").do(
 schedule.every().day.at("08:00").do(
     lambda: notify_pending_payments_per_quarter() if is_last_day_of_quarter() else None
 )
-
-# 월요일 오전 8시에 실행하는 작업을 설정
-def oneByonePerTwoWeeks():
-    notify_one_by_one_partner()
-    # 2주 후 다시 스케줄링
-    next_run = datetime.now() + timedelta(weeks=2)
-    schedule.every().monday.at("08:00").do(oneByonePerTwoWeeks)
-
-# 2주마다 월요일 오전 8시에 작업을 실행하도록 스케줄 설정
-schedule.every().monday.at("08:00").do(oneByonePerTwoWeeks)
 
 # 스케줄러 실행 함수
 def run_scheduler():
@@ -135,18 +128,15 @@ def message_im_events(event, next):
     if event.get("channel_type") == "im":
         next()
 
-
-from validator import is_holiday
-
 @app.event("message", middleware=[message_im_events])
 def handle_message_events(event, say):
     user_id = event['user']
     user_input = event['text']
+
     # Test - Should be deleted!!
     # test 용 함수 - "test" 입력하면 내가 원하는 함수 호출
     if process_user_input(user_input) == 'test':
-        res = is_holiday('2024-08-02 09:00')
-        print(res)
+        notify_one_by_one_partner()
         return
 
     if user_id not in user_states:

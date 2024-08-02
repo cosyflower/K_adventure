@@ -6,7 +6,7 @@ from googleapiclient.errors import HttpError
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import random
-
+import re
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -14,6 +14,7 @@ from get_slack_user_info import update_authority
 from googleVacationApi import is_file_exists_in_directory, copy_gdrive_spreadsheet
 from formatting import process_user_input
 from directMessageApi import send_direct_message_to_user
+
 
 # Example usage
 template_file_id = config.oneByone_id
@@ -89,13 +90,20 @@ def add_new_sheet(sheets_service, spreadsheet_id):
     spreadsheet = sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
     sheets = spreadsheet.get('sheets', [])
     
+    # 현재 날짜를 MM-DD 형식으로 구함
+    current_date = datetime.now().strftime('%m-%d')
+
     # Find the name of the last sheet and determine the new sheet's name
     last_sheet_title = sheets[-1]['properties']['title']
     if '주차' in last_sheet_title:
-        last_week_number = int(last_sheet_title.replace('주차', ''))
-        new_sheet_title = f"{last_week_number + 1}주차"
-    else:
-        new_sheet_title = "1주차"
+        # '주차' 앞의 숫자만 추출
+        match = re.search(r'(\d+)', last_sheet_title)
+
+        if match:
+            last_week_number = int(match.group(1))
+            new_sheet_title = f"{last_week_number + 1}주차({current_date})"
+        else:
+            new_sheet_title = f"1주차({current_date})"
     
     # Add a new sheet to the spreadsheet
     requests = [{
@@ -225,6 +233,48 @@ def match_people(people):
     
     return matches
 
+def is_valid_week_oneByone():
+    sheet_service, drive_service = get_spreadsheet_service()
+    
+    current_year = datetime.now().year
+    new_title = f"{current_year}1on1"
+
+    # Check if the spreadsheet already exists
+    spreadsheet_id = find_spreadsheet_in_shared_drive(drive_service, new_title, config.shared_drive_id)
+    
+    if not spreadsheet_id:
+        # Copy the template spreadsheet to create a new one
+        spreadsheet_id = copy_spreadsheet(drive_service, template_file_id, new_title)
+
+    # spreadsheet 내 마지막 시트명을 조회합니다
+    # 마지막 시트명의 문자열 내에 '(' ')' 로 묶인 내부 문자열을 조회합니다. 내부 문자열은 날짜 형태로 구성되어 있습니다(MM-DD)
+    # 조회한 날짜와 오늘의 날짜를 비교합니다
+    # 오늘의 날짜와 조회한 날짜 간의 일수 차이가 14일 이상이면 참, 아니면 거짓을 반환합니다
+    # # Get metadata of the spreadsheet
+    sheet_metadata = sheet_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+    sheets = sheet_metadata.get('sheets', [])
+    last_sheet = sheets[-1]
+    last_sheet_name = last_sheet['properties']['title']
+
+    # Extract date in MM-DD format within parentheses
+    match = re.search(r'\((\d{2}-\d{2})\)', last_sheet_name)
+    
+    if match:
+        last_date_str = match.group(1)
+        # Add the current year to the extracted date string
+        last_date = datetime.strptime(f"{current_year}-{last_date_str}", '%Y-%m-%d')
+        
+        # Get today's date
+        today = datetime.now()
+        
+        # Calculate the difference in days
+        days_difference = (today - last_date).days
+        
+        # Check if the difference is 14 days or more
+        if days_difference >= 14:
+            return True
+        else:
+            return False
 
 
 # Google Sheets에 데이터를 작성하는 함수
