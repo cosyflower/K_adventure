@@ -99,6 +99,10 @@ def deposit_rotation_system_low_model_handler(message, say, user_states):
 
 def qna_chatgpt_low_model(user_input):
     # try:
+    from datetime import datetime
+    # 오늘 날짜를 구함
+    today = datetime.now().date()
+
     prompt = ""
     client = OpenAI(api_key='sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
     response = client.chat.completions.create(
@@ -110,7 +114,7 @@ def qna_chatgpt_low_model(user_input):
         },
         {
         "role": "user",
-        "content": deposit_data_to_json() + "\n" + user_input
+        "content": "오늘날짜\n" + today + "\n참고자료\n" + deposit_data_to_json() + "\n" + user_input
         }
     ],)
     output = response.choices[0].message.content
