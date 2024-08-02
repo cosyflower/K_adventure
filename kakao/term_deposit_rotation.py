@@ -114,7 +114,7 @@ def qna_chatgpt_low_model(user_input):
         },
         {
         "role": "user",
-        "content": "오늘날짜\n" + today + "\n참고자료\n" + deposit_data_to_json() + "\n" + user_input
+        "content": "오늘날짜\n" + str(today) + "\n참고자료\n" + deposit_data_to_json() + "\n" + user_input
         }
     ],)
     output = response.choices[0].message.content
