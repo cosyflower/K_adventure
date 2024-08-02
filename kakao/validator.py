@@ -10,6 +10,33 @@ import holidays
 * Process for validating inputs depending on proper format such as Date or name
 
 """
+def is_valid_date_only_day(date_str, comparison_date_str=None):
+    # 정규식 패턴 정의 (YYYY-MM-DD)
+    date_pattern = r'^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$'
+    
+    # date_str 형식 검증
+    if not re.match(date_pattern, date_str):
+        return False
+    
+    # 날짜 유효성 검사
+    try:
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+    except ValueError:
+        return False
+    
+    # comparison_date_str이 주어졌을 때의 처리
+    if comparison_date_str:
+        if not re.match(date_pattern, comparison_date_str):
+            return False
+        try:
+            comparison_date_obj = datetime.strptime(comparison_date_str, '%Y-%m-%d')
+        except ValueError:
+            return False
+        # date_str이 comparison_date_str 이상인지 비교
+        return date_obj >= comparison_date_obj
+    
+    # comparison_date_str이 없는 경우 형식이 올바른지 여부 반환
+    return True
 
 def is_valid_date(date_str, comparison_date_str=None):
     # 정규식 패턴 정의 (YYYY-MM-DD HH:MM)

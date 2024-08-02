@@ -28,7 +28,7 @@ import copy
 from translator import to_specific_date, format_vacation_info, to_cancel_sequence_list, convert_type_value, \
     format_vacation_data
 from validator import is_valid_date, is_valid_vacation_sequence, is_valid_vacation_reason_sequence, \
-is_valid_email, is_valid_confirm_sequence, is_valid_cancel_sequence, is_valid_vacation_purpose, is_holiday, count_holidays
+is_valid_email, is_valid_confirm_sequence, is_valid_cancel_sequence, is_valid_vacation_purpose, is_valid_date_only_day, count_holidays
 from user_commend import VACATION_SEQUENCE_TO_TYPE, VACATION_SEQUENCE_TO_REASON
 from formatting import process_user_input, get_proper_file_name, create_leave_string, get_current_year, process_and_extract_email
 from directMessageApi import send_direct_message_to_user
@@ -399,12 +399,17 @@ def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, 
                 del user_vacation_info[user_id]
             if user_id in user_vacation_status:
                 del user_vacation_status[user_id]
+
             user_states[user_id] = 'request_vacation'
-            msg = (f"휴가 신청을 시작합니다. 휴가 시작 날짜와 시간을 입력해주세요.\n"
-                   "*[유의] 연차를 신청하는 경우 휴가 시작 시간은 오전 9시로 작성하세요*\n"
-                "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 입력하세요\n"
-                "[예시] 2024-04-04 18:00\n"
-                )
+            user_vacation_info[user_id] = []
+            user_vacation_status[user_id] = 'checking_vacation_type'
+
+            msg = (f"휴가 신청 진행중입니다. 휴가 종류를 선택하세요\n"
+               "1. 연차\n"
+               "2. 반차(오전)\n"
+               "3. 반차(오후)\n"
+               "4. 반반차(오전)\n"
+               "5. 반반차(오후)\n")
             send_direct_message_to_user(user_id, msg)
         elif cleaned_user_input == '3': # 삭제하기 - user_states 변경 / cancel_vacation_status
             if user_id in cancel_vacation_status:
@@ -453,9 +458,7 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
     
     # 먼저 휴가를 리스트업 한다 
     # 시트 번호가 적절하지 않은 경우 예외 처리를 진행한다
-    
     try:
-        # valid_data_list = [] delete
         found_data_list = find_data_by_userId(spreadsheet_id, 1, user_id, 1)
     except ValueError as e:
         msg = (f"Unvalid sheet_number: {e}")
@@ -545,7 +548,7 @@ def input_vacation_type(message, say, user_vacation_info, user_vacation_status):
         user_vacation_info[user_id].append(vacation_type) # 변환 모듈
         msg = (f"휴가 신청 진행중입니다. 신청한 휴가는 {vacation_type}입니다.\n\n")
         send_direct_message_to_user(user_id, msg)
-        user_vacation_status[user_id] = "waiting_vacation_reason"
+        user_vacation_status[user_id] = "requesting_type"
     else:
         msg = (f"휴가 신청 진행중입니다. 잘못된 휴가 종류입니다. 1 - 5번 사이의 번호를 입력하세요\n\n")
         send_direct_message_to_user(user_id, msg)
@@ -654,9 +657,202 @@ def input_cancel_sequence(message, say, cancel_vacation_status, spreadsheet_id):
 
 ######### 휴가/연차 신청하기 #######
 def request_vacation_handler(message, say, user_states, user_vacation_status, user_vacation_info):
+    # user_id = message['user']
+    # user_input = message['text']
+    # # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
+    # cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
+
+    # if cleaned_user_input == '종료':
+    #     msg = (f"휴가 신청 프로세스를 종료합니다.\n\n")
+    #     send_direct_message_to_user(user_id, msg)
+    #     if user_id in user_states:
+    #         del user_states[user_id]
+    #     if user_id in user_vacation_info:
+    #         del user_vacation_info[user_id]
+    #     if user_id in user_vacation_status:
+    #         del user_vacation_status[user_id]
+    #     return
+
+    # # waiting_ : 값 입력을 기다리는 상황 // checking_ : 입력받는 것에 오류가 있는지 확인
+    # if user_id not in user_vacation_status and cleaned_user_input != "종료":
+    #     user_vacation_info[user_id] = []
+    #     user_vacation_status[user_id] = 'requesting'
+    #     start_date = process_user_input(cleaned_user_input)
+    #     if is_valid_date(start_date):
+    #         # holiday_on, holiday_type = is_holiday(start_date)
+    #         # if holiday_on is True:
+    #         #     msg = (f":exclamation: 신청한 휴가 시작 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
+    #         #     send_direct_message_to_user(user_id, msg)
+
+    #         user_vacation_info[user_id].append(start_date)
+    #         msg = (f"휴가 신청 진행중입니다. *휴가 종료 날짜와 시간을* 입력해주세요.\n"
+    #             "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 입력하세요\n"
+    #             "[예시] 2024-04-04 18:00\n"
+    #             )
+    #         send_direct_message_to_user(user_id, msg)
+    #     else:
+    #         msg = (":x: 잘못된 형식입니다. *휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로* 다시 입력해주세요.\n"
+    #         )
+    #         send_direct_message_to_user(user_id, msg)
+    #         user_vacation_status[user_id] = 'pending'
+    # elif user_vacation_status[user_id] == 'pending': # 다시 시작 날짜부터 받는다 
+    #     start_date = process_user_input(cleaned_user_input)
+    #     if is_valid_date(start_date):
+    #         # holiday_on, holiday_type = is_holiday(start_date)
+    #         # if holiday_on is True:
+    #         #     msg = (f":exclamation: 신청한 휴가 시작 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
+    #         #     send_direct_message_to_user(user_id, msg)
+
+    #         user_vacation_info[user_id].append(start_date)
+    #         msg = (f"휴가 신청 진행중입니다. *휴가 종료 날짜와 시간을* 입력해주세요.\n"
+    #             "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 작성해주세요\n"
+    #             "[예시] 2024-01-01 19:00\n"
+    #             )
+    #         send_direct_message_to_user(user_id, msg)
+    #         user_vacation_status[user_id] = 'requesting'
+    #     else:
+    #         msg = (f"*휴가 시작 날짜와 시간을 다시 입력해주세요 YYYY-MM-DD HH:MM 형태로 입력하세요*\n"
+    #                )
+    #         send_direct_message_to_user(user_id, msg)
+    # elif user_vacation_status[user_id] == 'requesting': # 시작 날짜 문제가 없는 상황 - 종료 날짜를 입력받는다
+    #     end_date = process_user_input(cleaned_user_input)
+
+    #     if is_valid_date(end_date, comparison_date_str=user_vacation_info[user_id][0]):
+    #         # holiday_on, holiday_type = is_holiday(end_date)
+    #         # if holiday_on is True:
+    #         #     msg = (f":exclamation: 신청한 휴가 시작 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
+    #         #     send_direct_message_to_user(user_id, msg)
+    #         user_vacation_info[user_id].append(end_date)
+    #         start_date = user_vacation_info[user_id][0]
+    #         end_date = user_vacation_info[user_id][1]
+    #         msg = (f"휴가 신청 진행중입니다. 휴가 종류를 선택하세요\n\n")
+    #         send_direct_message_to_user(user_id, msg)
+    #         user_vacation_status[user_id] = 'waiting_vacation_type'
+    #     else:
+    #         msg = (":x: 잘못된 형식입니다. *휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로* 다시 입력해주세요.\n"
+    #                "*[유의] 연차를 신청하는 경우 휴가 시작 시간은 오전 9시로 작성하세요*\n"
+    #                )
+    #         send_direct_message_to_user(user_id, msg)
+    #         user_vacation_info[user_id] = []
+    #         user_vacation_status[user_id] = 'pending'
+
+    # # 휴가 종류 선택하기
+    # if user_vacation_status[user_id] == 'checking_vacation_type':
+    #     input_vacation_type(message, say, user_vacation_info, user_vacation_status)
+    
+    # if user_vacation_status[user_id] == 'waiting_vacation_type':
+    #     msg = ("휴가 종류에는 5가지로 숫자로 1 - 5번 사이의 수를 입력해주세요\n"
+    #         "1. 연차\n"
+    #         "2. 반차(오전)\n"
+    #         "3. 반차(오후)\n"
+    #         "4. 반반차(오전)\n"
+    #         "5. 반반차(오후)\n"
+    #         )
+    #     send_direct_message_to_user(user_id, msg)
+    #     user_vacation_status[user_id] = 'checking_vacation_type'
+
+    # # 휴가 사유 선택하기
+    # if user_vacation_status[user_id] == 'checking_vacation_reason':
+    #     input_vacation_reason(message, say, user_vacation_info, user_vacation_status)
+
+    # if user_vacation_status[user_id] == "waiting_vacation_reason":
+    #     # 휴가 이유 선택하기
+    #     msg = ("휴가 사유에는 8가지로 숫자로 1 - 8번 사이의 수를 입력해주세요\n"
+    #         "1. 개인휴가\n"
+    #         "2. 경조휴가\n"
+    #         "3. 특별휴가\n"
+    #         "4. 예비군,민방위휴가\n"
+    #         "5. 보건휴가\n"
+    #         "6. 안식휴가\n"
+    #         "7. 출산휴가\n"
+    #         "8. 기타휴가\n"
+    #         )
+    #     send_direct_message_to_user(user_id, msg)
+    #     user_vacation_status[user_id] = 'checking_vacation_reason'
+
+
+    # ### 상세사유 입력하는 경우 그리고 입력하지 않는 경우 구분해서 입력해야 한다
+    # if user_vacation_status[user_id] == "checking_vacation_specific_reason":
+    #     input_vacation_specific_reason(message, say, user_vacation_info, user_vacation_status)
+
+    # if user_vacation_status[user_id] == "waiting_vacation_specific_reason":
+    #     # 상세 사유 입력받기
+    #     msg = (f"휴가 신청 진행중입니다. 선택하신 {user_vacation_info[user_id][-1]}의 휴가 상세 사유를 작성해주세요")
+    #     send_direct_message_to_user(user_id, msg)
+    #     user_vacation_status[user_id] = "checking_vacation_specific_reason"
+
+    # """
+    # 이메일 입력 (Depreceated)
+    # if user_vacation_status[user_id] == "checking_vacation_email":
+    #     input_vacation_email(message, say, user_vacation_info, user_vacation_status)
+    # if user_vacation_status[user_id] == "waiting_vacation_email":
+    #     # email 입력받기
+    #     msg = (f"<@{user_id}>님 휴가 신청 진행중입니다. <@{user_id}>의 개인 이메일을 작성해주세요.\n"
+    #         "* 유의 * 이메일 아이디 내 느낌표(!)가 존재해서는 안 됩니다."
+    #         )
+    #     send_direct_message_to_user(user_id, msg)
+    #     user_vacation_status[user_id] = "checking_vacation_email"
+    # """
+    
+    # if user_vacation_status[user_id] == "waiting_final_confirm":
+    #     checking_final_confirm(message, say, user_vacation_status, user_vacation_info)
+    
+    # if user_id in user_vacation_info and user_vacation_status[user_id] == "pre-confirmed":
+    #     msg = (f"휴가 신청 정보입니다.")
+    #     send_direct_message_to_user(user_id, msg)
+    #     for a, value in enumerate(user_vacation_info[user_id]):
+    #         # 저장된 정보 출력 
+    #         # 상세 이유가 공백인 경우 출력하지 않음 (해결))
+    #         if value == '':
+    #             continue
+    #         msg = (f"{value}\n")
+    #         send_direct_message_to_user(user_id, msg)
+
+    #     # 공휴일 포함 여부를 확인
+    #     vacation_count, holiday_count, holiday_details = count_holidays(user_vacation_info[user_id][0], user_vacation_info[user_id][1])
+    #     final_vacation_count = vacation_count - holiday_count
+    #     if holiday_count > 0:
+    #         msg = (f":exclamation: 휴가 신청 기간에 휴일이 포함되어 있습니다. 휴가 {vacation_count}일을 신청하셨습니다. 주말이 {holiday_count}일 포함되었습니다.\n"
+    #                f"차감되는 휴가 일수는 {final_vacation_count}일입니다. *아래의 휴일을 확인하세요.*\n"
+    #                )
+    #         send_direct_message_to_user(user_id, msg)    
+
+    #         for detail in holiday_details:
+    #             msg = detail
+    #             send_direct_message_to_user(user_id, msg)
+
+        
+    #     msg = (f"휴가 신청을 완료하려면 0을, 수정을 원하면 1을 입력하세요.")
+    #     send_direct_message_to_user(user_id, msg)
+    #     user_vacation_status[user_id] = "waiting_final_confirm"
+
+    # if user_id in user_vacation_info and user_vacation_status[user_id] == "confirmed":
+    #     # DB에 저장한다
+    #     # user_vacation_info[user_id] 안에 모두 담겨져있는 상황 : 시작 - 종료 - 종류 - 사유 - 상세 사유 - 이메일 
+    #     new_row_data = []
+    #     current_time = datetime.now().strftime('%Y. %m. %d %p %I:%M:%S').replace('AM', '오전').replace('PM', '오후').lstrip("'")
+    #     # spreadsheet에 반영되는 경우 객체 변환
+    #     start_date_formatted = to_specific_date(user_vacation_info[user_id][0]).lstrip("'")
+    #     end_date_formatted = to_specific_date(user_vacation_info[user_id][1]).lstrip("'")
+    #     type = user_vacation_info[user_id][2]
+    #     reason = user_vacation_info[user_id][3]
+    #     specific_reason = user_vacation_info[user_id][4]
+    #     email = get_display_name(user_id, 'users_info.json') + '@kakaventures.co.kr'
+
+    #     new_row_data.extend([
+    #         current_time,
+    #         get_real_name_by_user_id(user_id), # 저장시 ID로 저장 - uesrs_info에서 찾아서 대신 넣어야 한다 (있는 경우 없는 경우 생각하기)
+    #         start_date_formatted,
+    #         end_date_formatted,
+    #         type,
+    #         reason,
+    #         specific_reason,
+    #         email
+    #     ])
+
+    # update
     user_id = message['user']
     user_input = message['text']
-    # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
     cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
 
     if cleaned_user_input == '종료':
@@ -670,109 +866,119 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             del user_vacation_status[user_id]
         return
 
-    # waiting_ : 값 입력을 기다리는 상황 // checking_ : 입력받는 것에 오류가 있는지 확인
     if user_id not in user_vacation_status and cleaned_user_input != "종료":
         user_vacation_info[user_id] = []
-        user_vacation_status[user_id] = 'requesting'
-        start_date = process_user_input(cleaned_user_input)
-        if is_valid_date(start_date):
-            # holiday_on, holiday_type = is_holiday(start_date)
-            # if holiday_on is True:
-            #     msg = (f":exclamation: 신청한 휴가 시작 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
-            #     send_direct_message_to_user(user_id, msg)
-
-            user_vacation_info[user_id].append(start_date)
-            msg = (f"휴가 신청 진행중입니다. *휴가 종료 날짜와 시간을* 입력해주세요.\n"
-                "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 입력하세요\n"
-                "[예시] 2024-04-04 18:00\n"
-                )
-            send_direct_message_to_user(user_id, msg)
-        else:
-            msg = (":x: 잘못된 형식입니다. *휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로* 다시 입력해주세요.\n"
-            )
-            send_direct_message_to_user(user_id, msg)
-            user_vacation_status[user_id] = 'pending'
-    elif user_vacation_status[user_id] == 'pending': # 다시 시작 날짜부터 받는다 
-        start_date = process_user_input(cleaned_user_input)
-        if is_valid_date(start_date):
-            # holiday_on, holiday_type = is_holiday(start_date)
-            # if holiday_on is True:
-            #     msg = (f":exclamation: 신청한 휴가 시작 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
-            #     send_direct_message_to_user(user_id, msg)
-
-            user_vacation_info[user_id].append(start_date)
-            msg = (f"휴가 신청 진행중입니다. *휴가 종료 날짜와 시간을* 입력해주세요.\n"
-                "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 작성해주세요\n"
-                "[예시] 2024-01-01 19:00\n"
-                )
-            send_direct_message_to_user(user_id, msg)
-            user_vacation_status[user_id] = 'requesting'
-        else:
-            msg = (f"*휴가 시작 날짜와 시간을 다시 입력해주세요 YYYY-MM-DD HH:MM 형태로 입력하세요*\n"
-                   )
-            send_direct_message_to_user(user_id, msg)
-    elif user_vacation_status[user_id] == 'requesting': # 시작 날짜 문제가 없는 상황 - 종료 날짜를 입력받는다
-        end_date = process_user_input(cleaned_user_input)
-
-        if is_valid_date(end_date, comparison_date_str=user_vacation_info[user_id][0]):
-            # holiday_on, holiday_type = is_holiday(end_date)
-            # if holiday_on is True:
-            #     msg = (f":exclamation: 신청한 휴가 시작 날짜는 휴일 또는 공휴일입니다. 공휴일은 자동 차감되지 않으니 이 점 고려하여 신청해주세요\n")
-            #     send_direct_message_to_user(user_id, msg)
-            user_vacation_info[user_id].append(end_date)
-            start_date = user_vacation_info[user_id][0]
-            end_date = user_vacation_info[user_id][1]
-            msg = (f"휴가 신청 진행중입니다. 휴가 종류를 선택하세요\n\n")
-            send_direct_message_to_user(user_id, msg)
-            user_vacation_status[user_id] = 'waiting_vacation_type'
-        else:
-            msg = (":x: 잘못된 형식입니다. *휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로* 다시 입력해주세요.\n"
-                   "*[유의] 연차를 신청하는 경우 휴가 시작 시간은 오전 9시로 작성하세요*\n"
-                   )
-            send_direct_message_to_user(user_id, msg)
-            user_vacation_info[user_id] = []
-            user_vacation_status[user_id] = 'pending'
-
-    # 휴가 종류 선택하기
-    if user_vacation_status[user_id] == 'checking_vacation_type':
-        input_vacation_type(message, say, user_vacation_info, user_vacation_status)
-    
-    if user_vacation_status[user_id] == 'waiting_vacation_type':
-        msg = ("휴가 종류에는 5가지로 숫자로 1 - 5번 사이의 수를 입력해주세요\n"
-            "1. 연차\n"
-            "2. 반차(오전)\n"
-            "3. 반차(오후)\n"
-            "4. 반반차(오전)\n"
-            "5. 반반차(오후)\n"
-            )
+        msg = (f"휴가 신청 진행중입니다. 휴가 종류를 선택하세요\n"
+               "1. 연차\n"
+               "2. 반차(오전)\n"
+               "3. 반차(오후)\n"
+               "4. 반반차(오전)\n"
+               "5. 반반차(오후)\n")
         send_direct_message_to_user(user_id, msg)
         user_vacation_status[user_id] = 'checking_vacation_type'
+    
+    elif user_vacation_status[user_id] == 'checking_vacation_type':
+        input_vacation_type(message, say, user_vacation_info, user_vacation_status)
+    
+    if user_vacation_status[user_id] == 'requesting_type':
+        if user_vacation_info[user_id][0] == '연차':  # 연차 선택 시
+            msg = (f"휴가 신청 진행중입니다. *휴가 시작 날짜*를 입력해주세요. *공휴일이 포함되어 있는 경우 구분해서 신청하세요*\n"
+                "날짜는 YYYY-MM-DD 형태로 입력하세요\n"
+                "[예시] 2024-04-04\n")
+        else:  # 연차 이외의 경우
+            msg = (f"휴가 신청 진행중입니다. *휴가 시작 날짜와 시간을* 입력해주세요. *공휴일이 포함되어 있는 경우 구분해서 신청하세요*\n"
+                "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 입력하세요\n"
+                "[예시] 2024-04-04 18:00\n")
+        send_direct_message_to_user(user_id, msg)
+        user_vacation_status[user_id] = 'requesting_start_date'
+
+    elif user_vacation_status[user_id] == 'requesting_start_date':
+        start_date = cleaned_user_input.strip()
+        if user_vacation_info[user_id][0] == '연차':  # 연차 선택 시
+            if is_valid_date_only_day(start_date):
+                user_vacation_info[user_id].append(start_date)
+                msg = (f"휴가 신청 진행중입니다. *휴가 종료 날짜*를 입력해주세요. *공휴일이 포함되어 있는 경우 구분해서 신청하세요*\n"
+                       "날짜는 YYYY-MM-DD 형태로 입력하세요\n"
+                       "[예시] 2024-04-05\n")
+                send_direct_message_to_user(user_id, msg)
+                user_vacation_status[user_id] = 'requesting_end_date'
+            else:
+                msg = (":x: 잘못된 형식입니다. *휴가 시작 날짜를 YYYY-MM-DD 형태로* 다시 입력해주세요. *공휴일이 포함되어 있는 경우 구분해서 신청하세요*\n")
+                send_direct_message_to_user(user_id, msg)
+        else:  # 연차 이외의 경우
+            if is_valid_date(start_date):
+                user_vacation_info[user_id].append(start_date)
+                msg = (f"휴가 신청 진행중입니다. *휴가 종료 날짜와 시간을* 입력해주세요. *공휴일이 포함되어 있는 경우 구분해서 신청하세요*\n"
+                       "날짜는 YYYY-MM-DD 형태로, 시간은 HH:MM 형태로 입력하세요\n"
+                       "[예시] 2024-04-05 18:00\n")
+                send_direct_message_to_user(user_id, msg)
+                user_vacation_status[user_id] = 'requesting_end_date'
+            else:
+                msg = (":x: 잘못된 형식입니다. *휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로* 다시 입력해주세요. *공휴일이 포함되어 있는 경우 구분해서 신청하세요*\n")
+                send_direct_message_to_user(user_id, msg)
+    
+    elif user_vacation_status[user_id] == 'requesting_end_date':
+        end_date = cleaned_user_input.strip()
+        if user_vacation_info[user_id][0] == '연차':  # 연차 선택 시
+            if is_valid_date_only_day(end_date, comparison_date_str=user_vacation_info[user_id][1]):
+                user_vacation_info[user_id][1] += " 09:00"  # 시작 시간 저장
+                user_vacation_info[user_id].append(end_date + " 20:00")  # 종료 시간 저장
+                msg = (f"휴가 신청 진행중입니다. 휴가 사유를 선택하세요\n"
+                       "1. 개인휴가\n"
+                       "2. 경조휴가\n"
+                       "3. 특별휴가\n"
+                       "4. 예비군, 민방위휴가\n"
+                       "5. 보건휴가\n"
+                       "6. 안식휴가\n"
+                       "7. 출산휴가\n"
+                       "8. 기타휴가\n")
+                send_direct_message_to_user(user_id, msg)
+                user_vacation_status[user_id] = 'checking_vacation_reason'
+            else:
+                msg = (":x: 잘못된 형식입니다. *휴가 종료 날짜를 YYYY-MM-DD 형태로* 다시 입력해주세요. *공휴일이 포함되어 있는 경우 구분해서 신청하세요*\n")
+                send_direct_message_to_user(user_id, msg)
+        else:  # 연차 이외의 경우
+            if is_valid_date(end_date, comparison_date_str=user_vacation_info[user_id][1]):
+                user_vacation_info[user_id].append(end_date)
+                msg = (f"휴가 신청 진행중입니다. 휴가 사유를 선택하세요\n"
+                       "1. 개인휴가\n"
+                       "2. 경조휴가\n"
+                       "3. 특별휴가\n"
+                       "4. 예비군, 민방위휴가\n"
+                       "5. 보건휴가\n"
+                       "6. 안식휴가\n"
+                       "7. 출산휴가\n"
+                       "8. 기타휴가\n")
+                send_direct_message_to_user(user_id, msg)
+                user_vacation_status[user_id] = 'checking_vacation_reason'
+            else:
+                msg = (":x: 잘못된 형식입니다. *휴가 종료 날짜와 시간을 YYYY-MM-DD HH:MM 형태로* 다시 입력해주세요. *공휴일이 포함되어 있는 경우 구분해서 신청하세요*\n")
+                send_direct_message_to_user(user_id, msg)
 
     # 휴가 사유 선택하기
-    if user_vacation_status[user_id] == 'checking_vacation_reason':
+    elif user_vacation_status[user_id] == 'checking_vacation_reason':
         input_vacation_reason(message, say, user_vacation_info, user_vacation_status)
 
-    if user_vacation_status[user_id] == "waiting_vacation_reason":
-        # 휴가 이유 선택하기
-        msg = ("휴가 사유에는 8가지로 숫자로 1 - 8번 사이의 수를 입력해주세요\n"
-            "1. 개인휴가\n"
-            "2. 경조휴가\n"
-            "3. 특별휴가\n"
-            "4. 예비군,민방위휴가\n"
-            "5. 보건휴가\n"
-            "6. 안식휴가\n"
-            "7. 출산휴가\n"
-            "8. 기타휴가\n"
-            )
-        send_direct_message_to_user(user_id, msg)
-        user_vacation_status[user_id] = 'checking_vacation_reason'
-
-
+    # elif user_vacation_status[user_id] == "waiting_vacation_reason":
+    #     # 휴가 이유 선택하기
+    #     msg = ("휴가 사유에는 8가지로 숫자로 1 - 8번 사이의 수를 입력해주세요\n"
+    #         "1. 개인휴가\n"
+    #         "2. 경조휴가\n"
+    #         "3. 특별휴가\n"
+    #         "4. 예비군,민방위휴가\n"
+    #         "5. 보건휴가\n"
+    #         "6. 안식휴가\n"
+    #         "7. 출산휴가\n"
+    #         "8. 기타휴가\n"
+    #         )
+    #     send_direct_message_to_user(user_id, msg)
+    #     user_vacation_status[user_id] = 'checking_vacation_reason'
     ### 상세사유 입력하는 경우 그리고 입력하지 않는 경우 구분해서 입력해야 한다
-    if user_vacation_status[user_id] == "checking_vacation_specific_reason":
+
+    elif user_vacation_status[user_id] == "checking_vacation_specific_reason":
         input_vacation_specific_reason(message, say, user_vacation_info, user_vacation_status)
 
-    if user_vacation_status[user_id] == "waiting_vacation_specific_reason":
+    elif user_vacation_status[user_id] == "waiting_vacation_specific_reason":
         # 상세 사유 입력받기
         msg = (f"휴가 신청 진행중입니다. 선택하신 {user_vacation_info[user_id][-1]}의 휴가 상세 사유를 작성해주세요")
         send_direct_message_to_user(user_id, msg)
@@ -805,20 +1011,6 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             msg = (f"{value}\n")
             send_direct_message_to_user(user_id, msg)
 
-        # 공휴일 포함 여부를 확인
-        vacation_count, holiday_count, holiday_details = count_holidays(user_vacation_info[user_id][0], user_vacation_info[user_id][1])
-        final_vacation_count = vacation_count - holiday_count
-        if holiday_count > 0:
-            msg = (f":exclamation: 휴가 신청 기간에 휴일이 포함되어 있습니다. 휴가 {vacation_count}일을 신청하셨습니다. 주말이 {holiday_count}일 포함되었습니다.\n"
-                   f"차감되는 휴가 일수는 {final_vacation_count}일입니다. *아래의 휴일을 확인하세요.*\n"
-                   )
-            send_direct_message_to_user(user_id, msg)    
-
-            for detail in holiday_details:
-                msg = detail
-                send_direct_message_to_user(user_id, msg)
-
-        
         msg = (f"휴가 신청을 완료하려면 0을, 수정을 원하면 1을 입력하세요.")
         send_direct_message_to_user(user_id, msg)
         user_vacation_status[user_id] = "waiting_final_confirm"
@@ -829,9 +1021,9 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         new_row_data = []
         current_time = datetime.now().strftime('%Y. %m. %d %p %I:%M:%S').replace('AM', '오전').replace('PM', '오후').lstrip("'")
         # spreadsheet에 반영되는 경우 객체 변환
-        start_date_formatted = to_specific_date(user_vacation_info[user_id][0]).lstrip("'")
-        end_date_formatted = to_specific_date(user_vacation_info[user_id][1]).lstrip("'")
-        type = user_vacation_info[user_id][2]
+        start_date_formatted = to_specific_date(user_vacation_info[user_id][1]).lstrip("'")
+        end_date_formatted = to_specific_date(user_vacation_info[user_id][2]).lstrip("'")
+        type = user_vacation_info[user_id][0]
         reason = user_vacation_info[user_id][3]
         specific_reason = user_vacation_info[user_id][4]
         email = get_display_name(user_id, 'users_info.json') + '@kakaventures.co.kr'
@@ -846,6 +1038,53 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             specific_reason,
             email
         ])
+    
+    # elif user_vacation_status[user_id] == 'requesting_reason':
+    #     vacation_reason = cleaned_user_input.strip()
+    #     if vacation_reason in ['1', '2', '3', '4', '5', '6', '7', '8']:
+    #         user_vacation_info[user_id].append(vacation_reason)
+    #         msg = (f"휴가 신청 진행중입니다. 상세 사유를 입력해주세요.\n")
+    #         send_direct_message_to_user(user_id, msg)
+    #         user_vacation_status[user_id] = 'requesting_specific_reason'
+    #     else:
+    #         msg = (f"잘못된 입력입니다. 1에서 8 사이의 숫자를 선택해주세요.\n")
+    #         send_direct_message_to_user(user_id, msg)
+    
+    # elif user_vacation_status[user_id] == 'requesting_specific_reason':
+    #     specific_reason = cleaned_user_input.strip()
+    #     user_vacation_info[user_id].append(specific_reason)
+    #     user_vacation_status[user_id] = 'waiting_final_confirm'
+    #     msg = (f"휴가 신청 정보를 확인하세요:\n"
+    #            f"휴가 종류: {user_vacation_info[user_id][0]}\n"
+    #            f"휴가 시작: {user_vacation_info[user_id][1]}\n"
+    #            f"휴가 종료: {user_vacation_info[user_id][2]}\n"
+    #            f"휴가 사유: {user_vacation_info[user_id][3]}\n"
+    #            f"상세 사유: {user_vacation_info[user_id][4]}\n\n"
+    #            f"최종 확인 후 0을 입력해주세요.")
+    #     send_direct_message_to_user(user_id, msg)
+    
+    # elif user_vacation_status[user_id] == 'waiting_final_confirm':
+    #     if cleaned_user_input == '0':
+    #         # 휴가 정보를 DB에 저장하고 부재중 이벤트 설정
+    #         new_row_data = []
+    #         current_time = datetime.now().strftime('%Y. %m. %d %p %I:%M:%S').replace('AM', '오전').replace('PM', '오후').lstrip("'")
+    #         start_date_formatted = to_specific_date(user_vacation_info[user_id][1]).lstrip("'")
+    #         end_date_formatted = to_specific_date(user_vacation_info[user_id][2]).lstrip("'")
+    #         type = user_vacation_info[user_id][0]
+    #         reason = user_vacation_info[user_id][3]
+    #         specific_reason = user_vacation_info[user_id][4]
+    #         email = get_display_name(user_id, 'users_info.json') + '@kakaventures.co.kr'
+
+    #         new_row_data.extend([
+    #             current_time,
+    #             get_real_name_by_user_id(user_id),
+    #             start_date_formatted,
+    #             end_date_formatted,
+    #             type,
+    #             reason,
+    #             specific_reason,
+    #             email
+    #         ])
 
         search_file_name = get_proper_file_name(new_row_data)
         if is_file_exists_in_directory(config.dummy_vacation_directory_id, search_file_name) is False:
@@ -854,9 +1093,9 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             # print("파일생성완료")
 
         spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
-        if spreadsheet_id == None:
-            # 사실상 불필요한 로직
-            return
+        # if spreadsheet_id == None:
+        #     # 사실상 불필요한 로직
+        #     return
 
         remained_vacation = get_remained_vacation_by_userId(spreadsheet_id, user_id)
         # type -> 수로 변경해야 함
@@ -907,8 +1146,8 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
 
         # 부재중 slot 반영
         set_out_of_office_event(user_id, 
-                                string_to_strptime(user_vacation_info[user_id][0]),
                                 string_to_strptime(user_vacation_info[user_id][1]),
+                                string_to_strptime(user_vacation_info[user_id][2]),
                                 summary= type,
                                 email= email,
                                 )
