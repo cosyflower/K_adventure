@@ -1,86 +1,44 @@
 {
-    "U031UM29JDD": {
-        "id": "U031UM29JDD",
-        "name": "brian",
-        "real_name": "Brian 브라이언",
-        "display_name": "Brian.kv 장동욱 (7번)",
+    "U0332HZ9AAW": {
+        "id": "U0332HZ9AAW",
+        "name": "rose054",
+        "real_name": "Rose.​kv 이화영",
+        "display_name": "Rose.​kv 이화영",
         "authority": 1
     },
-    "U031UM2D0FR": {
-        "id": "U031UM2D0FR",
-        "name": "anne",
-        "real_name": "Anne",
-        "display_name": "Anne. kv 안혜원",
+    "U033GU22A1G": {
+        "id": "U033GU22A1G",
+        "name": "rocky",
+        "real_name": "김정록Rocky Kim",
+        "display_name": "Rocky.kv 김정록",
         "authority": 1
     },
-    "U0326B07CJZ": {
-        "id": "U0326B07CJZ",
-        "name": "mike",
-        "real_name": "Mike 조현익",
-        "display_name": "mike.kv 조현익",
+    "U033GU3M99Q": {
+        "id": "U033GU3M99Q",
+        "name": "raina",
+        "real_name": "Raina 정나혜",
+        "display_name": "Raina.kv 정나혜",
         "authority": 1
     },
-    "U0329A8F6QK": {
-        "id": "U0329A8F6QK",
-        "name": "jacob",
-        "real_name": "김지웅Jacob Kim",
-        "display_name": "Jacob.kv 김지웅",
+    "U03PUFYDQ8J": {
+        "id": "U03PUFYDQ8J",
+        "name": "ben",
+        "real_name": "Byungmin Choi",
+        "display_name": "Ben.kv 최병민",
         "authority": 1
     },
-    "U0329MM96KC": {
-        "id": "U0329MM96KC",
-        "name": "jun",
-        "real_name": "Kijun Kim",
-        "display_name": "Jun.kv 김기준",
+    "U045ZS96B7V": {
+        "id": "U045ZS96B7V",
+        "name": "esther",
+        "real_name": "Esther Kim",
+        "display_name": "Esther.kv 김하연",
         "authority": 1
     },
-    "U032BJQJMJQ": {
-        "id": "U032BJQJMJQ",
-        "name": "eddie",
-        "real_name": "장승룡 Eddie Chang",
-        "display_name": "eddie.kv 장승룡 (8번)",
-        "authority": 1
-    },
-    "U032HNW23PW": {
-        "id": "U032HNW23PW",
-        "name": "zapier",
-        "real_name": "Zapier",
-        "display_name": "",
-        "authority": 1
-    },
-    "U032Z25EWUQ": {
-        "id": "U032Z25EWUQ",
-        "name": "justin",
-        "real_name": "신정호Justin Shin",
-        "display_name": "justin.kv 신정호",
-        "authority": 1
-    },
-    "U033E1L3E4D": {
-        "id": "U033E1L3E4D",
-        "name": "ryan",
-        "real_name": "Ryan (김치원)",
-        "display_name": "Ryan",
-        "authority": 1
-    },
-    "U035M850L1E": {
-        "id": "U035M850L1E",
-        "name": "jade",
-        "real_name": "Jade.​kv 정주연",
-        "display_name": "",
-        "authority": 1
-    },
-    "U04PBFCEENQ": {
-        "id": "U04PBFCEENQ",
-        "name": "notion2",
-        "real_name": "Notion",
-        "display_name": "",
-        "authority": 1
-    },
-    "U05R7FD8Y85": {
-        "id": "U05R7FD8Y85",
-        "name": "zero",
-        "real_name": "Zero",
-        "display_name": "Zero.kv 김영무",
+    "U067YPRUEVC": {
+        "id": "U067YPRUEVC",
+        "name": "judy",
+        "real_name": "Judy.​kv 윤지민",
+        "display_name": "Judy.kv 윤지민",
         "authority": 1
     },
     "U07FFB5T36V": {
@@ -89,6 +47,48 @@
         "real_name": "로제봇",
         "display_name": "",
         "authority": 5
+    },
+    "U031UM29JDD": {
+        "id": "U031UM29JDD",
+        "name": "brian",
+        "real_name": "Brian 브라이언",
+        "display_name": "Brian.kv 장동욱 (7번)",
+        "authority": 2
+    },
+    "U031UM2D0FR": {
+        "id": "U031UM2D0FR",
+        "name": "anne",
+        "real_name": "Anne",
+        "display_name": "Anne. kv 안혜원",
+        "authority": 2
+    },
+    "U0326B07CJZ": {
+        "id": "U0326B07CJZ",
+        "name": "mike",
+        "real_name": "Mike 조현익",
+        "display_name": "mike.kv 조현익",
+        "authority": 2
+    },
+    "U0329A8F6QK": {
+        "id": "U0329A8F6QK",
+        "name": "jacob",
+        "real_name": "김지웅Jacob Kim",
+        "display_name": "Jacob.kv 김지웅",
+        "authority": 2
+    },
+    "U0329MM96KC": {
+        "id": "U0329MM96KC",
+        "name": "jun",
+        "real_name": "Kijun Kim",
+        "display_name": "Jun.kv 김기준",
+        "authority": 2
+    },
+    "U032BJQJMJQ": {
+        "id": "U032BJQJMJQ",
+        "name": "eddie",
+        "real_name": "장승룡 Eddie Chang",
+        "display_name": "eddie.kv 장승룡 (8번)",
+        "authority": 2
     },
     "U032FEB8JFM": {
         "id": "U032FEB8JFM",
@@ -104,25 +104,25 @@
         "display_name": "wendy 박소진",
         "authority": 2
     },
-    "U0332HZ9AAW": {
-        "id": "U0332HZ9AAW",
-        "name": "rose054",
-        "real_name": "Rose.​kv 이화영",
-        "display_name": "Rose.​kv 이화영",
+    "U032Z25EWUQ": {
+        "id": "U032Z25EWUQ",
+        "name": "justin",
+        "real_name": "신정호Justin Shin",
+        "display_name": "justin.kv 신정호",
         "authority": 2
     },
-    "U033GU22A1G": {
-        "id": "U033GU22A1G",
-        "name": "rocky",
-        "real_name": "김정록Rocky Kim",
-        "display_name": "Rocky.kv 김정록",
+    "U033E1L3E4D": {
+        "id": "U033E1L3E4D",
+        "name": "ryan",
+        "real_name": "Ryan (김치원)",
+        "display_name": "Ryan",
         "authority": 2
     },
-    "U033GU3M99Q": {
-        "id": "U033GU3M99Q",
-        "name": "raina",
-        "real_name": "Raina 정나혜",
-        "display_name": "Raina.kv 정나혜",
+    "U035M850L1E": {
+        "id": "U035M850L1E",
+        "name": "jade",
+        "real_name": "Jade.​kv 정주연",
+        "display_name": "",
         "authority": 2
     },
     "U03HUQ45CVB": {
@@ -132,25 +132,11 @@
         "display_name": "Emma.kv 이예화",
         "authority": 2
     },
-    "U03PUFYDQ8J": {
-        "id": "U03PUFYDQ8J",
-        "name": "ben",
-        "real_name": "Byungmin Choi",
-        "display_name": "Ben.kv 최병민",
-        "authority": 2
-    },
-    "U045ZS96B7V": {
-        "id": "U045ZS96B7V",
-        "name": "esther",
-        "real_name": "Esther Kim",
-        "display_name": "Esther.kv 김하연",
-        "authority": 2
-    },
-    "U067YPRUEVC": {
-        "id": "U067YPRUEVC",
-        "name": "judy",
-        "real_name": "Judy.​kv 윤지민",
-        "display_name": "Judy.kv 윤지민",
+    "U05R7FD8Y85": {
+        "id": "U05R7FD8Y85",
+        "name": "zero",
+        "real_name": "Zero",
+        "display_name": "Zero.kv 김영무",
         "authority": 2
     },
     "U069GCP8B6J": {
@@ -167,12 +153,19 @@
         "display_name": "",
         "authority": 5
     },
+    "U032HNW23PW": {
+        "id": "U032HNW23PW",
+        "name": "zapier",
+        "real_name": "Zapier",
+        "display_name": "",
+        "authority": 5
+    },
     "U05CXCAQ9PG": {
         "id": "U05CXCAQ9PG",
         "name": "admin083",
         "real_name": "Administrator (Kakao Ventures)",
         "display_name": "Administrator (Kakao Ventures)",
-        "authority": 3
+        "authority": 5
     },
     "U05HG52UCGK": {
         "id": "U05HG52UCGK",
@@ -480,7 +473,7 @@
         "name": "notion",
         "real_name": "Notion Notifications",
         "display_name": "",
-        "authority": 4
+        "authority": 5
     },
     "U037XS781AL": {
         "id": "U037XS781AL",
@@ -656,6 +649,13 @@
         "real_name": "Smartsheet",
         "display_name": "",
         "authority": 4
+    },
+    "U04PBFCEENQ": {
+        "id": "U04PBFCEENQ",
+        "name": "notion2",
+        "real_name": "Notion",
+        "display_name": "",
+        "authority": 5
     },
     "U04PN23NKA6": {
         "id": "U04PN23NKA6",
@@ -870,7 +870,7 @@
     "U06QANK3A9Z": {
         "id": "U06QANK3A9Z",
         "name": "roze_bot",
-        "real_name": "로제봇",
+        "real_name": "",
         "display_name": "",
         "authority": 5
     },

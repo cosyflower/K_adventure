@@ -36,13 +36,13 @@ def deposit_rotation_system_handler(message, say, user_states):
     user_input = message['text']
     user_input = process_user_input(user_input)
     if user_input == '종료':
-        msg = (f"<@{user_id}> 정기예금 회전 시스템을 종료합니다.\n")
+        msg = (f"정기예금 회전 시스템을 종료합니다.\n")
         send_direct_message_to_user(user_id, msg)
         del user_states[user_id]
     else:
         if user_input.isdigit():
             if user_input == "1": # 질문하기(일반모델)(약 1원)
-                msg = (f"<@{user_id}> 원하는 질문을 입력해주세요\n"
+                msg = (f"원하는 질문을 입력해주세요\n"
                     "주의사항 본 서비스는 유료 서비스입니다 정기예금 회전 시스템과 관련된 질문만 해주세요\n"
                     "(종료를 원하시면 '종료'를 입력해주세요)\n"
                     )

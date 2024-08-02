@@ -865,6 +865,9 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         if user_id in user_vacation_status:
             del user_vacation_status[user_id]
         return
+    
+    if user_vacation_status[user_id] == 'checking_vacation_type':
+        input_vacation_type(message, say, user_vacation_info, user_vacation_status)
 
     if user_id not in user_vacation_status and cleaned_user_input != "종료":
         user_vacation_info[user_id] = []
@@ -877,9 +880,6 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         send_direct_message_to_user(user_id, msg)
         user_vacation_status[user_id] = 'checking_vacation_type'
     
-    elif user_vacation_status[user_id] == 'checking_vacation_type':
-        input_vacation_type(message, say, user_vacation_info, user_vacation_status)
-    
     if user_vacation_status[user_id] == 'requesting_type':
         if user_vacation_info[user_id][0] == '연차':  # 연차 선택 시
             msg = (f"휴가 신청 진행중입니다. *휴가 시작 날짜*를 입력해주세요. *공휴일이 포함되어 있는 경우 구분해서 신청하세요*\n"
@@ -891,6 +891,7 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
                 "[예시] 2024-04-04 18:00\n")
         send_direct_message_to_user(user_id, msg)
         user_vacation_status[user_id] = 'requesting_start_date'
+        return
 
     elif user_vacation_status[user_id] == 'requesting_start_date':
         start_date = cleaned_user_input.strip()
@@ -916,6 +917,10 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             else:
                 msg = (":x: 잘못된 형식입니다. *휴가 시작 날짜와 시간을 YYYY-MM-DD HH:MM 형태로* 다시 입력해주세요. *공휴일이 포함되어 있는 경우 구분해서 신청하세요*\n")
                 send_direct_message_to_user(user_id, msg)
+
+    # 휴가 사유 선택하기
+    elif user_vacation_status[user_id] == 'checking_vacation_reason':
+        input_vacation_reason(message, say, user_vacation_info, user_vacation_status)
     
     elif user_vacation_status[user_id] == 'requesting_end_date':
         end_date = cleaned_user_input.strip()
@@ -955,9 +960,7 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
                 msg = (":x: 잘못된 형식입니다. *휴가 종료 날짜와 시간을 YYYY-MM-DD HH:MM 형태로* 다시 입력해주세요. *공휴일이 포함되어 있는 경우 구분해서 신청하세요*\n")
                 send_direct_message_to_user(user_id, msg)
 
-    # 휴가 사유 선택하기
-    elif user_vacation_status[user_id] == 'checking_vacation_reason':
-        input_vacation_reason(message, say, user_vacation_info, user_vacation_status)
+    
 
     # elif user_vacation_status[user_id] == "waiting_vacation_reason":
     #     # 휴가 이유 선택하기

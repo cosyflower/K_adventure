@@ -27,7 +27,7 @@ def security_system_user_function_handler(message, say, user_states, security_sy
                 for i, (id, info) in enumerate(user_info_list.items()):
                     authority_name = ""
                     if info['authority'] == 1:
-                        authority_name = "투자관리팀"
+                        authority_name = "관리팀"
                         comment = comment + f"{i+1}. 이름: {info['name']}, 권한: {authority_name}\n"
                     elif info['authority'] == 2:
                         authority_name = "임직원"
@@ -53,7 +53,7 @@ def security_system_user_function_handler(message, say, user_states, security_sy
                     for i, (id, authority) in enumerate(authority_change_list.items()):
                         authority_name = ""
                         if authority == 1:
-                            authority_name = "투자관리팀"
+                            authority_name = "관리팀"
                         elif authority == 2:
                             authority_name = "임직원"
                         elif authority == 3:
@@ -76,7 +76,7 @@ def security_system_user_function_handler(message, say, user_states, security_sy
                     for key, user_data in users_info.items():
                         authority_name = ""
                         if user_data['authority'] == 1:
-                            authority_name = "투자관리팀"
+                            authority_name = "관리팀"
                             user_details.append({'real_name': user_data['real_name'], 'name': user_data['name'], 'id': user_data['id'], 'authority_name': authority_name, 'authority': user_data['authority']})
                         elif user_data['authority'] == 2:
                             authority_name = "임직원"
@@ -107,7 +107,7 @@ def security_system_user_function_handler(message, say, user_states, security_sy
                 with open("users_info.json", 'r', encoding='utf-8') as file:
                     user_info_list = json.load(file)
                 if user_info_list[user_id]['authority'] == 1:
-                    authority_name = "투자관리팀"
+                    authority_name = "관리팀"
                 elif user_info_list[user_id]['authority'] == 2:
                     authority_name = "임직원"
                 elif user_info_list[user_id]['authority'] == 3:
@@ -125,7 +125,7 @@ def security_system_user_function_handler(message, say, user_states, security_sy
                     for key, user_data in users_info.items():
                         authority_name = ""
                         if user_data['authority'] == 1:
-                            authority_name = "투자관리팀"
+                            authority_name = "관리팀"
                             user_details.append({'real_name': user_data['real_name'], 'name': user_data['name'], 'id': user_data['id'], 'authority_name': authority_name, 'authority': user_data['authority']})
                         elif user_data['authority'] == 2:
                             authority_name = "임직원"
@@ -463,7 +463,7 @@ def contains_keywords(user):
     for key in ['name', 'real_name', 'display_name']:
         if key in user:
             value = user[key].lower()
-            if any(keyword in value for keyword in ["simple", "bot", "_"]):
+            if any(keyword in value for keyword in ["simple", "bot", "_", "notion", "zapier", "admin"]):
                 return True
     return False
 

@@ -15,7 +15,7 @@ from security_system import update_authority
 import pandas as pd
 import json
 from directMessageApi import send_direct_message_to_user
-from term_deposit_rotation import get_pending_payments_per_month, get_pending_payments_per_quarter
+from term_deposit_rotation import get_pending_payments_per_month, get_pending_payments_per_quarter, update_deposit_df
 import math
 
 
@@ -135,8 +135,9 @@ def notify_one_by_one_partner():
 
 def notify_pending_payments_per_month():
     # ['우리은행  정기예금 1020-867-606019', '1,000,000,000', '3.69%', '2024-06-13', '2024-08-01', '49', '4940163.934']
+    update_deposit_df()
     result = get_pending_payments_per_month()
-
+    
     # result에 담긴 데이터를 하나씩 순회합니다
     # 각 데이터를 한번씩 출력합니다
     # 각 데이터의 6번째 값들의 합을 구합니다. 이 때 값에 소수점이 있는 경우 내림을 취하고 합을 구합니다
@@ -152,6 +153,9 @@ def notify_pending_payments_per_month():
         # ['우리은행  정기예금 1020-867-606019', '1,000,000,000', '3.69%', '2024-06-13', '2024-08-01', '49', '4940163.934']
         current_date = datetime.now().strftime('%Y-%m-%d')
         if current_date == data[3]:
+            
+            print(data)
+
             send_slack_message(config.deposit_channel_id, data)
             # 각 데이터의 6번째 값 (인덱스로는 5번째)을 가져옵니다
             amount = float(data[6])
@@ -160,6 +164,7 @@ def notify_pending_payments_per_month():
             # 값을 합산합니다
             total_sum += amount
 
+    # print(total_sum)
     send_slack_message(config.deposit_channel_id, f"현재일을 기준으로 미수금액의 총합은 {"{:,}".format(total_sum)}입니다")
 
 def notify_pending_payments_per_quarter():

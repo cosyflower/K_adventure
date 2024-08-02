@@ -135,9 +135,9 @@ def handle_message_events(event, say):
 
     # Test - Should be deleted!!
     # test 용 함수 - "test" 입력하면 내가 원하는 함수 호출
-    if process_user_input(user_input) == 'test':
-        notify_one_by_one_partner()
-        return
+    # if process_user_input(user_input) == 'test':
+    #     notify_pending_payments_per_month()
+    #     return
 
     if user_id not in user_states:
         user_purpose_handler(event, say) # 안내 문구 출력 - 알맞은 user_states[user_id] 배정하는 역할
@@ -231,11 +231,11 @@ def user_purpose_handler(message, say):
                 "1. 전체 사용자 권한 조회\n"
                 "2. 신규 사용자 권한 배정\n"
                 "3. 내 권한 조회\n"
-                "4. 권한이 변경된 사용자 조회([임시]관리자 전용)\n"
-                "5. 권한 업데이트([임시]관리자 전용)\n"
-                "6. 임시 관리자 배정(관리자 전용)\n"
-                "7. 임시 관리자 목록 조회(관리자 전용)\n"
-                "8. 임시 관리자 회수(관리자 전용)\n(종료를 원하시면 '종료'를 입력해주세요)"
+                "4. 권한이 변경된 사용자 조회([임시]운영자 전용)\n"
+                "5. 권한 업데이트([임시]운영자 전용)\n"
+                "6. 임시 운영자 배정(운영자 전용)\n"
+                "7. 임시 운영자 목록 조회(운영자 전용)\n"
+                "8. 임시 운영자 회수(운영자 전용)\n(종료를 원하시면 '종료'를 입력해주세요)"
                 )
             send_direct_message_to_user(user_id, msg)
             user_states[user_id] = 'security_system_waiting_function_number'
