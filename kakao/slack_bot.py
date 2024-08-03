@@ -279,8 +279,6 @@ def user_purpose_handler(message, say):
                 )
             send_direct_message_to_user(user_id, msg)
             user_states[user_id] = 'deposit_rotation_waiting_only_number'
-            msg = "공사중...종료합니다"
-            send_direct_message_to_user(user_id, msg)
         else:
             msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
             send_direct_message_to_user(user_id, msg)
@@ -298,7 +296,7 @@ def user_purpose_handler(message, say):
         else:
             msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
             send_direct_message_to_user(user_id, msg)
-    elif purpose == "인사총무":
+    elif purpose == "인사총무시스템":
         if get_user_authority(user_id) < 3:
             msg = ("인사 총무 기능을 진행합니다. *아래의 링크를 확인하세요*\n"
                     "https://forms.gle/xWeE1qWNCjLrrBob7"
