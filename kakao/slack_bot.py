@@ -12,7 +12,7 @@ import config
 import schedule
 import time
 import threading
-from user_commend import docx_generate, security_system, vacation_system_list, call_slack_bot, term_deposit_rotation_list, one_and_one # 사용자 명령어 DB
+from user_commend import docx_generate, security_system, vacation_system_list, call_slack_bot, term_deposit_rotation_list, one_and_one, hr_and_admin_list # 사용자 명령어 DB
 
 from document4create import docx_generating_company_name_handler, docx_generating_inv_choice_handler #, docx_generating_docx_category_handler
 
@@ -29,7 +29,6 @@ from config import dummy_vacation_directory_id
 from onebyone import find_oneByone_handler, update_spreadsheet_on_oneByone, match_people, get_name_list_from_json, find_oneByone
 from notification import notify_pending_payments_per_month, notify_pending_payments_per_quarter
 # slack bot system
-
 
 # testing for validating on generating docx
 import gspread
@@ -49,6 +48,8 @@ def check_the_user_purpose(user_input,user_id):
         return term_deposit_rotation_list[0]
     elif user_input in one_and_one:
         return one_and_one[0]
+    elif user_input in hr_and_admin_list:
+        return hr_and_admin_list[0]
     else:
         return chatgpt.analyze_user_purpose(user_input)
 
@@ -293,6 +294,15 @@ def user_purpose_handler(message, say):
             # # 삭제 예정
             # print(f"partner : {partner}")
             msg = (f"<@{user_id}>님의 매칭 대상은 : {partner}입니다. 일대일매칭 기능을 종료합니다\n")
+            send_direct_message_to_user(user_id, msg)
+        else:
+            msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
+            send_direct_message_to_user(user_id, msg)
+    elif purpose == "인사총무":
+        if get_user_authority(user_id) < 3:
+            msg = ("인사 총무 기능을 진행합니다. *아래의 링크를 확인하세요*\n"
+                    "https://forms.gle/xWeE1qWNCjLrrBob7"
+            )
             send_direct_message_to_user(user_id, msg)
         else:
             msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")

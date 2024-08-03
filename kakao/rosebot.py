@@ -35,9 +35,16 @@ def rose_bot_handler(message, say, user_states):
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "2": ## 인사 총무
-                msg = (f"공사중입니다. 종료합니다.\n")
-                send_direct_message_to_user(user_id, msg)
-                del user_states[user_id]
+                if get_user_authority(user_id) < 3:
+                    msg = ("인사 총무 기능을 진행합니다. *아래의 링크를 확인하세요*\n"
+                           "https://forms.gle/xWeE1qWNCjLrrBob7"
+                            )
+                    send_direct_message_to_user(user_id, msg)
+                    del user_states[user_id]
+                else:
+                    msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
+                    send_direct_message_to_user(user_id, msg)
+                    del user_states[user_id]
             elif user_input == "3": ## 문서 4종 생성
                 if get_user_authority(user_id) < 3:
                     msg = (f"문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
