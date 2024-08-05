@@ -55,7 +55,7 @@ def rose_bot_handler(message, say, user_states):
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
             elif user_input == "4": ## 정기예금 회전 시스템
-                if get_user_authority(user_id) < 3:
+                if get_user_authority(user_id) < 2:
                     msg = ("정기예금 회전 시스템을 작동합니다. 종료를 원한다면 \'종료\'를 입력해주세요\n"
                     "1. 질문하기\n"
                     # "2. 질문하기(상위모델)\n"

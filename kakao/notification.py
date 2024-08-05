@@ -198,7 +198,7 @@ def notify_deposit_info():
     deposit_df = extract_deposit_df()
     send_slack_message(channel_id, "예금 정보를 조회 중입니다...\n")
     deposit_df['만기일'] = pd.to_datetime(deposit_df['만기일'])
-    today = datetime.datetime.now()
+    today = datetime.now()
     is_friday = today.weekday() == 4
     if is_friday:
         threshold_dates = [today + timedelta(days=i) for i in range(4, 7)]
