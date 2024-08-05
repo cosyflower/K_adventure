@@ -5,6 +5,7 @@ import json
 import config
 import pytz
 
+
 # 구글 캘린더 API 인증 정보 설정
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 credentials = service_account.Credentials.from_service_account_file(
@@ -18,6 +19,18 @@ def string_to_strptime(date_string):
 # 2024.01.01 10:00:00
 def string_to_strptime_on_row_data(row_date_string):
     return datetime.datetime.strptime(row_date_string, "%Y.%m.%d %H:%M:%S")
+
+# JSON 파일을 확인하여 user_id에 맞는 데이터를 탐색하고 display_name을 반환한다
+def get_display_name(user_id, file_path='users_info.json'):
+    # JSON 파일을 열고 데이터를 읽음
+    with open(file_path, 'r', encoding='utf-8') as file:
+        users_data = json.load(file)
+    
+    # user_id에 해당하는 사용자 데이터 찾기
+    if user_id in users_data:
+        return users_data[user_id].get('name')
+    else:
+        print(f"User ID {user_id} not found in data")
 
 def set_out_of_office_event(user_id, start_date, end_date, summary='Out of Office', email=''):
     # 날짜 문자열을 datetime 객체로 변환
@@ -51,7 +64,7 @@ def set_out_of_office_event(user_id, start_date, end_date, summary='Out of Offic
 
     # 이벤트 삽입
     try:
-        event_result = service.events().insert(calendarId=config.google_calendar_id, body=event).execute()
+        event_result = service.events().insert(calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr', body=event).execute()
     except Exception as e:
         print(f"An error occurred: {e}")
 
@@ -75,7 +88,7 @@ def delete_out_of_office_event(user_id, start_date, end_date):
     # 이벤트 검색
     try:
         events_result = service.events().list(
-            calendarId=config.google_calendar_id,
+            calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr',
             timeMin=start_datetime,
             timeMax=end_datetime,
             singleEvents=True,
@@ -86,7 +99,7 @@ def delete_out_of_office_event(user_id, start_date, end_date):
         for event in events:
             if event.get('eventType') == 'outOfOffice':
                 try:
-                    service.events().delete(calendarId=config.google_calendar_id, eventId=event['id']).execute()
+                    service.events().delete(calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr', eventId=event['id']).execute()
                 except Exception as e:
                     print(f"An error occurred while deleting the event: {e}")
     except Exception as e:

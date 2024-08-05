@@ -45,6 +45,9 @@ def notify_today_vacation_info():
     json_keyfile_path = config.kakao_json_key_path
     today_vacation_data = get_today_vacation_data(spreadsheet_id, json_keyfile_path)
 
+    for data in today_vacation_data:
+        print(data)
+    
     # Vacation requested and transformed
     formatted_vacation_data = format_vacation_data(today_vacation_data)
     client = WebClient(token=config.bot_token_id)
@@ -67,7 +70,7 @@ def notify_today_vacation_info():
     else:
         formatted_data = '\n'.join(formatted_vacation_data)
         vacation_msg = f":palm_tree:금일 휴가자 명단입니다\n\n{formatted_data}"
-
+    
     for slack_id in user_ids:
         try:
             response = client.chat_postMessage(
@@ -77,7 +80,6 @@ def notify_today_vacation_info():
         except SlackApiError as e:
             print(f"Error sending message to {slack_id}: {e.response['error']}")
     
-    print("휴가 DM 보내기 완료! 배포 결과를 확인하세요!!")
 
 def notify_one_by_one_partner():
     # 14일 이상 차이가 나지 않은 경우에는 아무것도 하지 않음

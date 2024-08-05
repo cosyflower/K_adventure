@@ -220,24 +220,34 @@ def get_today_vacation_data(spreadsheet_id, json_keyfile_path):
     # 스프레드시트 객체 얻기
     spreadsheet = get_spreadsheet(spreadsheet_id, json_keyfile_path)
     sheet = spreadsheet.worksheets()[0]
+    
     # 모든 데이터 얻기
+    # 각각의 데이터는 '2024. 08. 05 오전 8:31:24' 'Claire' '2024. 08. 05 오전 10:00:00' '2024. 08. 05 오후 12:00:00' '반반차(오전)' '개인휴가'
     all_data = sheet.get_all_values()
     today = datetime.today()
-    today_str = today.strftime('%Y. %m. %d').replace(' 0', ' ')  # 불필요한 0 제거
-    # 오늘의 날짜와 휴가 시작 날짜가 같은 데이터 필터링
-    today_vacation_data = []
     
+    # 오늘의 날짜와 휴가 기간(시작 날짜 <= 오늘 <= 종료 날짜)이 겹치는 데이터 필터링
+    today_vacation_data = []
+
     for data in all_data:
-        start_date = data[2].strip("' ")
+        start_date_str = data[2].strip("' ")
+        end_date_str = data[3].strip("' ")
+
         # 날짜 부분만 추출하여 datetime 객체로 변환
         try:
-            date_part = ' '.join(start_date.split()[:3])
-            parsed_date = datetime.strptime(date_part, '%Y. %m. %d')
-            parsed_date_str = parsed_date.strftime('%Y. %m. %d').replace(' 0', ' ')
+            start_date_part = ' '.join(start_date_str.split()[:3])
+            end_date_part = ' '.join(end_date_str.split()[:3])
+
+            start_date = datetime.strptime(start_date_part, '%Y. %m. %d')
+            end_date = datetime.strptime(end_date_part, '%Y. %m. %d')
+
+            start_date_str = start_date.strftime('%Y. %m. %d').replace(' 0', ' ')
+            end_date_str = end_date.strftime('%Y. %m. %d').replace(' 0', ' ')
         except ValueError:
             continue  # 잘못된 날짜 형식은 무시합니다
 
-        if parsed_date_str == today_str:
+        # 오늘 날짜가 휴가 기간에 포함되는지 확인
+        if start_date <= today <= end_date:
             today_vacation_data.append(data)
 
     return today_vacation_data
@@ -1029,7 +1039,7 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         type = user_vacation_info[user_id][0]
         reason = user_vacation_info[user_id][3]
         specific_reason = user_vacation_info[user_id][4]
-        email = get_display_name(user_id, 'users_info.json') + '@kakaventures.co.kr'
+        email = get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr'
 
         new_row_data.extend([
             current_time,
