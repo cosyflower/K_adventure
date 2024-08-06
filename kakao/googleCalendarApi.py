@@ -4,6 +4,7 @@ import datetime
 import json
 import config
 import pytz
+import re
 
 
 # 구글 캘린더 API 인증 정보 설정
@@ -11,6 +12,11 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 credentials = service_account.Credentials.from_service_account_file(
         config.kakao_json_key_path, scopes=SCOPES)
 service = build('calendar', 'v3', credentials=credentials)
+
+def extract_name_before_number(name):
+    # 정규식을 사용하여 숫자가 등장하기 전까지의 문자열을 추출
+    result = re.match(r'^[^\d]*', name)
+    return result.group(0) if result else name
 
 # 2024-01-01 10:00
 def string_to_strptime(date_string):
@@ -28,7 +34,7 @@ def get_display_name(user_id, file_path='users_info.json'):
     
     # user_id에 해당하는 사용자 데이터 찾기
     if user_id in users_data:
-        return users_data[user_id].get('name')
+        return extract_name_before_number(users_data[user_id].get('name'))
     else:
         print(f"User ID {user_id} not found in data")
 

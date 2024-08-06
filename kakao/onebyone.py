@@ -19,6 +19,10 @@ from directMessageApi import send_direct_message_to_user
 # Example usage
 template_file_id = config.oneByone_id
 
+def extract_name_before_number(name):
+    # 정규식을 사용하여 숫자가 등장하기 전까지의 문자열을 추출
+    result = re.match(r'^[^\d]*', name)
+    return result.group(0) if result else name
 
 # users_info에 등록된 사람들의 이름을 가지고 리스트를 반환하는 함수
 def get_name_list_from_json(file_path='users_info.json'):
@@ -31,8 +35,8 @@ def get_name_list_from_json(file_path='users_info.json'):
     names = []
     for id in users_data:
         name = users_data[id].get('name')
-        if users_data[id].get('authority') <= 2 and 'bot' not in name and 'admin' not in name:
-            names.append(users_data[id].get('name'))
+        if users_data[id].get('authority') <= 2 and 'bot' not in name and 'admin' not in name and 'notion' not in name:
+            names.append(extract_name_before_number(users_data[id].get('name')))
     return names
 
 # 이름 문자열을 전달하면 id 값을 반환하는 함수
@@ -264,11 +268,16 @@ def is_valid_week_oneByone():
         # Add the current year to the extracted date string
         last_date = datetime.strptime(f"{current_year}-{last_date_str}", '%Y-%m-%d')
         
-        # Get today's date
-        today = datetime.now()
+        # Get today's date in %Y-%m-%d format
+        today_str = datetime.now().strftime('%Y-%m-%d')
+
+        # Convert today_str back to a datetime object
+        today = datetime.strptime(today_str, '%Y-%m-%d')
         
         # Calculate the difference in days
         days_difference = (today - last_date).days
+        # Debug - print
+        # print(f"days_differecne : {days_difference}")
         
         # Check if the difference is 14 days or more
         if days_difference >= 14:

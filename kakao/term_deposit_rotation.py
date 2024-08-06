@@ -256,6 +256,7 @@ def update_deposit_df():
         # 시트명을 '시트명_미수금액'으로 설정
         sheet_name = row['시트명'] + '_미수금액'
         new_sheet = spreadsheet.worksheet(sheet_name)
+        time.sleep(6)  # 60초(1분) 대기
 
         # 계산 기준일 - 현재 날짜로 설정
         calc_date = datetime.now()

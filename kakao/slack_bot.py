@@ -137,7 +137,7 @@ def handle_message_events(event, say):
     # Test - Should be deleted!!
     # test 용 함수 - "test" 입력하면 내가 원하는 함수 호출
     if process_user_input(user_input) == 'test':
-        notify_today_vacation_info()
+        notify_one_by_one_partner()
         return
 
     if user_id not in user_states:
