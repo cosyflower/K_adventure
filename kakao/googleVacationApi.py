@@ -174,6 +174,15 @@ def get_real_name_by_user_id(user_id, json_path='users_info.json'):
             return user_data['real_name']
     return None
 
+def get_display_name_by_user_id(user_id, json_path='users_info.json'):
+    with open(json_path, 'r', encoding='utf-8') as file:
+        users_info = json.load(file)
+    
+    for key, user_data in users_info.items():
+        if user_data['id'] == user_id:
+            return user_data['display_name']
+    return None
+
 def get_data_by_real_name(sheet, real_name, attribute_sequence):
     data = sheet.get_all_values()
     matched_data = []
@@ -181,11 +190,28 @@ def get_data_by_real_name(sheet, real_name, attribute_sequence):
     if real_name is None:
         return matched_data
 
+    # lower case comparison
     for row in data:
-        if len(row) > attribute_sequence and row[attribute_sequence] == real_name:
+        if len(row) > attribute_sequence and row[attribute_sequence].lower() == real_name.lower():
             matched_data.append(row)
     
     return matched_data
+
+def extract_before_dot_or_space(s):
+    # 문자열에서 '.' 또는 ' '의 위치를 찾습니다.
+    dot_index = s.find('.')
+    space_index = s.find(' ')
+
+    # '.'와 ' '의 위치 중 가장 먼저 나타나는 위치를 찾습니다.
+    if dot_index == -1 and space_index == -1:
+        return s  # '.'나 ' '가 없다면 전체 문자열 반환
+    elif dot_index == -1:
+        return s[:space_index]
+    elif space_index == -1:
+        return s[:dot_index]
+    else:
+        return s[:min(dot_index, space_index)]
+
 
 def find_data_by_userId(spreadsheet_id, sheet_number, user_id, attribute_sequence):
     spreadsheet = get_spreadsheet(spreadsheet_id, config.kakao_json_key_path)
@@ -200,7 +226,12 @@ def find_data_by_userId(spreadsheet_id, sheet_number, user_id, attribute_sequenc
     # 시트 번호에 따라 해당 시트를 접근
     sheet = sheet_list[sheet_number - 1]
 
-    real_name = get_real_name_by_user_id(user_id)
+    # display_name으로 수정해야 하고
+    # 인자로 문자열을 전달하면 인자의 '.' or ' ' 앞까지의 문자열을 추출하기
+    display_name = get_display_name_by_user_id(user_id)
+    real_name = extract_before_dot_or_space(display_name)
+
+    # lower case comparison
     data = get_data_by_real_name(sheet, real_name, attribute_sequence)
     return data
 

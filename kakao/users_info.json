@@ -188,13 +188,6 @@
         "display_name": "Claire.kv 공지유",
         "authority": 3
     },
-    "U06EJF6GFSL": {
-        "id": "U06EJF6GFSL",
-        "name": "song",
-        "real_name": "song kim 김송현",
-        "display_name": "Song.kv 김송현",
-        "authority": 3
-    },
     "U06S64X9TAP": {
         "id": "U06S64X9TAP",
         "name": "taeho",
@@ -221,13 +214,6 @@
         "name": "bety",
         "real_name": "bety",
         "display_name": "bety.kv 김민정",
-        "authority": 3
-    },
-    "U07D7AFPMN2": {
-        "id": "U07D7AFPMN2",
-        "name": "kacey",
-        "real_name": "Kacey",
-        "display_name": "Kacey.kv 박유빈",
         "authority": 3
     },
     "USLACKBOT": {
@@ -853,6 +839,13 @@
         "display_name": "Connor.kv 정성훈",
         "authority": 4
     },
+    "U06EJF6GFSL": {
+        "id": "U06EJF6GFSL",
+        "name": "song",
+        "real_name": "",
+        "display_name": "Song.kv 김송현",
+        "authority": 4
+    },
     "U06NG65CFHB": {
         "id": "U06NG65CFHB",
         "name": "wf_bot_a06njvdg63d",
@@ -894,5 +887,12 @@
         "real_name": "Send a scheduled message",
         "display_name": "",
         "authority": 5
+    },
+    "U07D7AFPMN2": {
+        "id": "U07D7AFPMN2",
+        "name": "kacey",
+        "real_name": "",
+        "display_name": "Kacey.kv 박유빈",
+        "authority": 4
     }
 }
