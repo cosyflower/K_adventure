@@ -243,7 +243,8 @@ def notify_deposit_info():
     user1 = config.deposity_user1_id
     user2 = config.deposity_user2_id
     user3 = config.deposity_user3_id
-    channel_id = config.deposit_channel_id
+    #channel_id = config.deposit_channel_id
+    channel_id = "C07ETQP9HJB" ## 임시 테스트용 채널 (제로,에스더 채팅방)
     deposit_df = extract_deposit_df()
     send_slack_message(channel_id, "예금 정보를 조회 중입니다...\n")
     deposit_df['만기일'] = pd.to_datetime(deposit_df['만기일'])

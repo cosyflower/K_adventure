@@ -63,13 +63,13 @@ schedule.every().monday.at("08:00").do(notify_today_vacation_info)
 schedule.every().tuesday.at("08:00").do(notify_today_vacation_info)
 schedule.every().wednesday.at("08:00").do(notify_today_vacation_info)
 schedule.every().thursday.at("08:00").do(notify_today_vacation_info)
-schedule.every().friday.at("08:00").do(notify_today_vacation_info)
+schedule.every().sunday.at("08:00").do(notify_today_vacation_info)
 
 schedule.every().monday.at("08:00").do(notify_deposit_info)
 schedule.every().tuesday.at("08:00").do(notify_deposit_info)
 schedule.every().wednesday.at("08:00").do(notify_deposit_info)
 schedule.every().thursday.at("08:00").do(notify_deposit_info)
-schedule.every().friday.at("08:00").do(notify_deposit_info)
+schedule.every().sunday.at("08:00").do(notify_deposit_info)
 
 # 2주마다 월요일 오]전 8시에 작업을 실행하도록 스케줄 설정
 schedule.every().monday.at("08:00").do(notify_one_by_one_partner)

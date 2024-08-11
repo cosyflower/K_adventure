@@ -180,7 +180,11 @@ def get_display_name_by_user_id(user_id, json_path='users_info.json'):
     
     for key, user_data in users_info.items():
         if user_data['id'] == user_id:
-            return user_data['display_name']
+            res = user_data['display_name']
+            if res == '':
+                return user_data['real_name'] # exception : jade / ellen (no ellen data in users_info)
+            else:
+                return res
     return None
 
 def get_data_by_real_name(sheet, real_name, attribute_sequence):
