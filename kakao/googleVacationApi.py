@@ -870,6 +870,14 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         specific_reason = user_vacation_info[user_id][4]
         email = get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr'
 
+        # 연도, 월, 일만 추출하여 datetime 객체로 변환
+        date1 = datetime.strptime(user_vacation_info[user_id][1].split(' ')[0], '%Y-%m-%d')
+        date2 = datetime.strptime(user_vacation_info[user_id][2].split(' ')[0], '%Y-%m-%d')
+
+        # 일수 차이 계산
+        days_difference = (date2 - date1).days
+        # print(f"days_difference : {days_difference}")
+
         new_row_data.extend([
             current_time,
             get_real_name_by_user_id(user_id), # 저장시 ID로 저장 - uesrs_info에서 찾아서 대신 넣어야 한다 (있는 경우 없는 경우 생각하기)
@@ -885,13 +893,12 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         if is_file_exists_in_directory(config.dummy_vacation_directory_id, search_file_name) is False:
             copy_gdrive_spreadsheet(config.dummy_vacation_template_id, search_file_name, config.dummy_vacation_directory_id)
             
-
         spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
 
         remained_vacation = get_remained_vacation_by_userId(spreadsheet_id, user_id)
         # type -> 수로 변경해야 함
         converted_value = convert_type_value(type)
-        if reason == "개인휴가" and float(remained_vacation[0]) < converted_value:
+        if reason == "개인휴가" and float(remained_vacation[0]) < converted_value * (days_difference+1):
             msg = (f":x: 개인휴가 신청이 불가합니다. *개인휴가의 잔여 일수를 확인하세요.*\n")
             send_direct_message_to_user(user_id, msg)
             msg = (f"휴가 신청을 종료합니다.")
@@ -902,7 +909,7 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             del user_vacation_status[user_id]
             return
         
-        if reason == "안식휴가" and float(remained_vacation[1]) < converted_value:
+        if reason == "안식휴가" and float(remained_vacation[1]) < converted_value * (days_difference+1):
             msg = (f":x: 안식휴가 신청이 불가합니다. *안식휴가의 잔여 일수를 확인하세요.*\n")
             send_direct_message_to_user(user_id, msg)
             msg = (f"휴가 신청을 종료합니다.")

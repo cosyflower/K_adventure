@@ -27,7 +27,7 @@ from googleVacationApi import request_vacation_handler, cancel_vacation_handler,
 from directMessageApi import send_direct_message_to_user
 from config import dummy_vacation_directory_id
 from onebyone import find_oneByone_handler, update_spreadsheet_on_oneByone, match_people, get_name_list_from_json, find_oneByone
-from notification import notify_pending_payments_per_month, notify_pending_payments_per_quarter
+from notification import notify_pending_payments_per_month, notify_pending_payments_per_quarter, send_slack_message
 # slack bot system
 
 # testing for validating on generating docx
@@ -137,6 +137,8 @@ def handle_message_events(event, say):
     # Test - Should be deleted!!
     # test 용 함수 - "test" 입력하면 내가 원하는 함수 호출
     if process_user_input(user_input) == 'test':
+        # notify_pending_payments_per_month()
+        # notify_pending_payments_per_quarter()
         notify_one_by_one_partner()
         return
 

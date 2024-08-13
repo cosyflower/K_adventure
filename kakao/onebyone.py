@@ -49,8 +49,10 @@ def get_slack_id_from_json(name_str, file_path='users_info.json'):
         users_data = json.load(file)
 
     for id in users_data:
+        # name 정보를 조회합니다
         name = users_data[id].get('name')
-        if users_data[id].get('authority') <= 3 and name_str == name:
+        # 자신의 이름뒤에 숫자를 붙이는 경우도 있어서 name_str in name 로 수정 (예시로 rose054) 
+        if users_data[id].get('authority') <= 3 and name_str in name:
             return users_data[id].get('id')
     return None
 

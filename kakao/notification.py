@@ -87,9 +87,12 @@ def notify_today_vacation_info():
 def notify_one_by_one_partner():
     # 14일 이상 차이가 나지 않은 경우에는 아무것도 하지 않음
     if not is_valid_week_oneByone():
-        # print('not valid. Nothing created')
+        print('not valid. Nothing created')
+        names = get_name_list_from_json()
+        for name in names:
+            print(name)
         return
-
+    
     update_authority()
     spreadsheet_id = update_spreadsheet_on_oneByone(match_people(get_name_list_from_json()))
     
@@ -170,7 +173,7 @@ def notify_pending_payments_per_month():
                 f"원금: {principal_amount:,.0f}원\n"
                 f"이자율: {interest_rate}\n"
                 f"시작일: {start_date}\n"
-                f"종료일: {end_date}\n"
+                f"계산 기준일: {end_date}\n"
                 f"일수: {days}일\n"
                 f"미수 금액: {pending_amount:,.0f}원"
                 f"\n"
@@ -220,7 +223,7 @@ def notify_pending_payments_per_quarter():
                         f"원금: {principal_amount:,.0f}원\n"
                         f"이자율: {interest_rate}\n"
                         f"시작일: {start_date}\n"
-                        f"종료일: {end_date}\n"
+                        f"계산 기준일: {end_date}\n"
                         f"일수: {days}일\n"
                         f"미수 금액: {pending_amount:,.0f}원"
                         f"\n"

@@ -1,7 +1,7 @@
 ## 정기예금 회전시스템 ##
 # KAKAO
 deposit_id = '1R4QfCN9Ltb-_AAYdJcdNwoBb5EfPvSBl8aVa2MYuues' ###### 수정필요
-deposit_channel_id = 'C07EHTRMR4Z'
+deposit_channel_id = 'C07G1F4LGP9' # 'C07EHTRMR4Z' <- 이 채널은 뭐지??? 현재 test-esther
 deposity_user1_id = "U0332HZ9AAW" # rose
 deposity_user2_id = "U033GU3M99Q" # raina
 deposity_user3_id = "U045ZS96B7V" # esther
