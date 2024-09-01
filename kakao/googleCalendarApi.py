@@ -38,7 +38,7 @@ def get_display_name(user_id, file_path='users_info.json'):
     else:
         print(f"User ID {user_id} not found in data")
 
-def set_out_of_office_event(user_id, start_date, end_date, summary='Out of Office', email=''):
+def set_out_of_office_event(user_id, start_date, end_date, summary='Out of Office', email='', reason=''):
     # 날짜 문자열을 datetime 객체로 변환
     # start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d %H:%M')
     # end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d %H:%M')
@@ -52,7 +52,31 @@ def set_out_of_office_event(user_id, start_date, end_date, summary='Out of Offic
     start_datetime = start_date.isoformat()
     end_datetime = end_date.isoformat()
 
-    # 캘린더 이벤트 생성
+    # # 캘린더 이벤트 생성
+    # event = {
+    #     'summary': summary,
+    #     'start': {
+    #         'dateTime': start_datetime,
+    #         'timeZone': 'Asia/Seoul',
+    #     },
+    #     'end': {
+    #         'dateTime': end_datetime,
+    #         'timeZone': 'Asia/Seoul',
+    #     },
+    #     'transparency': 'opaque',
+    #     'visibility': 'private',
+    #     'eventType': 'outOfOffice'
+    # }
+    
+
+    #---------------------------------#
+    # Should test this logic!!!!!!!!
+
+    summary = reason
+    if reason == '보건휴가':
+        summary = '병결'
+
+    # 병결 이벤트(슬롯) 생성
     event = {
         'summary': summary,
         'start': {
@@ -65,14 +89,52 @@ def set_out_of_office_event(user_id, start_date, end_date, summary='Out of Offic
         },
         'transparency': 'opaque',
         'visibility': 'private',
-        'eventType': 'outOfOffice'
+        'eventType': 'outOfOffice',
+        'extendedProperties': {
+            'private': {
+                'declineNewInvites': 'true',  # 새로운 회의 거부 설정
+            }
+        }
     }
 
+    # 이벤트 생성
+    created_event = service.events().insert(calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr', body=event).execute()
+    # print(f"Created out of office event: {created_event.get('htmlLink')}")
+
+    # 해당 날짜의 기존 회의 상태 변경 (거부로 설정)
+    events_result = service.events().list(
+        calendarId= get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr',
+        timeMin=start_datetime,  # KST (Korea Standard Time)
+        timeMax=end_datetime,
+        singleEvents=True,
+        orderBy='startTime'
+    ).execute()
+
+    events = events_result.get('items', [])
+
+    for event in events:
+        attendees = event.get('attendees', [])
+        for attendee in attendees:
+            if attendee.get('email').endswith('@kakaoventures.co.kr'):
+                attendee['responseStatus'] = 'declined'
+                try:
+                    # 회의 상태 업데이트
+                    service.events().patch(
+                        calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr', 
+                        eventId=event['id'], 
+                        body={'attendees': attendees}
+                    ).execute()
+                    # print(f"Set declined status for meeting: {event.get('summary')}")
+                except Exception as e:
+                    pass
+    # }
+    #---------------------------------#
+
     # 이벤트 삽입
-    try:
-        event_result = service.events().insert(calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr', body=event).execute()
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    # try:
+    #     event_result = service.events().insert(calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr', body=event).execute()
+    # except Exception as e:
+    #     print(f"An error occurred: {e}")
 
 def delete_out_of_office_event(user_id, start_date, end_date):
     # 날짜 문자열을 datetime 객체로 변환
@@ -92,24 +154,65 @@ def delete_out_of_office_event(user_id, start_date, end_date):
     end_datetime = end_date.isoformat()
 
     # 이벤트 검색
-    try:
-        events_result = service.events().list(
-            calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr',
-            timeMin=start_datetime,
-            timeMax=end_datetime,
-            singleEvents=True,
-            orderBy='startTime'
-        ).execute()
+    # try:
+    #     events_result = service.events().list(
+    #         calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr',
+    #         timeMin=start_datetime,
+    #         timeMax=end_datetime,
+    #         singleEvents=True,
+    #         orderBy='startTime'
+    #     ).execute()
 
-        events = events_result.get('items', [])
-        for event in events:
-            if event.get('eventType') == 'outOfOffice':
+    #     events = events_result.get('items', [])
+    #     for event in events:
+    #         if event.get('eventType') == 'outOfOffice':
+    #             try:
+    #                 service.events().delete(calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr', eventId=event['id']).execute()
+    #             except Exception as e:
+    #                 print(f"An error occurred while deleting the event: {e}")
+    # except Exception as e:
+    #     print(f"An error occurred while retrieving events: {e}")
+  
+    # 병결 이벤트 삭제
+    events_result = service.events().list(
+        calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr',
+        timeMin=start_datetime,  # KST (Korea Standard Time)
+        timeMax=end_datetime,
+        singleEvents=True,
+        orderBy='startTime'
+    ).execute()
+
+    events = events_result.get('items', [])
+
+    for event in events:
+        # 병결 이벤트인 경우 삭제
+        if event.get('eventType') == 'outOfOffice':
+            try:
+                service.events().delete(
+                    calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr', 
+                    eventId=event['id']
+                ).execute()
+                # print(f"Deleted out of office event: {event.get('summary')}")
+            except Exception as e:
+                # print(f"Failed to delete out of office event: {event.get('summary')}. Error: {e}")
+                pass
+        
+        # 기존 회의 상태 복원
+        attendees = event.get('attendees', [])
+        for attendee in attendees:
+            if attendee.get('email').endswith('@kakaoventures.co.kr') and attendee.get('responseStatus') == 'declined':
+                attendee['responseStatus'] = 'accepted'
                 try:
-                    service.events().delete(calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr', eventId=event['id']).execute()
+                    # 회의 상태 업데이트
+                    service.events().patch(
+                        calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr', 
+                        eventId=event['id'], 
+                        body={'attendees': attendees}
+                    ).execute()
+                    # print(f"Restored participation in meeting: {event.get('summary')}")
                 except Exception as e:
-                    print(f"An error occurred while deleting the event: {e}")
-    except Exception as e:
-        print(f"An error occurred while retrieving events: {e}")
+                    # print(f"Failed to restore meeting: {event.get('summary')}. Error: {e}")
+                    pass
 
 # 예시 사용법
 # 자신의 user_id가 들어간다고 생각하기

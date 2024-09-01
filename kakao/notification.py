@@ -135,7 +135,7 @@ def notify_one_by_one_partner():
             response = client.chat_postMessage(
                 channel=slack_id,
                 text=f"안녕하세요, 이번주 금요일에 진행할 1on1 미팅 안내 드립니다.\n"
-                f"이번주는 Esther와(과) 함께 피드백을 주고 받으면 어떨까요?\n"
+                f"이번주는  {partner_name}와(과) 함께 피드백을 주고 받으면 어떨까요?\n"
                 f"1on1을 어떻게 해야 하는지 막막하다면, 아래 링크의 'KV 사람들이 말하는 법'을 참고하시기 바랍니다.\n"
                 f"https://kakaoventures.oopy.io/how-to-speak \n"
                 f"꼭 레몬베이스에 기록하는 것 잊지 마시고요.금주 1on1 매칭 대상은 {partner_name}입니다"

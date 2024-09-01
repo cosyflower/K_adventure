@@ -877,15 +877,17 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         # 일수 차이 계산
         days_difference = (date2 - date1).days
         # print(f"days_difference : {days_difference}")
-
+        
+       
+        # 저장 최종 단계
         new_row_data.extend([
             current_time,
             get_real_name_by_user_id(user_id), # 저장시 ID로 저장 - uesrs_info에서 찾아서 대신 넣어야 한다 (있는 경우 없는 경우 생각하기)
             start_date_formatted,
             end_date_formatted,
             type,
-            reason,
-            specific_reason,
+            reason, # 이유 
+            specific_reason, # 상세 사유
             email
         ])
     
@@ -943,11 +945,13 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             send_direct_message_to_user(user_id, msg)
 
         # 부재중 slot 반영
+        #  add if reason == '보건휴가' 
         set_out_of_office_event(user_id, 
                                 string_to_strptime(user_vacation_info[user_id][1]),
                                 string_to_strptime(user_vacation_info[user_id][2]),
                                 summary= type,
                                 email= email,
+                                reason= reason
                                 )
         
         msg = (f":white_check_mark: 휴가 신청을 완료합니다. 휴가 / 연차 서비스를 종료합니다.\n")

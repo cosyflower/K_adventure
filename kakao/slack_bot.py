@@ -12,6 +12,7 @@ import config
 import schedule
 import time
 import threading
+import calendar
 from user_commend import docx_generate, security_system, vacation_system_list, call_slack_bot, term_deposit_rotation_list, one_and_one, hr_and_admin_list # 사용자 명령어 DB
 
 from document4create import docx_generating_company_name_handler, docx_generating_inv_choice_handler #, docx_generating_docx_category_handler
@@ -77,17 +78,17 @@ schedule.every().monday.at("08:00").do(notify_one_by_one_partner)
 # notify_pending_payments_per_month() 함수를 월말에 알림
 # notify_pending_payments_per_quarter() 함수를 3,6,9,12월말에 알림
 def is_last_day_of_month():
-    # 오늘이 월말인지 확인
     today = datetime.today()
-    next_day = today.replace(day=today.day + 1)
-    return today.month != next_day.month
+    last_day_of_month = calendar.monthrange(today.year, today.month)[1]
+    return today.day == last_day_of_month
 
 def is_last_day_of_quarter():
     # 오늘이 분기말인지 확인 (3, 6, 9, 12월의 말일)
     today = datetime.today()
     if today.month in [3, 6, 9, 12]:
-        next_day = today.replace(day=today.day + 1)
-        return today.month != next_day.month
+        # 해당 월의 마지막 날 계산
+        last_day_of_month = calendar.monthrange(today.year, today.month)[1]
+        return today.day == last_day_of_month
     return False
 
 # 스케줄 설정 - per month 8:00
@@ -248,9 +249,9 @@ def user_purpose_handler(message, say):
     elif purpose == "휴가신청시스템":
         if get_user_authority(user_id) < 4:
             msg = (f"휴가시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
-                "1. 신청된 휴가 조회\n"
+                "1. 예정된 휴가 조회\n"
                 "2. 신규 휴가 신청\n"
-                "3. 기존 휴가 삭제\n"
+                "3. 신청 휴가 취소\n"
                 "4. 남은 휴가 일수 조회\n"
                 "(종료를 원하시면 '종료'를 입력해주세요)"
                 )
