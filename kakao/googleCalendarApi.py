@@ -5,7 +5,7 @@ import json
 import config
 import pytz
 import re
-
+from googleapiclient.discovery import build
 
 # 구글 캘린더 API 인증 정보 설정
 SCOPES = ['https://www.googleapis.com/auth/calendar']
@@ -28,6 +28,10 @@ def string_to_strptime_on_row_data(row_date_string):
 
 # JSON 파일을 확인하여 user_id에 맞는 데이터를 탐색하고 display_name을 반환한다
 def get_display_name(user_id, file_path='users_info.json'):
+    # abnormal case (just for member 'rose')
+    if user_id == 'U0332HZ9AAW':
+        return 'rose'
+
     # JSON 파일을 열고 데이터를 읽음
     with open(file_path, 'r', encoding='utf-8') as file:
         users_data = json.load(file)
@@ -97,7 +101,7 @@ def set_out_of_office_event(user_id, start_date, end_date, summary='Out of Offic
         }
     }
 
-    # 이벤트 생성
+    # 이벤트 생성 - error occured
     created_event = service.events().insert(calendarId=get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr', body=event).execute()
     # print(f"Created out of office event: {created_event.get('htmlLink')}")
 
@@ -219,3 +223,38 @@ def delete_out_of_office_event(user_id, start_date, end_date):
 # set_out_of_office_event("U05R7FD8Y85", '2024-07-13 09:00', '2024-07-13 19:00')
 # delete_out_of_office_event("U05R7FD8Y85", '2024-07-13 09:00', '2024-07-13 19:00')
 # print(string_to_strptime_on_row_data('2024.05.05 10:00:00'))
+
+
+# 캘린더 공유 권한을 추가
+def share_calendar_with_user(calendar_id):
+
+    # 관리자 계정(도메인 내에서 권한이 있는 계정)
+    DELEGATED_ADMIN_EMAIL = 'jun@kakaoventures.co.kr'
+
+    # Google Admin API 및 Calendar API에 필요한 권한 범위
+    SCOPES = [
+        'https://www.googleapis.com/auth/calendar'
+    ]
+
+    # 서비스 계정 인증
+    credentials = service_account.Credentials.from_service_account_file(
+        config.kakao_json_key_path, scopes=SCOPES)
+
+    # 관리자 계정으로 위임
+    delegated_credentials = credentials.with_subject(DELEGATED_ADMIN_EMAIL)
+
+    # Google Calendar API를 사용해 서비스 객체 생성
+    service = build('calendar', 'v3', credentials=delegated_credentials)
+
+    calendar = {
+        'role': 'writer',  # 원하는 권한: reader, writer, owner
+        'scope': {
+            'type': 'user',  # 사용자에게 공유할 경우 'user', 그룹에 공유할 경우 'group'
+            'value': 'zerobot@zerobot-425701.iam.gserviceaccount.com' # '113930975830190331630'
+        }
+    }
+    
+    service.acl().insert(calendarId=calendar_id, body=calendar).execute()
+    print(f"캘린더 {calendar_id} 공유 완료")
+
+# share_calendar_with_user('zero@kakaoventures.co.kr')

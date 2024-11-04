@@ -5,7 +5,7 @@ import chatgpt
 import json
 import requests
 from config import deposit_id, kakao_json_key_path
-from openai import OpenAI
+# from openai import OpenAI
 import pandas as pd
 import gspread
 import pandas as pd
@@ -97,31 +97,60 @@ def deposit_rotation_system_low_model_handler(message, say, user_states):
 #         send_direct_message_to_user(user_id, msg)
 #         del user_states[user_id]
 
+import openai
 def qna_chatgpt_low_model(user_input):
+    # OpenAI API 키 설정
+    openai.api_key = 'sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ'
     # try:
     from datetime import datetime
     # 오늘 날짜를 구함
     today = datetime.now().date()
 
     prompt = ""
-    client = OpenAI(api_key='sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
-    response = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[
-        {
-        "role": "system",
-        "content": prompt
-        },
-        {
-        "role": "user",
-        "content": "오늘날짜\n" + str(today) + "\n참고자료\n" + deposit_data_to_json() + "\n" + user_input
-        }
-    ],)
-    output = response.choices[0].message.content
-    # except Exception as e:
-    #     print(f"qna_chatgpt_low_model chatgpt error: {e}")
-    #     return "서버 오류로 인해 사용이 불가능합니다 잠시후 다시 이용해 주세요"
+    # GPT-4 API 호출
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": prompt
+            },
+            {
+                "role": "user",
+                "content": "오늘날짜\n" + str(today) + "\n참고자료\n" + deposit_data_to_json() + "\n" + user_input
+            }
+        ]
+    )
+
+    # GPT 응답에서 결과를 추출
+    output = response['choices'][0]['message']['content']
     return output
+
+# def qna_chatgpt_low_model(user_input):
+#     # try:
+#     from datetime import datetime
+#     # 오늘 날짜를 구함
+#     today = datetime.now().date()
+
+#     prompt = ""
+#     client = OpenAI(api_key='sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
+#     response = client.chat.completions.create(
+#     model="gpt-4o-mini",
+#     messages=[
+#         {
+#         "role": "system",
+#         "content": prompt
+#         },
+#         {
+#         "role": "user",
+#         "content": "오늘날짜\n" + str(today) + "\n참고자료\n" + deposit_data_to_json() + "\n" + user_input
+#         }
+#     ],)
+#     output = response.choices[0].message.content
+#     # except Exception as e:
+#     #     print(f"qna_chatgpt_low_model chatgpt error: {e}")
+#     #     return "서버 오류로 인해 사용이 불가능합니다 잠시후 다시 이용해 주세요"
+#     return output
 
 # def qna_chatgpt_high_model(user_input):
 #     try:

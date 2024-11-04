@@ -16,6 +16,7 @@ import pytz
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import config
+import investmentTable
 
 def get_last_company_name():
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -88,6 +89,20 @@ def get_db1_info_from_kv_id(kv_id):
     row = df1[df1['KV ID'] == kv_id]
     return row
 
+def get_db2_info_from_kv_id(kv_id):
+    scope2 = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+    creds2 = ServiceAccountCredentials.from_json_keyfile_name(config.kakao_json_key_path, scope2)
+    client2 = gspread.authorize(creds2)
+    spreadsheet_id2 = config.db_2_id  # 스프레드시트 주소에 있는 아이디 가져오기
+    spreadsheet2 = client2.open_by_key(spreadsheet_id2)
+    worksheet2 = spreadsheet2.worksheet("2024")  # '2024' 시트명을 지정
+    data2 = worksheet2.get_all_values()
+    df2 = pd.DataFrame(data2)
+    df2.columns = df2.iloc[0]
+    df2 = df2[1:]
+    row = df2[df2['KV ID'] == kv_id]
+    return row
+
 def get_db3_info_from_kv_id(kv_id):
     scope3 = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
     creds3 = ServiceAccountCredentials.from_json_keyfile_name(config.kakao_json_key_path, scope3)
@@ -112,9 +127,9 @@ def get_db4_info_from_inv_id(inv_id):
     spreadsheet_id = config.db_4_id # 스프레드시트 주소에 있는 아이디 가져오기
     spreadsheet = client.open_by_key(spreadsheet_id)
     worksheet = spreadsheet.sheet1
-    data = worksheet.get_all_values()
+    data = worksheet.get_all_values() 
     df = pd.DataFrame(data)
-    df.columns = df.iloc[0]
+    df.columns = df.iloc[0] 
     df = df[1:]
     row = df[df['INV ID'] == inv_id]
     return row
@@ -1168,26 +1183,42 @@ def get_inv_list_and_date(company_name):
         investments.append({'inv_id': row['INV ID'], 'investment_date': row['투자 납입일']})
     return investments
 
+def get_capital_from_company_name(company_name):
+    kv_id = get_company_id_from_company_name(company_name)
+    db_2 = get_db2_info_from_kv_id(kv_id)
+    db_2['기준시점'] = pd.to_datetime(db_2['기준시점'], format="%Y.%m")
+
+    latest_row = db_2.sort_values(by='기준시점', ascending=False).iloc[0]
+    total_shares = float(latest_row['총발행주식수'].replace(",", "")) if isinstance(latest_row['총발행주식수'], str) else latest_row['총발행주식수']
+    face_value = float(latest_row['액면가'].replace(",", "")) if isinstance(latest_row['액면가'], str) else latest_row['액면가']
+    total_value = total_shares * face_value
+    return total_value
+
 if __name__ == "__main__":
+    print(get_capital_from_company_name("샌디플로어"))
+
     # all_company_names = get_all_company_names()
     # print(all_company_names)
     # print(investments)
     # id,name = get_last_company_name()
-    kv_id = get_company_id_from_company_name("(주)라포랩스")
-    inv_id, _ = get_inv_id_from_company_id(kv_id)
+    # kv_id = get_company_id_from_company_name("샌디플로어")
+    # db_2 = get_db2_info_from_kv_id(kv_id)
+    # print(db_2)
+    # inv_id, _ = get_inv_id_from_company_id(kv_id)
 
-    # kv_id = get_kv_id_from_inv_id(inv_id)
-    print(inv_id)
-    inv_id = inv_id[2]
-    db_1 = get_db1_info_from_kv_id(kv_id)
-    db_4 = get_db4_info_from_inv_id(inv_id)
-    fund_num = db_4['투자한 조합'].iloc[-1]
-    db_7 = get_db7_info_from_fund_num(fund_num)
-    print(db_7)
-    total_investment, total_investment_in = get_extra_info_frome_inv_id(inv_id,fund_num)
-    make_docx_fileA(db_1,db_4,db_7)
-    new_document_id = make_docx_fileB(db_1,db_4,db_7)
-    update_tableB(db_7,new_document_id)
-    update_tableB_ver2(new_document_id)
-    make_docx_fileC(db_1, db_4, db_7, total_investment, total_investment_in)
-    make_docx_fileD(db_1,db_4,db_7)
+    # # kv_id = get_kv_id_from_inv_id(inv_id)
+    # print(inv_id)
+    # inv_id = inv_id[2]
+    # db_1 = get_db1_info_from_kv_id(kv_id)
+    # db_4 = get_db4_info_from_inv_id(inv_id)
+    # fund_num = db_4['투자한 조합'].iloc[-1]
+    # db_7 = get_db7_info_from_fund_num(fund_num)
+
+    # print(db_7)
+    # total_investment, total_investment_in = get_extra_info_frome_inv_id(inv_id,fund_num)
+    # make_docx_fileA(db_1,db_4,db_7)
+    # new_document_id = make_docx_fileB(db_1,db_4,db_7)
+    # update_tableB(db_7,new_document_id)
+    # update_tableB_ver2(new_document_id)
+    # make_docx_fileC(db_1, db_4, db_7, total_investment, total_investment_in)
+    # make_docx_fileD(db_1,db_4,db_7)

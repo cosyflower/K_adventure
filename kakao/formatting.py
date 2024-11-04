@@ -20,6 +20,7 @@ def get_proper_file_name(new_vacation_data):
     # 2024. 10. 19 오전 10:00:00
     start_date = new_vacation_data[2]
     year = start_date[:4]
+    # print(f"year: {year}")
     return create_leave_string(year)
 
 

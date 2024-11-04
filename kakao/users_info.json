@@ -1,7 +1,7 @@
 {
     "U0332HZ9AAW": {
         "id": "U0332HZ9AAW",
-        "name": "rose054",
+        "name": "rose",
         "real_name": "Rose.​kv 이화영",
         "display_name": "Rose.​kv 이화영",
         "authority": 1
@@ -160,20 +160,6 @@
         "display_name": "",
         "authority": 5
     },
-    "U05CXCAQ9PG": {
-        "id": "U05CXCAQ9PG",
-        "name": "admin083",
-        "real_name": "Administrator (Kakao Ventures)",
-        "display_name": "Administrator (Kakao Ventures)",
-        "authority": 5
-    },
-    "U05HG52UCGK": {
-        "id": "U05HG52UCGK",
-        "name": "yk",
-        "real_name": "YK (이예겸)",
-        "display_name": "YK (이예겸)",
-        "authority": 3
-    },
     "U06DVE2CQ11": {
         "id": "U06DVE2CQ11",
         "name": "yona",
@@ -216,11 +202,11 @@
         "display_name": "bety.kv 김민정",
         "authority": 3
     },
-    "U07H8GZHVRU": {
-        "id": "U07H8GZHVRU",
-        "name": "elsa",
-        "real_name": "Elsa.​kv 신규빈",
-        "display_name": "Elsa.​kv 신규빈",
+    "U07NWUVSCCS": {
+        "id": "U07NWUVSCCS",
+        "name": "sydney",
+        "real_name": "Sydney Kim",
+        "display_name": "Sydney.kv 김소정",
         "authority": 3
     },
     "USLACKBOT": {
@@ -685,6 +671,13 @@
         "display_name": "",
         "authority": 5
     },
+    "U05CXCAQ9PG": {
+        "id": "U05CXCAQ9PG",
+        "name": "admin083",
+        "real_name": "",
+        "display_name": "Administrator (Kakao Ventures)",
+        "authority": 5
+    },
     "U05CZ5GQTCM": {
         "id": "U05CZ5GQTCM",
         "name": "wb_bot_a05cz5gqg9k",
@@ -753,6 +746,13 @@
         "name": "zoey",
         "real_name": "",
         "display_name": "Zoey.kv 여지원",
+        "authority": 4
+    },
+    "U05HG52UCGK": {
+        "id": "U05HG52UCGK",
+        "name": "yk",
+        "real_name": "",
+        "display_name": "YK (이예겸)",
         "authority": 4
     },
     "U05HUT6NXA5": {
@@ -900,6 +900,13 @@
         "name": "kacey",
         "real_name": "",
         "display_name": "Kacey.kv 박유빈",
+        "authority": 4
+    },
+    "U07H8GZHVRU": {
+        "id": "U07H8GZHVRU",
+        "name": "elsa",
+        "real_name": "",
+        "display_name": "Elsa.​kv 신규빈",
         "authority": 4
     }
 }

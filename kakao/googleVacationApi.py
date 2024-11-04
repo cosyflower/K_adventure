@@ -32,25 +32,25 @@ is_valid_email, is_valid_confirm_sequence, is_valid_cancel_sequence, is_valid_va
 from user_commend import VACATION_SEQUENCE_TO_TYPE, VACATION_SEQUENCE_TO_REASON
 from formatting import process_user_input, get_proper_file_name, create_leave_string, get_current_year, process_and_extract_email
 from directMessageApi import send_direct_message_to_user
-from googleCalendarApi import string_to_strptime, set_out_of_office_event, delete_out_of_office_event
+from googleCalendarApi import string_to_strptime, set_out_of_office_event, delete_out_of_office_event, get_display_name, \
+share_calendar_with_user
 
 
 """
 API 설명
 """
 # JSON 파일을 확인하여 user_id에 맞는 데이터를 탐색하고 display_name을 반환한다
-def get_display_name(user_id, file_path='users_info.json'):
-    # JSON 파일을 열고 데이터를 읽음
-    with open(file_path, 'r', encoding='utf-8') as file:
-        users_data = json.load(file)
+# def get_display_name(user_id, file_path='users_info.json'):
+#     # JSON 파일을 열고 데이터를 읽음
+#     with open(file_path, 'r', encoding='utf-8') as file:
+#         users_data = json.load(file)
     
-    # user_id에 해당하는 사용자 데이터 찾기
-    if user_id in users_data:
-        return users_data[user_id].get('name')
-    else:
-        print(f"User ID {user_id} not found in data")
+#     # user_id에 해당하는 사용자 데이터 찾기
+#     if user_id in users_data:
+#         return users_data[user_id].get('name')
+#     else:
+#         print(f"User ID {user_id} not found in data")
     
-
 
 def get_spreadsheet(spreadsheet_id, json_keyfile_path):
     # 구글 스프레드시트 API 인증 및 클라이언트 생성
@@ -171,7 +171,7 @@ def get_real_name_by_user_id(user_id, json_path='users_info.json'):
     
     for key, user_data in users_info.items():
         if user_data['id'] == user_id:
-            return user_data['real_name']
+            return user_data['name']
     return None
 
 def get_display_name_by_user_id(user_id, json_path='users_info.json'):
@@ -517,7 +517,7 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
 
     if user_id not in cancel_vacation_status:
         seq = 1 
-        msg = (f"휴가 삭제를 진행중입니다. 아래의 휴가 신청 내역 중 취소할 휴가 번호를 입력하세요.\n"
+        msg = (f"휴가 삭제를 진행중입니다. **아직 지나지 않은 휴가만 취소 가능하며, 지난 휴가 취소가 필요한 경우 로키 또는 레이나에게 문의주세요**\n\n 아래의 휴가 신청 내역 중 취소할 휴가 번호를 입력하세요.\n"
             "종료를 원하시면 \'종료\'를 입력해주세요"
             ) # 문구 추가
         send_direct_message_to_user(user_id, msg)
@@ -569,12 +569,12 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
                     valid_data_list.append(result)
 
             found_data_list = valid_data_list
-
+            
             for num in cancel_sequence_list:
                 delete_data(spreadsheet_id, 1, found_data_list[num-1])
                 delete_out_of_office_event(user_id, found_data_list[num-1][2], found_data_list[num-1][3])
 
-            msg = (f"휴가 삭제를 진행중입니다. 휴가 삭제를 완료했습니다.")
+            msg = (f":white_check_mark: 휴가 삭제를 진행중입니다. 휴가 삭제를 완료했습니다.")
             # send_direct_message_to_user(user_id, msg)
             # 구글 캘린더에 떠 있는 부재중 알림을 해제해야 함
 
@@ -617,8 +617,17 @@ def input_vacation_reason(message, say, user_vacation_info, user_vacation_status
         user_vacation_info[user_id].append(vacation_reason_type)
         msg = (f"휴가 신청 진행중입니다. {vacation_reason_type}를 신청했습니다.\n\n")
         send_direct_message_to_user(user_id, msg)
-        if vacation_reason_type in ["경조휴가", "특별휴가", "출산휴가"]:
-            user_vacation_status[user_id] = "waiting_vacation_specific_reason"
+        if vacation_reason_type in ["경조휴가", "특별휴가", "출산휴가", "기타휴가"]:
+            if vacation_reason_type == '기타휴가':
+                msg = (f"기타 휴가를 신청중입니다. 예시) 태아검진휴가, 가족돌봄휴가, 난임치료휴가, 보상휴가 중 하나를 입력해주세요")
+                send_direct_message_to_user(user_id, msg)
+                # user_vacation_status[user_id] = "checking_vacation_specific_reason"
+            else: 
+                msg = (f"휴가 신청 진행중입니다. 선택하신 {user_vacation_info[user_id][-1]}의 휴가 상세 사유를 작성해주세요")
+                send_direct_message_to_user(user_id, msg)
+                # 기타 휴가 추가 멘트 수정 
+        
+            user_vacation_status[user_id] = "checking_vacation_specific_reason"
         else:
             user_vacation_info[user_id].append("") # 휴가 상세 자유를 공백으로 추가해둔다
             user_vacation_status[user_id] = "pre-confirmed"
@@ -672,10 +681,20 @@ def checking_final_confirm(message, say, user_vacation_status, user_vacation_inf
         if is_confirmed(confirm_sequence):
             user_vacation_status[user_id] = 'confirmed'
         else:
-            msg = (f"휴가 신청 진행중입니다. 휴가 신청 정보를 재입력합니다. 휴가 시작 날짜를 알려주세요. 입력 형식은 YYYY-MM-DD 입니다.\n\n")
-            send_direct_message_to_user(user_id, msg)
+            # msg = (f"휴가 신청 진행중입니다. 휴가 신청 정보를 재입력합니다. 휴가 시작 날짜를 알려주세요. 입력 형식은 YYYY-MM-DD 입니다.\n\n")
+            # send_direct_message_to_user(user_id, msg)
             del user_vacation_status[user_id]
             del user_vacation_info[user_id]
+
+            user_vacation_info[user_id] = []
+            msg = (f"휴가 신청 진행중입니다. 휴가 종류를 선택하세요\n"
+               "1. 연차\n"
+               "2. 반차(오전)\n"
+               "3. 반차(오후)\n"
+               "4. 반반차(오전)\n"
+               "5. 반반차(오후)\n")
+            send_direct_message_to_user(user_id, msg)
+            user_vacation_status[user_id] = 'checking_vacation_type'
     else:
         msg = (f"휴가 신청 진행중입니다. <{confirm_sequence}> 잘못된 입력입니다. 0 혹은 1을 입력하세요(0: 저장, 1: 수정)\n\n")
         send_direct_message_to_user(user_id, msg)
@@ -824,6 +843,8 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         # 상세 사유 입력받기
         msg = (f"휴가 신청 진행중입니다. 선택하신 {user_vacation_info[user_id][-1]}의 휴가 상세 사유를 작성해주세요")
         send_direct_message_to_user(user_id, msg)
+        # 기타 휴가 추가 멘트 수정 
+        
         user_vacation_status[user_id] = "checking_vacation_specific_reason"
 
     """
@@ -868,6 +889,7 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         type = user_vacation_info[user_id][0]
         reason = user_vacation_info[user_id][3]
         specific_reason = user_vacation_info[user_id][4]
+        # email = get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr'
         email = get_display_name(user_id, 'users_info.json') + '@kakaoventures.co.kr'
 
         # 연도, 월, 일만 추출하여 datetime 객체로 변환
@@ -892,10 +914,13 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
         ])
     
         search_file_name = get_proper_file_name(new_row_data)
+        # print(search_file_name)
         if is_file_exists_in_directory(config.dummy_vacation_directory_id, search_file_name) is False:
+            # print("copied")
             copy_gdrive_spreadsheet(config.dummy_vacation_template_id, search_file_name, config.dummy_vacation_directory_id)
             
         spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
+        # print(spreadsheet_id)
 
         remained_vacation = get_remained_vacation_by_userId(spreadsheet_id, user_id)
         # type -> 수로 변경해야 함
@@ -944,19 +969,39 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             msg = (f"An unexpected error occurred: {e}")
             send_direct_message_to_user(user_id, msg)
 
-        # 부재중 slot 반영
-        #  add if reason == '보건휴가' 
-        set_out_of_office_event(user_id, 
-                                string_to_strptime(user_vacation_info[user_id][1]),
-                                string_to_strptime(user_vacation_info[user_id][2]),
-                                summary= type,
-                                email= email,
-                                reason= reason
-                                )
-        
-        msg = (f":white_check_mark: 휴가 신청을 완료합니다. 휴가 / 연차 서비스를 종료합니다.\n")
-        send_direct_message_to_user(user_id, msg)
+        try:
+            set_out_of_office_event(
+                user_id, 
+                string_to_strptime(user_vacation_info[user_id][1]),
+                string_to_strptime(user_vacation_info[user_id][2]),
+                summary=type,
+                email=email,
+                reason=reason
+            )
 
+            # 예외가 발생하지 않으면 정상적으로 메시지 전송
+            msg = ":white_check_mark: 휴가 신청을 완료합니다. 휴가 / 연차 서비스를 종료합니다.\n"
+            send_direct_message_to_user(user_id, msg)
+
+        except Exception as e:
+            # 예외가 발생하면 해당 메시지를 전송
+            error_msg = "로제봇의 편집 권한을 구글 캘린더에 반영합니다. 휴가 신청 진행중입니다. 잠시만 기다려주세요."
+            send_direct_message_to_user(user_id, error_msg)
+            share_calendar_with_user(email)
+
+            set_out_of_office_event(
+                user_id, 
+                string_to_strptime(user_vacation_info[user_id][1]),
+                string_to_strptime(user_vacation_info[user_id][2]),
+                summary=type,
+                email=email,
+                reason=reason
+            )
+
+            # 예외가 발생하지 않으면 정상적으로 메시지 전송
+            msg = ":white_check_mark: 휴가 신청을 완료합니다. 휴가 / 연차 서비스를 종료합니다.\n"
+            send_direct_message_to_user(user_id, msg)
+        
         # 신청을 마무리하면 관련 모든 정보를 삭제한다
         del user_states[user_id]
         del user_vacation_info[user_id]

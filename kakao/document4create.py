@@ -4,6 +4,7 @@ import gspread
 import chatgpt
 import json
 from directMessageApi import send_direct_message_to_user
+import investmentTable
 
 def docx_generating_company_name_handler(message, say, user_states, inv_list_info, inv_info):
     user_id = message['user']
@@ -64,10 +65,16 @@ def docx_generating_inv_choice_handler(message, say, user_states, inv_list_info,
                 data = inv_list[user_input-1]
                 inv_id = data['inv_id']
                 kv_id = googleapi.get_kv_id_from_inv_id(inv_id)
+
                 db_1 = googleapi.get_db1_info_from_kv_id(kv_id)
                 db_4 = googleapi.get_db4_info_from_inv_id(inv_id)
                 fund_num = db_4['투자한 조합'].iloc[-1]
                 db_7 = googleapi.get_db7_info_from_fund_num(fund_num)
+
+                # investmentTable.create_investmentTable(db_1, db_4, db_7, kv_id, inv_id) # - 투자재원현황표를 만드는 함수
+                # 투자재원현황표 협의되는대로 바로 활성화해주기
+
+                # return
                 total_investment, total_investment_in = googleapi.get_extra_info_frome_inv_id(inv_id,fund_num)
                 current_time = googleapi.get_time()
 

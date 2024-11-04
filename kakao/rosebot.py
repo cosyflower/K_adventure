@@ -6,10 +6,13 @@ import json
 from security_system import get_user_authority
 from directMessageApi import send_direct_message_to_user
 from onebyone import find_oneByone
+from ocr import ocr_transform_handler
+from ocr_view import check_yes_or_no_init
 
-def rose_bot_handler(message, say, user_states):
+def rose_bot_handler(message, say, user_states, client, user_responses):
     user_id = message['user']
     user_input = message['text']
+    channel_id = message['channel']
     user_input = process_user_input(user_input)
 
     if user_input == '종료':
@@ -109,6 +112,15 @@ def rose_bot_handler(message, say, user_states):
                     msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
                     send_direct_message_to_user(user_id, msg)
                     del user_states[user_id]
+            elif user_input == "9":
+                user_responses[user_id] = None  # 초기화
+                msg = (f"OCR program의 주의사항은 다음과 같습니다.\n"
+                        "1. 현재 시간을 바탕으로 폴더를 탐색합니다. ex) 2024-10-03\n 24년_3분기_등기부등본"
+                        "2. 파일명의 구성은 회사 이름을 시작으로 '_'로 구분되어야 합니다. \n"
+                        "3. 회사 이름에 오타가 없는지 다시 한번 확인해주세요.\n"
+                        )
+                send_direct_message_to_user(user_id, msg)
+                check_yes_or_no_init(user_id, channel_id, client, content='OCR 프로그램을 시작하시겠습니까?')
             else:
                 msg = (f"잘못된 숫자를 입력했습니다. 다시 입력해주세요.\n")
                 send_direct_message_to_user(user_id, msg)

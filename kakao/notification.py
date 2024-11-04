@@ -88,9 +88,9 @@ def notify_one_by_one_partner():
     # 14일 이상 차이가 나지 않은 경우에는 아무것도 하지 않음
     if not is_valid_week_oneByone():
         print('not valid. Nothing created')
-        names = get_name_list_from_json()
-        for name in names:
-            print(name)
+        # names = get_name_list_from_json()
+        # for name in names:
+        #     print(name)
         return
     
     update_authority()

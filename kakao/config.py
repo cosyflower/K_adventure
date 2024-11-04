@@ -1,3 +1,6 @@
+
+
+
 ## 정기예금 회전시스템 ##
 # KAKAO
 deposit_id = '1R4QfCN9Ltb-_AAYdJcdNwoBb5EfPvSBl8aVa2MYuues' ###### 수정필요
@@ -27,8 +30,10 @@ intern_channel_id = "C032MTUL8BT"
 ### 문서 4종 ####
 # KAKAO
 kakao_json_key_path = 'zerobot-425701-15f85b16185c.json'
+ocr_parent_id = '1_4D3oHASxPgL7lCDwT7Ptgz852o4tzKk' # OCR parent directory ID
+ocr_test_parent_id = '1jO0EZViYdpuCgChcD_g1zwcTVYq-7321' # OCR test directory ID 
 db_1_id = '1sjoyLXr9a1ltEnI8GtReMO55FqSPdFbgLJL4f0ER3Rg'
-db_2_id = ''
+db_2_id = '1nADky7nzxj6oaWh98GCOGfeJbYeIs4a4HQBpJr-IN4Y'
 db_3_id = ''
 db_4_id = '1u8R2NOAo_lMKhKjlJVuQHWqgWfxy0BL4HqVTck1oIJo'
 db_5_id = ''
@@ -39,7 +44,10 @@ fileA_id = '1WdCOANRejmlmjpjLgSOb_0RZnMINBa2gEFIDpqhZpvI' # 운용지시서
 fileB_id = '15LA_kjBo4H2C6arweRWHG8xLZzaeEvIfXfLbb7Za4uc' # 투자심의위원회 의사록
 fileC_id = '1VF-uUBifpa9-Vxp5pTljTMLNRuTuSJpY1kB29nwN9YI' # 준법사항 체크리스트(벤처투자조합)
 fileD_id = '1KLO2imQPAfNNKhiIHyBya5EUw1c0zOAj9rfOoW-4bnk' # 투자집행품의서
-fileABCD_parent_folder_id = '1bwpRq4c9Z9KBNME6mGZYdDbFwyU0fOuJ'
+fileABCD_parent_folder_id = '1bwpRq4c9Z9KBNME6mGZYdDbFwyU0fOuJ' #'1bwpRq4c9Z9KBNME6mGZYdDbFwyU0fOuJ'
+investment_table_template_id = '1AaECIBVi53TrehlugKegpWaut0DzEhYKScG4_faFypM' 
+investment_resources_overview_id = '1ksYaB5ERx_ELSS4Elaktyjzpg3izr8HNeEWaGLuQMjg' 
+investment_present_table_id = '1VNS7ioHctROido0blWz-89C6g0BiGmVFjSZb5x2beDU'
 # bot_token_id = 'xoxb-3089907656241-7223743768631-AE5H1vmrnFTGf2zN4sDcT1GB'
 # app_token_id = 'xapp-1-A07704ULQCB-7261083472928-4240d3f4a5a807b855af54ae306a57f0869263ca0272ae52351335a895611f2d'
 bot_token_id = 'xoxb-3089907656241-7525379921233-4Kr4mDow3dL63DWv1tQj0jG3'
@@ -68,7 +76,7 @@ all_bot_channel = 'C032MTUL8BT'
 dummy_vacation_template_id = '1090B_3K-uuCO0GfBF8CfbllCM1QgqKx_14OalWQInoo'
 dummy_vacation_directory_id = '0ADXn4EWBStqjUk9PVA'
 
-google_calendar_id = 'zero@kakaoventures.co.kr'
+# google_calendar_id = 'zero@kakaoventures.co.kr'
 oneByone_id = '18zf8OvSEAVvWyh0M234eK1bYG3dkATpTAQixwI0GK7s'
 shared_drive_id = '0ADXn4EWBStqjUk9PVA'
 # # TEST

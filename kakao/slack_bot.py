@@ -13,7 +13,7 @@ import schedule
 import time
 import threading
 import calendar
-from user_commend import docx_generate, security_system, vacation_system_list, call_slack_bot, term_deposit_rotation_list, one_and_one, hr_and_admin_list # 사용자 명령어 DB
+from user_commend import docx_generate, security_system, vacation_system_list, call_slack_bot, term_deposit_rotation_list, one_and_one, hr_and_admin_list, ocr_system_list # 사용자 명령어 DB
 
 from document4create import docx_generating_company_name_handler, docx_generating_inv_choice_handler #, docx_generating_docx_category_handler
 
@@ -29,6 +29,8 @@ from directMessageApi import send_direct_message_to_user
 from config import dummy_vacation_directory_id
 from onebyone import find_oneByone_handler, update_spreadsheet_on_oneByone, match_people, get_name_list_from_json, find_oneByone
 from notification import notify_pending_payments_per_month, notify_pending_payments_per_quarter, send_slack_message
+from ocr import ocr_transform_handler
+from ocr_view import check_yes_or_no_init
 # slack bot system
 
 # testing for validating on generating docx
@@ -51,11 +53,14 @@ def check_the_user_purpose(user_input,user_id):
         return one_and_one[0]
     elif user_input in hr_and_admin_list:
         return hr_and_admin_list[0]
+    elif user_input in ocr_system_list:
+        return ocr_system_list[0]
     else:
         return chatgpt.analyze_user_purpose(user_input)
 
 
 app = App(token=config.bot_token_id)
+client = app.client
 
 # Scheduler 관련 함수 정의
 # 평일 오전 8시에 notify_today_vacation_info 함수 실행
@@ -64,7 +69,7 @@ schedule.every().monday.at("08:00").do(notify_today_vacation_info)
 schedule.every().tuesday.at("08:00").do(notify_today_vacation_info)
 schedule.every().wednesday.at("08:00").do(notify_today_vacation_info)
 schedule.every().thursday.at("08:00").do(notify_today_vacation_info)
-schedule.every().sunday.at("08:00").do(notify_today_vacation_info)
+schedule.every().friday.at("08:00").do(notify_today_vacation_info)
 
 schedule.every().monday.at("08:00").do(notify_deposit_info)
 schedule.every().tuesday.at("08:00").do(notify_deposit_info)
@@ -125,22 +130,87 @@ user_vacation_info = {}
 # 휴가 취소 프로세스
 cancel_vacation_status = {}
 
+# 사용자의 응답을 저장할 딕셔너리
+user_responses = {}
+
 # 다이렉트 메시지에서만 호출되도록 필터링하는 함수
 def message_im_events(event, next):
     if event.get("channel_type") == "im":
         next()
 
+# 예 / 아니오 셀렉션 액션 만들기
+@app.action("yes_button_init") # action_id - make each handler
+def handle_yes_action_init(ack, body, say):
+    ack()  # 응답 확인
+    user_id = body["user"]["id"]
+    message = body['message']
+    channel_id = body['channel']['id']
+
+    # 사용자의 응답을 저장 (True)
+    user_responses[user_id] = True
+    say(f"<@{user_id}> 님, OCR 프로그램을 시작합니다. 잠시만 기다려주세요...")
+
+    user_states[user_id] = 'ocr_start'
+    ocr_transform_handler(message, say, user_states, client, user_responses, channel_id, user_id, '')
+    
+@app.action("no_button_init")
+def handle_no_action_init(ack, body, say):
+    ack()  # 응답 확인
+    user_id = body["user"]["id"]
+    message = body['message']
+    channel_id = body['channel']['id']
+
+    say(f"<@{user_id}> 님, OCR 프로그램을 종료합니다.")
+    # 사용자의 응답을 저장 (False)
+    user_responses[user_id] = False
+    # 프로그램 종료 로직을 여기에 추가
+
+    if user_id in user_states:
+        del user_states[user_id]
+
+@app.action("yes_button_progress") # action_id - make each handler
+def handle_yes_action_init(ack, body, say):
+    ack()  # 응답 확인
+    user_id = body["user"]["id"]
+    message = body['message']
+    channel_id = body['channel']['id']
+
+    # 사용자의 응답을 저장 (True)
+    user_responses[user_id] = True
+    # 버튼 누르면 바로 나오는 문장은 바로 아래 코드
+    say(f"<@{user_id}> 님, OCR 프로그램을 진행합니다.")
+
+    user_states[user_id] = 'ocr_progress'
+    ocr_transform_handler(message, say, user_states, client, user_responses, channel_id, user_id, '')
+    
+@app.action("no_button_progress")
+def handle_no_action_init(ack, body, say):
+    ack()  # 응답 확인
+    user_id = body["user"]["id"]
+    message = body['message']
+    channel_id = body['channel']['id']
+
+    say(f"<@{user_id}> 님, OCR 프로그램을 종료합니다.")
+    # 사용자의 응답을 저장 (False)
+    user_responses[user_id] = False
+    # 프로그램 종료 로직을 여기에 추가
+    if user_id in user_states:
+        del user_states[user_id]
+
+# ------------------------------------------------------------------------------
 @app.event("message", middleware=[message_im_events])
 def handle_message_events(event, say):
     user_id = event['user']
     user_input = event['text']
+    channel_id = event.get('channel')
 
     # Test - Should be deleted!!
     # test 용 함수 - "test" 입력하면 내가 원하는 함수 호출
     if process_user_input(user_input) == 'test':
         # notify_pending_payments_per_month()
         # notify_pending_payments_per_quarter()
-        notify_one_by_one_partner()
+        # notify_one_by_one_partner()
+        # print(get_display_name('U0332HZ9AAW'))
         return
 
     if user_id not in user_states:
@@ -157,6 +227,7 @@ def handle_message_events(event, say):
                 "6. 검색\n"
                 "7. 1on1\n"
                 "8. 보안 시스템\n"
+                "9. OCR\n"
             )
             send_direct_message_to_user(user_id, msg)
             user_states[user_id] = 'rosebot_waiting_only_number'
@@ -185,27 +256,31 @@ def handle_message_events(event, say):
             cancel_vacation_handler(event, say, user_states, cancel_vacation_status)    
         ######################### 로제봇 시스템 ###################################
         elif user_states[user_id] == 'rosebot_waiting_only_number':
-            rose_bot_handler(event, say, user_states)
+            rose_bot_handler(event, say, user_states, client, user_responses)
         ######################### 정기예금 회전 시스템 ###################################
         elif user_states[user_id] == 'deposit_rotation_waiting_only_number':
             deposit_rotation_system_handler(event, say, user_states)
         elif user_states[user_id] == 'deposit_rotation_waiting_low_chatgpt_input':
             deposit_rotation_system_low_model_handler(event, say, user_states)
+        ######################## OCR system #######################################
+        elif user_states[user_id] == 'ocr_handler':
+            ocr_transform_handler(event, say, user_states, client, user_responses, channel_id, user_id, user_input)
 
 # Function to handle channel messages with specific keywords
 @app.event("message")
-def handle_channel_messages(event, say):
+def handle_channel_messages(event, say, client):
     channel_type = event.get("channel_type")
     text = event.get("text")
+    user_id = event.get("user")
     
     if channel_type != "im" and ("로제봇" in text or "도와줘" in text):
-        channel_id = event['channel']
-        say(text="DM으로 답변드리겠습니다.", channel=channel_id)
-        user_purpose_handler(event, say)
-
-# @app.event("message")
-# def handle_message_events(body, logger):
-#     logger.info(body)
+        # # Send the response in the DM
+        # msg = 'DM으로 답변드리겠습니다'
+        # send_direct_message_to_user(user_id, msg)        
+        
+        # # Handle the user purpose in DM
+        # user_purpose_handler(event, say)
+        pass
 
 @app.event("app_mention")
 def handle_message_events(event, say):
@@ -218,6 +293,8 @@ def handle_message_events(event, say):
 def user_purpose_handler(message, say):
     user_id = message['user']
     user_input = message['text']
+    channel_id = message['channel']
+
     user_input = process_user_input(user_input)
     purpose = check_the_user_purpose(user_input,user_id)
 
@@ -270,6 +347,7 @@ def user_purpose_handler(message, say):
                 "6. 검색\n"
                 "7. 1on1\n"
                 "8. 보안 시스템\n"
+                "9. OCR\n"
             )
         send_direct_message_to_user(user_id, msg)
         user_states[user_id] = 'rosebot_waiting_only_number'
@@ -305,6 +383,19 @@ def user_purpose_handler(message, say):
                     "https://forms.gle/xWeE1qWNCjLrrBob7"
             )
             send_direct_message_to_user(user_id, msg)
+        else:
+            msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
+            send_direct_message_to_user(user_id, msg)
+    elif purpose == "ocr":
+        if get_user_authority(user_id) < 3: # 나중에 권한 1로 수정해야 함 
+            user_responses[user_id] = None  # 초기화
+            msg = (f"OCR program의 주의사항은 다음과 같습니다.\n"
+               "1. 현재 시간을 바탕으로 폴더를 탐색합니다. ex) 2024-10-03\n 24년_3분기_등기부등본"
+               "2. 파일명의 구성은 회사 이름을 시작으로 '_'로 구분되어야 합니다. \n"
+               "3. 회사 이름에 오타가 없는지 다시 한번 확인해주세요.\n"
+               )
+            send_direct_message_to_user(user_id, msg)
+            check_yes_or_no_init(user_id, channel_id, client, 'OCR 프로그램을 진행시키겠습니까?')
         else:
             msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
             send_direct_message_to_user(user_id, msg)
