@@ -19,11 +19,13 @@ import config
 import json
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
+from slack_bolt import App
 import io
 import os
 import shutil
 import re
 import copy
+# from slack_bot import user_states, cancel_vacation_status
 
 from translator import to_specific_date, format_vacation_info, to_cancel_sequence_list, convert_type_value, \
     format_vacation_data
@@ -34,23 +36,10 @@ from formatting import process_user_input, get_proper_file_name, create_leave_st
 from directMessageApi import send_direct_message_to_user
 from googleCalendarApi import string_to_strptime, set_out_of_office_event, delete_out_of_office_event, get_display_name, \
 share_calendar_with_user
+from slack_view import vacation_handler_by_button
 
-
-"""
-API 설명
-"""
-# JSON 파일을 확인하여 user_id에 맞는 데이터를 탐색하고 display_name을 반환한다
-# def get_display_name(user_id, file_path='users_info.json'):
-#     # JSON 파일을 열고 데이터를 읽음
-#     with open(file_path, 'r', encoding='utf-8') as file:
-#         users_data = json.load(file)
-    
-#     # user_id에 해당하는 사용자 데이터 찾기
-#     if user_id in users_data:
-#         return users_data[user_id].get('name')
-#     else:
-#         print(f"User ID {user_id} not found in data")
-    
+app = App(token=config.bot_token_id)
+client = app.client
 
 def get_spreadsheet(spreadsheet_id, json_keyfile_path):
     # 구글 스프레드시트 API 인증 및 클라이언트 생성
@@ -379,10 +368,67 @@ def get_remained_vacation(message, say, user_states,  user_vacation_info, user_v
         del user_vacation_status[user_id]
     return
 
+#---------------------------
+#_____VACATION________
+@app.action("vacation_1_id") # action_id - make each handler
+def vecation_1_ack(ack, body, say, user_states, cancel_vacation_status):
+    ack()  # 응답 확인
+    user_id = body["user"]["id"]
+    message = body['message']
+    channel_id = body['channel']['id']
+
+    msg = (f"휴가 조회 기능을 실행합니다. 휴가 리스트를 출력합니다\n\n")
+    send_direct_message_to_user(user_id, msg)
+    try:
+        search_file_name = create_leave_string(get_current_year())
+        spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
+        
+        if spreadsheet_id == None:
+            msg = ("현재 연도를 기준으로 신청한 휴가 내역이 없습니다.\n")
+            send_direct_message_to_user(user_id, msg)
+            msg = (f"잔여 휴가 조회를 종료합니다.\n\n")
+            send_direct_message_to_user(user_id, msg)
+            if user_id in user_states:
+                del user_states[user_id]    
+            if user_id in cancel_vacation_status:
+                del cancel_vacation_status[user_id]
+            return
+        
+        found_data_list = find_data_by_userId(spreadsheet_id, 1, user_id, 1)
+    except ValueError as e:
+        msg = (f"Unvalid sheet_number: {e}")
+        send_direct_message_to_user(user_id, msg)
+
+    seq = 1
+    for result in found_data_list:
+        start_date = result[2]
+        # 현재 날짜 이후 휴가만 조회 가능
+        start_date = start_date.replace("오전", "AM")
+        start_date = start_date.replace("오후", "PM")
+
+        start_date = datetime.strptime(start_date, '%Y. %m. %d %p %I:%M:%S')
+        now = datetime.now()
+
+        if start_date <= now:
+            continue
+        else:
+            msg = (f"{seq}. {format_vacation_info(result)}")
+            send_direct_message_to_user(user_id, msg)
+            seq += 1
+    
+    msg = (f"휴가 관련 프로그램을 종료합니다.\n\n")
+    send_direct_message_to_user(user_id, msg)
+    if user_id in user_states:
+        del user_states[user_id]
+    if user_id in cancel_vacation_status:
+        del cancel_vacation_status[user_id]
+
+
 # 조회는 1번, 추가는 2번, 삭제는 3번을, 종료를 원하시면 \"종료\"를 입력하세요 (1, 2, 3, 종료)
 def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, user_vacation_info, user_vacation_status):
     user_id = message['user']
     user_input = message['text']
+    channel_id = message['channel']
     # 1 / 2 / 3 / 종료가 들어가 있는 상황
     cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
 
@@ -391,6 +437,11 @@ def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, 
         send_direct_message_to_user(user_id, msg)
         del user_states[user_id]
         return
+    
+    # 1 / 2 / 3 to GUI
+    # Should be tested
+    # vacation_handler_by_button(user_id, channel_id, client, user_states, cancel_vacation_status, '휴가 시스템 기능을 실행합니다.')
+    
 
     if is_valid_vacation_purpose(cleaned_user_input):
         if cleaned_user_input == '1': # 조회하기 - user_states 변경
@@ -432,10 +483,6 @@ def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, 
                     msg = (f"{seq}. {format_vacation_info(result)}")
                     send_direct_message_to_user(user_id, msg)
                     seq += 1
-
-                # msg = (f"{seq}. {format_vacation_info(result)}")
-                # send_direct_message_to_user(user_id, msg)
-                # seq += 1
             
             msg = (f"휴가 관련 프로그램을 종료합니다.\n\n")
             send_direct_message_to_user(user_id, msg)

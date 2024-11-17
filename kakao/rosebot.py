@@ -114,10 +114,13 @@ def rose_bot_handler(message, say, user_states, client, user_responses):
                     del user_states[user_id]
             elif user_input == "9":
                 user_responses[user_id] = None  # 초기화
-                msg = (f"OCR program의 주의사항은 다음과 같습니다.\n"
-                        "1. 현재 시간을 바탕으로 폴더를 탐색합니다. ex) 2024-10-03\n 24년_3분기_등기부등본"
-                        "2. 파일명의 구성은 회사 이름을 시작으로 '_'로 구분되어야 합니다. \n"
-                        "3. 회사 이름에 오타가 없는지 다시 한번 확인해주세요.\n"
+                msg = (f"*[주의] OCR program의 주의사항은 다음과 같습니다.*\n"
+                        "0. https://drive.google.com/drive/folders/1jO0EZViYdpuCgChcD_g1zwcTVYq-7321\n"
+                        "1. 현재 날짜를 기준으로 *위 링크*의 폴더를 탐색합니다. ex) 2024-10-03 -> 24년_3분기_등기부등본\n"
+                        "2. 파일명의 구성은 회사 이름을 시작으로 '_'로 구분되어야 합니다. ex) 라포랩스_재무제표.. \n"
+                        "3. 회사 이름에 오타가 없는지 다시 한번 확인해주세요. 약식명, 풀네임을 기준으로 회사를 검색합니다.\n"
+                        "4. 폴더에 파일을 올바르게 넣었는지 확인하세요. 링크의 구글 드라이브 내 문서 종류 맞게 넣어야 합니다.\n"
+                        "5. OCR 기능이 진행되는 동안 다른 기능을 추가로 실행할 수 없습니다. 실행 시 주의 사항을 확인하며 진행해주세요.\n"
                         )
                 send_direct_message_to_user(user_id, msg)
                 check_yes_or_no_init(user_id, channel_id, client, content='OCR 프로그램을 시작하시겠습니까?')

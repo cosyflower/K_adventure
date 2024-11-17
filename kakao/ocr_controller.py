@@ -1,5 +1,11 @@
 from ocr_google_drive import get_authorized_service, get_folder_id_by_name, get_all_company_names, extract_prefix_from_filename, list_files_in_folder
 from googleapiclient.errors import HttpError
+import unicodedata
+
+
+def normalize_string(text):
+    """한글 문자열을 NFC로 정규화하고 공백 제거"""
+    return unicodedata.normalize('NFC', text.replace(" ", "").strip())
 
 def compare_name(total_names, comparing_names):
     """
@@ -10,6 +16,10 @@ def compare_name(total_names, comparing_names):
     :param comparing_names: 비교 대상 이름 리스트
     :return: existing_names (일치하는 이름 리스트), not_found_names (일치하지 않는 이름 리스트)
     """
+    # 각 리스트의 요소 내 공백 제거 및 정규화
+    total_names = [normalize_string(name) for name in total_names]
+    comparing_names = [normalize_string(name) for name in comparing_names]
+
     # 일치하는 이름 리스트 
     existing_names = [name for name in comparing_names if name in total_names]
 

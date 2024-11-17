@@ -1,42 +1,8 @@
-
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from flask import Flask, request, jsonify
 
 import os
-
-def start_ocr_program():
-    """
-    OCR 프로그램을 시작하는 함수.
-    'OCR 프로그램을 시작합니다'와 주의사항을 출력하고, 예/아니오 입력을 기다립니다.
-    """
-    while True:
-        print("OCR 프로그램을 시작합니다.")
-        print("주의사항은 다음과 같습니다:\n"
-                "---------------------------------------------------\n"
-                "1. 파일 이름의 형식을 지켜주세요.\n"
-                "2. 파일을 올바른 폴더(디렉토리)에 위치했는지 확인해주세요.\n"
-                "3. 파일은 '기업명'으로 시작해야 하며 '_' 문자로 구분합니다.\n"
-              )
-        
-        # YES / NO button activation
-        user_input = input("계속 진행하시겠습니까? (예/아니오): ")
-
-        if user_input == '예':
-            print("OCR 프로그램을 시작합니다...")
-            break  # 프로그램을 시작
-
-        elif user_input == '아니오':
-            # 중간에 진짜로 중단하시겠습니까? 라는 창 띄우기
-            if confirm_exit():
-                print("프로그램이 중단되었습니다.")
-                return False # 프로그램 종료
-            else:
-                print("프로그램을 다시 시작합니다.\n\n\n")
-                continue # 다시 처음부터 출력
-        else:
-            print("잘못된 입력입니다. '예' 또는 '아니오'를 입력해주세요.\n")
-    return True
 
 def show_progress_message(message="OCR 프로그램 진행중..."):
     print(message)
@@ -159,7 +125,7 @@ def check_yes_or_no_init(user_id, channel_id, client, content='OCR 프로그램�
                             },
                             "style": "primary",
                             "value": "yes",
-                            "action_id": "yes_button_init"
+                            "action_id": "yes_button_init" # match action_id in response logic 
                         },
                         {
                             "type": "button",
@@ -214,6 +180,114 @@ def check_yes_or_no_progress(user_id, channel_id, client, content='OCR 프로그
                             "style": "danger",
                             "value": "no",
                             "action_id": "no_button_progress"
+                        }
+                    ]
+                }
+            ]
+        )
+        return response
+    except SlackApiError as e:
+        print(f"Error sending message: {e.response['error']}")
+
+def choice_multiple_ocr_selection(user_id, channel_id, client, content='옵션을 선택해주세요'):
+    try:
+        response = client.chat_postMessage(
+            channel=channel_id,
+            text=f"<@{user_id}> 님, 옵션을 선택해주세요.",
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"<@{user_id}> 님, {content}"
+                    }
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "OCR_1_JUDY"
+                            },
+                            "style": "primary",
+                            "value": "OCR_1_JUDY",
+                            "action_id": "OCR_1_JUDY"
+                        },
+                        {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "OCR_2_BEN"
+                            },
+                            "style": "danger",
+                            "value": "OCR_2",
+                            "action_id": "OCR_2_BEN"
+                        }
+                    ]
+                }
+            ]
+        )
+        return response
+    except SlackApiError as e:
+        print(f"Error sending message: {e.response['error']}")
+
+def choice_multiple_selection_in_ocr_1(user_id, channel_id, client, content='옵션을 선택해주세요'):
+    try:
+        response = client.chat_postMessage(
+            channel=channel_id,
+            text=f"<@{user_id}>님, 옵션을 선택해주세요.",
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"<@{user_id}> 님, {content}"
+                    }
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "1. 주주명부, 등기부등본 - 텍스트 추출"
+                            },
+                            "style": "primary",
+                            "value": "OCR_1_1",
+                            "action_id": "OCR_1_1"
+                        },
+                        {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "2. 주주명부, 등기부등본 - 검토 및 DB 반영"
+                            },
+                            "style": "danger",
+                            "value": "OCR_1_2",
+                            "action_id": "OCR_1_2"
+                        },
+                        {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "3. 재무제표 - 텍스트 추출"
+                            },
+                            # "style": "primary",
+                            "value": "OCR_1_3",
+                            "action_id": "OCR_1_3"
+                        },
+                        {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "4. 재무제표 - 검토 및 DB 반영"
+                            },
+                            "style": "primary",
+                            "value": "OCR_1_4",
+                            "action_id": "OCR_1_4"
                         }
                     ]
                 }

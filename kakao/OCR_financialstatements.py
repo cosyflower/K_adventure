@@ -671,9 +671,9 @@ def process_files(normalized_company_name_list, files_financialstatements):
 # financialstatements_company_name_list = ["21세기전파상","가지랩","겟차","고이장례연구소","그렙","하이로컬","Market Stadium", "M3TA", "KASA NETWORK", "Intelon", "홈즈컴퍼니", "홀릭스팩토리", "하이로컬","플랭","드리모"]
 
 
-financialstatements_company_name_list = ["하이로컬"] ## 기업명
-financialstatements_folder_id = '1DSlMhSMAskZGtS1t4eNeFHlAeW7AsaLy' ## 재무제표 폴더
+# financialstatements_company_name_list = ["하이로컬"] ## 기업명
+# financialstatements_folder_id = '1DSlMhSMAskZGtS1t4eNeFHlAeW7AsaLy' ## 재무제표 폴더
 
-normalized_company_name_list = [normalize_text(name) for name in financialstatements_company_name_list]
-files_financialstatements = list_files_in_folder(financialstatements_folder_id)
-process_files(normalized_company_name_list, files_financialstatements)
+# normalized_company_name_list = [normalize_text(name) for name in financialstatements_company_name_list]
+# files_financialstatements = list_files_in_folder(financialstatements_folder_id)
+# process_files(normalized_company_name_list, files_financialstatements)
