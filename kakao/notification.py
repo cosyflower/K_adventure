@@ -18,7 +18,6 @@ from directMessageApi import send_direct_message_to_user
 from term_deposit_rotation import get_pending_payments_per_month, get_pending_payments_per_quarter, update_deposit_df
 import math
 
-
 def send_slack_message(channel_id, text):
     try:
         client = WebClient(token=config.bot_token_id)
@@ -83,7 +82,6 @@ def notify_today_vacation_info():
             print(f"Error sending message to {slack_id}: {e.response['error']}")
             
     
-
 def notify_one_by_one_partner():
     # 14일 이상 차이가 나지 않은 경우에는 아무것도 하지 않음
     if not is_valid_week_oneByone():

@@ -68,23 +68,23 @@ def execute_rosebot_by_button(user_id, channel_id, client, content='로제봇 �
                         "action_id": "rosebot_3_id"
                     }
                 },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "*정기예금 회전 시스템*"
-                    },
-                    "accessory": {
-                        "type": "button",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "정기예금 회전 시스템"
-                        },
-                        "style": "primary",
-                        "value": "yes",
-                        "action_id": "rosebot_4_id"
-                    }
-                },
+                # {
+                #     "type": "section",
+                #     "text": {
+                #         "type": "plain_text",
+                #         "text": "*정기예금 회전 시스템*"
+                #     },
+                #     "accessory": {
+                #         "type": "button",
+                #         "text": {
+                #             "type": "plain_text",
+                #             "text": "정기예금 회전 시스템"
+                #         },
+                #         "style": "primary",
+                #         "value": "yes",
+                #         "action_id": "rosebot_4_id"
+                #     }
+                # },
                 {
                     "type": "section",
                     "text": {

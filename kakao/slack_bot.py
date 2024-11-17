@@ -36,129 +36,38 @@ from ocr_view import check_yes_or_no_init
 from slack_view import execute_rosebot_by_button
 # testing for validating on generating docx
 from datetime import datetime, timedelta
+from GlobalState import GlobalState
 
-def check_the_user_purpose(user_input,user_id):
-    user_input = user_input.replace(" ","")
-    if user_input in docx_generate:
-        return docx_generate[0]
-    elif user_input in vacation_system_list:
-        return vacation_system_list[0]
-    elif user_input in security_system:
-        return security_system[0]
-    elif user_input in call_slack_bot:
-        return call_slack_bot[0]
-    elif user_input in term_deposit_rotation_list:
-        return term_deposit_rotation_list[0]
-    elif user_input in one_and_one:
-        return one_and_one[0]
-    elif user_input in hr_and_admin_list:
-        return hr_and_admin_list[0]
-    elif user_input in ocr_system_list:
-        return ocr_system_list[0]
-    else:
-        return chatgpt.analyze_user_purpose(user_input)
-
+from slack_view import vacation_handler_by_button
 
 app = App(token=config.bot_token_id)
 client = app.client
 
-# Terminated
 # 추가된 변수 - 봇의 활성 상태를 관리
 is_bot_active = True
 
-# 수정된 데코레이터 정의
-def check_bot_active(func):
-    def wrapper(event, say, *args, **kwargs):
-        global is_bot_active
-        user_id = event.get("user")
-        user_input = event.get("text", "").strip()
-
-        # 비활성화 상태에서 "활성화" 명령을 관리자가 입력한 경우 예외적으로 처리
-        # 관리자는 유저 아이디 정보를 활용해서 진행하면 됨
-        if not is_bot_active and user_input == "활성화" and user_id == 'U05R7FD8Y85':
-            is_bot_active = True
-            say(f"<@{user_id}> 님, 로제봇이 다시 활성화되었습니다.")
-            return
-        
-        # 비활성화 상태일 때는 종료 메시지 출력
-        if not is_bot_active:
-            say(f"<@{user_id}>님, 현재 로제봇이 종료된 상태입니다. 관리자에게 문의해주세요.")
-            return
-        
-        # 활성화 상태일 때만 원래 함수 실행
-        return func(event, say, *args, **kwargs)
-    return wrapper
-
-# Scheduler 관련 함수 정의
-# 평일 오전 8시에 notify_today_vacation_info 함수 실행
-
-schedule.every().monday.at("08:00").do(notify_today_vacation_info)
-schedule.every().tuesday.at("08:00").do(notify_today_vacation_info)
-schedule.every().wednesday.at("08:00").do(notify_today_vacation_info)
-schedule.every().thursday.at("08:00").do(notify_today_vacation_info)
-schedule.every().friday.at("08:00").do(notify_today_vacation_info)
-
-schedule.every().monday.at("08:00").do(notify_deposit_info)
-schedule.every().tuesday.at("08:00").do(notify_deposit_info)
-schedule.every().wednesday.at("08:00").do(notify_deposit_info)
-schedule.every().thursday.at("08:00").do(notify_deposit_info)
-schedule.every().sunday.at("08:00").do(notify_deposit_info)
-
-# 2주마다 월요일 오]전 8시에 작업을 실행하도록 스케줄 설정
-schedule.every().monday.at("08:00").do(notify_one_by_one_partner)
-
-# notify_pending_payments_per_month() 함수를 월말에 알림
-# notify_pending_payments_per_quarter() 함수를 3,6,9,12월말에 알림
-def is_last_day_of_month():
-    today = datetime.today()
-    last_day_of_month = calendar.monthrange(today.year, today.month)[1]
-    return today.day == last_day_of_month
-
-def is_last_day_of_quarter():
-    # 오늘이 분기말인지 확인 (3, 6, 9, 12월의 말일)
-    today = datetime.today()
-    if today.month in [3, 6, 9, 12]:
-        # 해당 월의 마지막 날 계산
-        last_day_of_month = calendar.monthrange(today.year, today.month)[1]
-        return today.day == last_day_of_month
-    return False
-
-# 스케줄 설정 - per month 8:00
-schedule.every().day.at("08:00").do(
-    lambda: notify_pending_payments_per_month() if is_last_day_of_month() else None
-)
-
-# per quarter 8:00
-schedule.every().day.at("08:00").do(
-    lambda: notify_pending_payments_per_quarter() if is_last_day_of_quarter() else None
-)
-
-# 스케줄러 실행 함수
-def run_scheduler():
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
-
 #slack_bot에 사용되는 변수
-user_states = {}
-user_input_info = {}
+user_states = GlobalState.user_states
+user_input_info = GlobalState.user_input_info
 
 #문서 4종 생성에 사용되는 변수
-inv_list_info = {}
-inv_info = {}
+inv_list_info = GlobalState.inv_list_info
+inv_info = GlobalState.inv_info
 
 # 보안 시스템에 사용되는 변수
-security_system_user_info_list = {}
-security_system_advisor_user_info_list = {}
+security_system_user_info_list = GlobalState.security_system_user_info_list
+security_system_advisor_user_info_list = GlobalState.security_system_advisor_user_info_list
 
 # 연차 프로세스를 실행한 적 없을 때 딕셔너리 내 값 생성
-user_vacation_status = {}
-user_vacation_info = {}
+user_vacation_status = GlobalState.user_vacation_status
+user_vacation_info = GlobalState.user_vacation_info
 # 휴가 취소 프로세스
-cancel_vacation_status = {}
+cancel_vacation_status = GlobalState.cancel_vacation_status
 # 사용자의 응답을 저장할 딕셔너리
-user_responses = {}
+user_responses = GlobalState.user_responses
 
+# StateManger만을 활용해서 컨트롤하고자 함
+# 이것도 GlobalState에 선언해서 사용하는 방법이 더 나을듯!
 class StateManager:
     def __init__(self, global_states):
         self.global_states = global_states
@@ -218,6 +127,102 @@ global_states = {
 }
 
 state_manager = StateManager(global_states)
+
+def check_the_user_purpose(user_input,user_id):
+    user_input = user_input.replace(" ","")
+    if user_input in docx_generate:
+        return docx_generate[0]
+    elif user_input in vacation_system_list:
+        return vacation_system_list[0]
+    elif user_input in security_system:
+        return security_system[0]
+    elif user_input in call_slack_bot:
+        return call_slack_bot[0]
+    elif user_input in term_deposit_rotation_list:
+        return term_deposit_rotation_list[0]
+    elif user_input in one_and_one:
+        return one_and_one[0]
+    elif user_input in hr_and_admin_list:
+        return hr_and_admin_list[0]
+    elif user_input in ocr_system_list:
+        return ocr_system_list[0]
+    else:
+        return chatgpt.analyze_user_purpose(user_input)
+
+# 수정된 데코레이터 정의
+def check_bot_active(func):
+    def wrapper(event, say, *args, **kwargs):
+        global is_bot_active
+        user_id = event.get("user")
+        user_input = event.get("text", "").strip()
+
+        # 비활성화 상태에서 "활성화" 명령을 관리자가 입력한 경우 예외적으로 처리
+        # 관리자는 유저 아이디 정보를 활용해서 진행하면 됨
+        if not is_bot_active and user_input == "활성화" and user_id == 'U05R7FD8Y85':
+            is_bot_active = True
+            say(f"<@{user_id}> 님, 로제봇이 다시 활성화되었습니다.")
+            return
+        
+        # 비활성화 상태일 때는 종료 메시지 출력
+        if not is_bot_active:
+            say(f"<@{user_id}>님, 현재 로제봇이 종료된 상태입니다. 관리자에게 문의해주세요.")
+            return
+        
+        # 활성화 상태일 때만 원래 함수 실행
+        return func(event, say, *args, **kwargs)
+    return wrapper
+
+# Scheduler 관련 함수 정의
+# 평일 오전 8시에 notify_today_vacation_info 함수 실행
+schedule.every().monday.at("08:00").do(notify_today_vacation_info)
+schedule.every().tuesday.at("08:00").do(notify_today_vacation_info)
+schedule.every().wednesday.at("08:00").do(notify_today_vacation_info)
+schedule.every().thursday.at("08:00").do(notify_today_vacation_info)
+schedule.every().friday.at("08:00").do(notify_today_vacation_info)
+
+# 정기예금 알림 비활성화 시키기
+# schedule.every().monday.at("08:00").do(notify_deposit_info)
+# schedule.every().tuesday.at("08:00").do(notify_deposit_info)
+# schedule.every().wednesday.at("08:00").do(notify_deposit_info)
+# schedule.every().thursday.at("08:00").do(notify_deposit_info)
+# schedule.every().sunday.at("08:00").do(notify_deposit_info)
+
+# 2주마다 월요일 오]전 8시에 작업을 실행하도록 스케줄 설정
+schedule.every().monday.at("08:00").do(notify_one_by_one_partner)
+
+# notify_pending_payments_per_month() 함수를 월말에 알림
+# notify_pending_payments_per_quarter() 함수를 3,6,9,12월말에 알림
+def is_last_day_of_month():
+    today = datetime.today()
+    last_day_of_month = calendar.monthrange(today.year, today.month)[1]
+    return today.day == last_day_of_month
+
+def is_last_day_of_quarter():
+    # 오늘이 분기말인지 확인 (3, 6, 9, 12월의 말일)
+    today = datetime.today()
+    if today.month in [3, 6, 9, 12]:
+        # 해당 월의 마지막 날 계산
+        last_day_of_month = calendar.monthrange(today.year, today.month)[1]
+        return today.day == last_day_of_month
+    return False
+
+# 스케줄 설정 - per month 8:00
+# 정기 예금 OFF
+# schedule.every().day.at("08:00").do(
+#     lambda: notify_pending_payments_per_month() if is_last_day_of_month() else None
+# )
+
+# per quarter 8:00
+# 정기 예금 OFF
+# schedule.every().day.at("08:00").do(
+#     lambda: notify_pending_payments_per_quarter() if is_last_day_of_quarter() else None
+# )
+
+# 스케줄러 실행 함수
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 # 다이렉트 메시지에서만 호출되도록 필터링하는 함수
 def message_im_events(event, next):
@@ -295,6 +300,9 @@ def rosebot_1_ack(ack, body, say):
 
     # 버튼 누르면 바로 나오는 문장은 바로 아래 코드
     say(f"<@{user_id}> 님, 휴가신청 시스템을 진행합니다.")
+
+    # Button
+    # vacation_handler_by_button(user_id, channel_id, client, content='휴가 시스템 기능을 실행합니다.')
 
     if get_user_authority(user_id) < 4:
         msg = (f"휴가시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
@@ -588,6 +596,7 @@ def ocr_1(ack, body, say):
 @check_bot_active
 def handle_message_events(event, say):
     global is_bot_active
+
     user_id = event['user']
     user_input = event['text']
     channel_id = event.get('channel')
