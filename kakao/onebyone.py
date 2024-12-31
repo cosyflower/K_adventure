@@ -80,7 +80,7 @@ def copy_spreadsheet(drive_service, template_file_id, new_title):
     return copied_file.get('id')
 
 def find_spreadsheet(drive_service, title):
-    query = f"name='{title}' and mimeType='application/vnd.google-apps.spreadsheet'"
+    query = f"name='{title}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed = false"
     result = drive_service.files().list(q=query).execute()
     files = result.get('files', [])
     return files[0].get('id') if files else None

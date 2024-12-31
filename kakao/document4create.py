@@ -1,10 +1,13 @@
-from formatting import process_user_input, get_proper_file_name
 import googleapi
 import gspread
 import chatgpt
 import json
-from directMessageApi import send_direct_message_to_user
 import investmentTable
+
+from formatting import process_user_input, get_proper_file_name
+from directMessageApi import send_direct_message_to_user
+from datetime import datetime, timedelta
+import time
 
 def docx_generating_company_name_handler(message, say, user_states, inv_list_info, inv_info):
     user_id = message['user']
@@ -34,7 +37,7 @@ def docx_generating_company_name_handler(message, say, user_states, inv_list_inf
         user_states[user_id] = 'docx_generating_waiting_inv_choice'
         inv_list_info[user_id] = inv_list
     else:
-        msg = (f"입력하신 회사명이 존재하지 않습니다. 회사명을 다시 입력해주세요.\n(종료를 원하시면 '종료'를 입력해주세요)")
+        msg = (f"회사명을 입력해주세요. (종료를 원하시면 '종료'를 입력해주세요)")
         send_direct_message_to_user(user_id, msg)
         user_states[user_id] = 'docx_generating_waiting_company_name'
 
@@ -71,10 +74,11 @@ def docx_generating_inv_choice_handler(message, say, user_states, inv_list_info,
                 fund_num = db_4['투자한 조합'].iloc[-1]
                 db_7 = googleapi.get_db7_info_from_fund_num(fund_num)
 
-                # investmentTable.create_investmentTable(db_1, db_4, db_7, kv_id, inv_id) # - 투자재원현황표를 만드는 함수
-                # 투자재원현황표 협의되는대로 바로 활성화해주기
+                # 투자재원현황표
+                investmentTable.create_investmentTable(db_1, db_4, db_7, kv_id, inv_id) # - 투자재원현황표를 만드는 함수
+                send_direct_message_to_user(user_id, '투자재원현황표 생성이 완료되었습니다. 다음 문서 생성을 진행합니다.')
+                time.sleep(2)
 
-                # return
                 total_investment, total_investment_in = googleapi.get_extra_info_frome_inv_id(inv_id,fund_num)
                 current_time = googleapi.get_time()
 

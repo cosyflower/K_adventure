@@ -259,36 +259,80 @@ def choice_multiple_selection_in_ocr_1(user_id, channel_id, client, content='옵
                             "value": "OCR_1_1",
                             "action_id": "OCR_1_1"
                         },
+                        # {
+                        #     "type": "button",
+                        #     "text": {
+                        #         "type": "plain_text",
+                        #         "text": "2. 주주명부, 등기부등본 - 검토 및 DB 반영"
+                        #     },
+                        #     "style": "danger",
+                        #     "value": "OCR_1_2",
+                        #     "action_id": "OCR_1_2"
+                        # },
                         {
                             "type": "button",
                             "text": {
                                 "type": "plain_text",
-                                "text": "2. 주주명부, 등기부등본 - 검토 및 DB 반영"
-                            },
-                            "style": "danger",
-                            "value": "OCR_1_2",
-                            "action_id": "OCR_1_2"
-                        },
-                        {
-                            "type": "button",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "3. 재무제표 - 텍스트 추출"
+                                "text": "2. 재무제표 - 텍스트 추출"
                             },
                             # "style": "primary",
                             "value": "OCR_1_3",
                             "action_id": "OCR_1_3"
                         },
+                        # {
+                        #     "type": "button",
+                        #     "text": {
+                        #         "type": "plain_text",
+                        #         "text": "4. 재무제표 - 검토 및 DB 반영"
+                        #     },
+                        #     "style": "primary",
+                        #     "value": "OCR_1_4",
+                        #     "action_id": "OCR_1_4"
+                        # }
+                    ]
+                }
+            ]
+        )
+        return response
+    except SlackApiError as e:
+        print(f"Error sending message: {e.response['error']}")
+
+def choice_multiple_selection_in_ocr_2(user_id, channel_id, client, content='옵션을 선택해주세요'):
+    try:
+        response = client.chat_postMessage(
+            channel=channel_id,
+            text=f"<@{user_id}>님, 옵션을 선택해주세요.",
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"<@{user_id}> 님, {content}"
+                    }
+                },
+                {
+                    "type": "actions",
+                    "elements": [
                         {
                             "type": "button",
                             "text": {
                                 "type": "plain_text",
-                                "text": "4. 재무제표 - 검토 및 DB 반영"
+                                "text": "1. 검토용 자료 생성 및 항목 검증"
                             },
                             "style": "primary",
-                            "value": "OCR_1_4",
-                            "action_id": "OCR_1_4"
-                        }
+                            "value": "OCR_2_1",
+                            "action_id": "OCR_2_1"
+                        },
+                        {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "2. OCR 진행"
+                            },
+                            # "style": "primary",
+                            "value": "OCR_2_2",
+                            "action_id": "OCR_2_2"
+                        },
                     ]
                 }
             ]

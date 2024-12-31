@@ -1,6 +1,3 @@
-
-
-
 ## 정기예금 회전시스템 ##
 # KAKAO
 deposit_id = '1R4QfCN9Ltb-_AAYdJcdNwoBb5EfPvSBl8aVa2MYuues' ###### 수정필요
@@ -8,6 +5,7 @@ deposit_channel_id = 'C07G1F4LGP9' # 'C07EHTRMR4Z' <- 이 채널은 뭐지??? �
 deposity_user1_id = "U0332HZ9AAW" # rose
 deposity_user2_id = "U033GU3M99Q" # raina
 deposity_user3_id = "U045ZS96B7V" # esther
+
 # # TEST
 # deposit_id = '1Q9G080RRAgaaIYYPXCyxB_R83AGP8NGJgpMMUNHhD3I'
 # deposit_channel_id = 'C07264YTB7X'
@@ -53,6 +51,11 @@ investment_present_table_id = '1VNS7ioHctROido0blWz-89C6g0BiGmVFjSZb5x2beDU'
 bot_token_id = 'xoxb-3089907656241-7525379921233-4Kr4mDow3dL63DWv1tQj0jG3'
 app_token_id = 'xapp-1-A07EN2XNGKH-7525338460209-6f48103f1d9195b6d9ae9b7ce532bcfad61779459d001bab46dc481880379f5d'
 
+#OCR 재무제표 디렉토리 id
+financialstatements_folder_id = '1u3Nczn0d15F8H6pm9Qer1tNQRfxfYi5n'
+# Mapping db
+mapping_db_id = '1WACKlZYIoW7-aaLrzbeA3C4s9haTPnwQtr7LDi7PMSI'
+validation_id = '1sKbhatzVFQKABl2dh1xaRZwbzFYARiPJLZ2MYMtVG2Y'
 # kakao_json_key_path = 'kakao-test-422905-9ed51f908a0f.json'
 # db_1_id = '1z0sPy8gau8AtfiX1iCstJbV25B9MN0x7TndIt308qgg'
 # db_2_id = ''

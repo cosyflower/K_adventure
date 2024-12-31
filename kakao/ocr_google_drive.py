@@ -28,7 +28,7 @@ import copy
 # Global variable
 # If constant, should be upper-case(상수면 대문자)
 JSON_KEY_FILE_PATH = config.kakao_json_key_path
-SEARCH_FILE_NAME_PREFIX = '_'
+SEARCH_FILE_NAME_PREFIX = ['_', '(별도)', '(연결)']
 
 def get_authorized_service(json_path=JSON_KEY_FILE_PATH):
     # 서비스 계정 인증 정보 로드
@@ -41,7 +41,7 @@ def get_authorized_service(json_path=JSON_KEY_FILE_PATH):
 
 # get children directories from parent_folder_id
 def list_drive_folders(service, parent_folder_id):
-    query = f"'{parent_folder_id}' in parents and mimeType = 'application/vnd.google-apps.folder'"
+    query = f"'{parent_folder_id}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
     results = service.files().list(q=query, spaces='drive', fields='files(id, name)', supportsAllDrives=True,
                                    includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
@@ -81,7 +81,7 @@ def list_files_in_folder(service, folder_id):
     :param folder_id: 파일을 조회할 폴더의 ID
     :return: 폴더 내 파일 목록 (리스트 형식)
     """
-    query = f"'{folder_id}' in parents"
+    query = f"'{folder_id}' in parents and trashed = false"
     results = service.files().list(q=query, spaces='drive', fields='files(id, name)', 
                                    supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
@@ -104,7 +104,7 @@ def get_spreadsheet_id_in_folder(file_name, folder_id):
     # authentication first!
     service = get_authorized_service()
     # 파일 검색 쿼리
-    query = f"'{folder_id}' in parents and name = '{file_name}' and mimeType = 'application/vnd.google-apps.spreadsheet'"
+    query = f"'{folder_id}' in parents and name = '{file_name}' and mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false"
     results = service.files().list(q=query, fields="files(id, name)", supportsAllDrives=True,
                                    includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
@@ -118,8 +118,17 @@ def get_spreadsheet_id_in_folder(file_name, folder_id):
             return item['id']
 
 # extract string until prefix 
-def extract_prefix_from_filename(filename, prefix=SEARCH_FILE_NAME_PREFIX):
-    return filename.split(prefix)[0]
+def extract_prefix_from_filename(filename, prefix_list=SEARCH_FILE_NAME_PREFIX):
+    # 접두어 위치 찾기
+    split_positions = [filename.find(prefix) for prefix in prefix_list if prefix in filename]
+
+    if split_positions:
+        # 가장 먼저 등장하는 접두어 위치 찾기
+        min_position = min(split_positions)
+        return filename[:min_position]
+
+    # 접두어가 없으면 원래 문자열 반환
+    return filename
 
 def convert_excel_to_sheets(service, excel_file_id, sheet_name):
     # Google 스프레드시트로 변환

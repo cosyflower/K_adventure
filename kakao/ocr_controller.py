@@ -59,19 +59,15 @@ def compare_controller(parent_folder_id):
         elif not shareholder_list_id:
             print("주주명부 폴더를 찾을 수 없습니다.")
             return
-            
-        # Step 3: property_registry_id 내 모든 파일명을 리스트로 반환. 이 때 각각의 파일명에서 '_' 앞까지의 정보만 가지고 온다.
+        
+        # 아래는 순수회사명만 추출함 (별도, 연결 없이 단순 회사명만 추출하는 구간 )
         property_registry_prefixes = list_file_prefixes(service, property_registry_id)
-        # Step 4: financial_statement_id 내 모든 파일명을 리스트로 반환. 이 때 각각의 파일명에서 '_' 앞까지의 정보만 가지고 온다.
         financial_statement_prefixes = list_file_prefixes(service, financial_statement_id)
         sharedholder_list_prefixes = list_file_prefixes(service, shareholder_list_id)
 
         # Step 5 : get_all_company_names() - 약식 회사명, 풀 회사명 네임리스트를 먼저 가지고 온다 
         short_company_names, full_company_names = get_all_company_names()
         total_right_company_names = short_company_names + full_company_names
-
-        # all company names debugging
-        # print(f'all_company_names: {short_company_names} + {full_company_names}')
 
         # Step 6 : total_right_company_names와 property_registry_prefixes를 비교
         # total_right_company_names와 financial_statement_prefixes를 비교

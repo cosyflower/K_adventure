@@ -38,66 +38,265 @@ share_calendar_with_user
 from slack_view import vacation_handler_by_button
 from GlobalState import GlobalState
 
-app = App(token=config.bot_token_id)
-client = app.client
-
 #---------------------------
 #_____BUTTON_VACATION_______
-# 휴가 조회하기 
-@app.action("vacation_1_id") # action_id - make each handler
-def vecation_1_ack(ack, body, say):
-    ack()  # 응답 확인
-    user_id = body["user"]["id"]
-    message = body['message']
-    channel_id = body['channel']['id']
+# ESSENTIAL LOGIC 
+def register_google_vacation_handlers(app, client, handle_message_events):
+    @app.action("vacation_request_id")
+    def vacation_request_ack(ack, body, say):
+        ack()  # 응답 확인
+        user_id = body["user"]["id"]
+        message = body.get("message", {})
+        channel_id = body["container"]["channel_id"]
 
-    msg = (f"휴가 조회 기능을 실행합니다. 휴가 리스트를 출력합니다\n\n")
-    send_direct_message_to_user(user_id, msg)
-    try:
-        search_file_name = create_leave_string(get_current_year())
-        spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
-        
-        if spreadsheet_id == None:
-            msg = ("현재 연도를 기준으로 신청한 휴가 내역이 없습니다.\n")
-            send_direct_message_to_user(user_id, msg)
-            msg = (f"잔여 휴가 조회를 종료합니다.\n\n")
-            send_direct_message_to_user(user_id, msg)
+        if user_id in GlobalState.user_vacation_info:
+            del GlobalState.user_vacation_info[user_id]
+        if user_id in GlobalState.user_vacation_status:
+            del GlobalState.user_vacation_status[user_id]
 
-            if user_id in GlobalState.user_states:
-                del GlobalState.user_states[user_id]    
-            if user_id in GlobalState.cancel_vacation_status:
-                del GlobalState.cancel_vacation_status[user_id]
-            return
-        
-        found_data_list = find_data_by_userId(spreadsheet_id, 1, user_id, 1)
-    except ValueError as e:
-        msg = (f"Unvalid sheet_number: {e}")
+        GlobalState.user_states[user_id] = 'request_vacation'
+        GlobalState.user_vacation_info[user_id] = []
+        GlobalState.user_vacation_status[user_id] = 'checking_vacation_type'
+
+        msg = (f"휴가 신청 진행중입니다. 휴가 종류를 선택하세요\n"
+            "1. 연차\n"
+            "2. 반차(오전)\n"
+            "3. 반차(오후)\n"
+            "4. 반반차(오전)\n"
+            "5. 반반차(오후)\n")
         send_direct_message_to_user(user_id, msg)
 
-    seq = 1
-    for result in found_data_list:
-        start_date = result[2]
-        # 현재 날짜 이후 휴가만 조회 가능
-        start_date = start_date.replace("오전", "AM")
-        start_date = start_date.replace("오후", "PM")
+        event = {
+            "type": "message",
+            "user": user_id,
+            "text": "vacation_request", 
+            "channel": channel_id
+        }
+        handle_message_events(event, say)
 
-        start_date = datetime.strptime(start_date, '%Y. %m. %d %p %I:%M:%S')
-        now = datetime.now()
+    @app.action("vacation_check_id")  # action_id - make each handler
+    def vecation_check_ack(ack, body, say):
+        ack()  # 응답 확인
+        user_id = body["user"]["id"]
+        message = body.get("message", {})
+        channel_id = body["container"]["channel_id"]
 
-        if start_date <= now:
-            continue
-        else:
-            msg = (f"{seq}. {format_vacation_info(result)}")
+        msg = (f"휴가 조회 기능을 실행합니다. 휴가 리스트를 출력합니다\n\n")
+        send_direct_message_to_user(user_id, msg)
+        try:
+            search_file_name = create_leave_string(get_current_year())
+            spreadsheet_id = get_spreadsheet_id_in_folder(
+                search_file_name, config.dummy_vacation_directory_id
+            )
+            
+            if spreadsheet_id is None:
+                msg = "현재 연도를 기준으로 신청한 휴가 내역이 없습니다.\n"
+                send_direct_message_to_user(user_id, msg)
+                msg = "잔여 휴가 조회를 종료합니다.\n\n"
+                send_direct_message_to_user(user_id, msg)
+                return
+            
+            found_data_list = find_data_by_userId(spreadsheet_id, 1, user_id, 1)
+        except ValueError as e:
+            msg = f"Unvalid sheet_number: {e}"
             send_direct_message_to_user(user_id, msg)
-            seq += 1
-    
-    msg = (f"휴가 관련 프로그램을 종료합니다.\n\n")
-    send_direct_message_to_user(user_id, msg)
+            return
 
-    if user_id in GlobalState.user_states:
-        del GlobalState.user_states[user_id]
-    if user_id in GlobalState.cancel_vacation_status:
-        del GlobalState.cancel_vacation_status[user_id]
+        seq = 1
+        for result in found_data_list:
+            # '오전'을 'AM', '오후'를 'PM'으로 바꿔서 처리
+            start_date_str = result[2].replace("오전", "AM").replace("오후", "PM").strip()
+            # 날짜 포맷 수정: 월, 일이 1자리일 수 있으므로 %m과 %d를 2자리로 처리하도록 포맷
+            start_date = datetime.strptime(start_date_str, "%Y. %m. %d %p %I:%M:%S")
+            now = datetime.now()
+
+            if start_date > now:
+                msg = f"{seq}. {format_vacation_info(result)}"
+                send_direct_message_to_user(user_id, msg)
+                seq += 1
+
+        msg = "휴가 관련 프로그램을 종료합니다.\n\n"
+        send_direct_message_to_user(user_id, msg)
+    
+    # ARCHIVE CODE
+    # @app.action('vacation_remove_id')
+    # def vacation_remove_ack(ack, body, say):
+    #     ack()  # 응답 확인
+    #     user_id = body["user"]["id"]
+    #     message = body.get("message", {})
+    #     channel_id = body["container"]["channel_id"]
+
+    #     if user_id in GlobalState.cancel_vacation_status:
+    #             del GlobalState.cancel_vacation_status[user_id]
+        
+    #     GlobalState.user_states[user_id] = 'cancel_vacation'
+    #     msg = (f"휴가 삭제를 시작합니다.") 
+    #     send_direct_message_to_user(user_id, msg)
+    #     cancel_vacation_handler(message, say, GlobalState.user_states, GlobalState.cancel_vacation_status)
+
+    @app.action('vacation_remove_id')
+    def vacation_remove_ack(ack, body, say):
+        ack()  # 버튼 클릭 확인
+        user_id = body["user"]["id"]
+        channel_id = body["container"]["channel_id"]
+
+        send_direct_message_to_user(user_id, '휴가 삭제를 진행합니다. 잠시만 기다려주세요.')
+
+        # 상태 초기화
+        if user_id in GlobalState.cancel_vacation_status:
+            del GlobalState.cancel_vacation_status[user_id]
+
+        GlobalState.user_states[user_id] = 'cancel_vacation'
+
+        # 1. 사용자 휴가 목록 조회
+        search_file_name = create_leave_string(get_current_year())
+        spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
+
+        if not spreadsheet_id:
+            send_direct_message_to_user(user_id, "현재 연도를 기준으로 신청한 휴가 내역이 없습니다.")
+            del GlobalState.user_states[user_id]
+            return
+
+        # 조회 가능한 데이터 필터링
+        found_data_list = find_data_by_userId(spreadsheet_id, 1, user_id, 1)
+        valid_data_list = []
+
+        for result in found_data_list:
+            # 날짜 문자열 정리 및 변환
+            try:
+                start_date = result[2].replace("오전", "AM").replace("오후", "PM").strip()
+                start_date = datetime.strptime(start_date, '%Y. %m. %d %p %I:%M:%S')
+            except ValueError as e:
+                print(f'start_date = {result[2]}')
+                send_direct_message_to_user(user_id, f"날짜 형식 변환 오류 발생: {result[2]}\n **관리자에게 문의해주세요**")
+                
+                if user_id in GlobalState.cancel_vacation_status:
+                    del GlobalState.cancel_vacation_status[user_id]
+                if user_id in GlobalState.user_states:
+                    del GlobalState.user_states[user_id]
+                
+                return  
+
+            if start_date > datetime.now():
+                valid_data_list.append(result)
+
+        if not valid_data_list:
+            send_direct_message_to_user(user_id, "삭제 가능한 휴가가 없습니다.")
+            del GlobalState.user_states[user_id]
+            return
+
+        # 2. 휴가 삭제 버튼 제공
+        msg = "삭제 가능한 휴가 목록:\n"
+        for idx, data in enumerate(valid_data_list, start=1):
+            msg += f"{idx}. {format_vacation_info(data)}\n"
+        msg += "삭제할 항목의 버튼을 눌러주세요."
+
+        send_direct_message_to_user(user_id, msg)
+
+        # 버튼 생성 및 전송
+        blocks = [
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": f"{idx}번"
+                        },
+                        "value": f"{idx}",
+                        "action_id": f"delete_vacation_{idx}"  # 버튼별 고유 ID
+                    }
+                    for idx in range(1, len(valid_data_list) + 1)
+                ]
+            }
+        ]
+
+        # Slack 버튼 전송
+        client.chat_postMessage(channel=channel_id, blocks=blocks)
+
+        # 삭제 가능한 데이터 저장
+        GlobalState.cancel_vacation_status[user_id] = {"data": valid_data_list, "step": "waiting_selection"}
+
+    @app.action(re.compile(r"delete_vacation_\d+"))  # 동적 Action ID 처리
+    def delete_vacation_handler(ack, body, say):
+        ack()  # 버튼 클릭 확인
+        user_id = body["user"]["id"]
+        channel_id = body["container"]["channel_id"]
+
+        # 사용자의 상태와 선택 데이터 확인
+        if user_id not in GlobalState.cancel_vacation_status:
+            send_direct_message_to_user(user_id, "삭제 가능한 상태가 아닙니다. 다시 시도해주세요.")
+            return
+
+        status = GlobalState.cancel_vacation_status[user_id]
+        if status["step"] != "waiting_selection":
+            send_direct_message_to_user(user_id, "삭제 작업 중 오류가 발생했습니다.")
+            return
+
+        # 버튼 값으로 선택된 데이터 확인
+        selected_idx = int(body["actions"][0]["value"]) - 1
+        valid_data_list = status["data"]
+
+        if selected_idx >= len(valid_data_list):
+            send_direct_message_to_user(user_id, "유효하지 않은 선택입니다. 다시 시도해주세요.")
+            return
+
+        selected_data = valid_data_list[selected_idx]
+
+        # Google Sheets 및 Google Calendar 삭제
+        try:
+            spreadsheet_id = get_spreadsheet_id_in_folder(
+                create_leave_string(get_current_year()), config.dummy_vacation_directory_id
+            )
+            delete_data(spreadsheet_id, 1, selected_data)
+            delete_out_of_office_event(user_id, selected_data[2], selected_data[3])
+
+            send_direct_message_to_user(user_id, f":white_check_mark: {format_vacation_info(selected_data)} 삭제 완료.")
+        except Exception as e:
+            send_direct_message_to_user(user_id, f"삭제 중 오류 발생: {e}")
+            return
+
+        if user_id in GlobalState.cancel_vacation_status:
+            del GlobalState.cancel_vacation_status[user_id]
+        if user_id in GlobalState.user_states:
+            del GlobalState.user_states[user_id]
+
+    @app.action("vacation_remained_id")
+    def vacation_remained_ack(ack, body, say):
+        ack()  # 버튼 클릭 확인
+        user_id = body["user"]["id"]
+
+        # 사용자에게 조회 중 메시지 표시
+        send_direct_message_to_user(user_id, "잔여 휴가를 조회합니다. 잠시만 기다려주세요.")
+
+        # 남은 휴가 조회 로직 실행
+        try:
+            search_file_name = create_leave_string(get_current_year())
+            spreadsheet_id = get_spreadsheet_id_in_folder(search_file_name, config.dummy_vacation_directory_id)
+
+            if not spreadsheet_id:
+                # 휴가 정보가 없을 때 처리
+                send_direct_message_to_user(user_id, "현재 연도를 기준으로 신청한 휴가 내역이 없습니다.")
+                return
+
+            # 남은 휴가 일수를 가져오는 함수 호출
+            remained_vacation = get_remained_vacation_by_userId(spreadsheet_id, user_id)
+
+            # 잔여 휴가 정보 메시지 구성
+            msg = (
+                f"잔여 휴가 정보입니다:\n"
+                f"연차 휴가 잔여 일수: {float(remained_vacation[0])}\n"
+                f"안식 휴가 잔여 일수: {float(remained_vacation[1])}\n"
+            )
+            send_direct_message_to_user(user_id, msg)
+
+            send_direct_message_to_user(user_id, '잔여 휴가 조회를 종료합니다.')
+        except Exception as e:
+            # 예외 처리
+            error_msg = f"남은 휴가를 조회하는 중 오류가 발생했습니다: {str(e)}"
+            send_direct_message_to_user(user_id, error_msg)
+
 
 def get_spreadsheet(spreadsheet_id, json_keyfile_path):
     # 구글 스프레드시트 API 인증 및 클라이언트 생성
@@ -123,7 +322,7 @@ def get_spreadsheet_id_in_folder(file_name, folder_id):
     # Google Drive API 클라이언트 생성
     service = build('drive', 'v3', credentials=credentials)
     # 파일 검색 쿼리
-    query = f"'{folder_id}' in parents and name = '{file_name}' and mimeType = 'application/vnd.google-apps.spreadsheet'"
+    query = f"'{folder_id}' in parents and name = '{file_name}' and mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false"
     results = service.files().list(q=query, fields="files(id, name)", supportsAllDrives=True,
                                    includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
@@ -472,6 +671,7 @@ def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, 
             for result in found_data_list:
                 start_date = result[2]
                 # 현재 날짜 이후 휴가만 조회 가능
+                start_date = start_date.strip()
                 start_date = start_date.replace("오전", "AM")
                 start_date = start_date.replace("오후", "PM")
 
@@ -521,7 +721,7 @@ def vacation_purpose_handler(message, say, user_states, cancel_vacation_status, 
             send_direct_message_to_user(user_id, msg)
             get_remained_vacation(message, say, user_states, user_vacation_info, user_vacation_status)
     else:
-        msg = (f"휴가 프로그램 실행중입니다. 잘못된 입력입니다. 1,2,3,4 중 하나를 입력하세요")
+        msg = (f"휴가 프로그램 실행중입니다. 1,2,3,4 중 하나를 입력하세요")
         send_direct_message_to_user(user_id, msg)
 
 #### 휴가 취소 ####
@@ -573,6 +773,7 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
         for result in found_data_list:
             start_date = result[2]
             # 현재 날짜 이후 휴가만 삭제 가능
+            start_date = start_date.strip()
             start_date = start_date.replace("오전", "AM")
             start_date = start_date.replace("오후", "PM")
 
@@ -605,6 +806,7 @@ def cancel_vacation_handler(message, say, user_states, cancel_vacation_status):
             for result in found_data_list:
                 start_date = result[2]
                 # 현재 날짜 이후 휴가만 삭제 가능
+                start_date = start_date.strip()
                 start_date = start_date.replace("오전", "AM")
                 start_date = start_date.replace("오후", "PM")
 
@@ -640,15 +842,19 @@ def input_vacation_type(message, say, user_vacation_info, user_vacation_status):
     # mention을 제외한 내가 전달하고자 하는 문자열만 추출하는 함수 
     cleaned_user_input = re.sub(r'<@[^>]+>\s*', '', user_input)
     vacation_sequence = cleaned_user_input
+    
 
     if is_valid_vacation_sequence(vacation_sequence):
         vacation_type = VACATION_SEQUENCE_TO_TYPE[int(vacation_sequence)]
         user_vacation_info[user_id].append(vacation_type) # 변환 모듈
         msg = (f"휴가 신청 진행중입니다. 신청한 휴가는 {vacation_type}입니다.\n\n")
         send_direct_message_to_user(user_id, msg)
-        user_vacation_status[user_id] = "requesting_type"
+        user_vacation_status[user_id] = "requesting_type" # When button,, it's not fail case!! REMEMBER!!
+    elif vacation_sequence == 'vacation_request':
+        msg = (f"휴가 신청 진행중입니다. 1 - 5번 사이의 번호를 입력하세요\n\n")
+        send_direct_message_to_user(user_id, msg)
     else:
-        msg = (f"휴가 신청 진행중입니다. 잘못된 휴가 종류입니다. 1 - 5번 사이의 번호를 입력하세요\n\n")
+        msg = (f"휴가 신청 진행중입니다. 잘못된 번호입니다.1 - 5번 사이의 번호를 입력하세요\n\n")
         send_direct_message_to_user(user_id, msg)
 
 #### 휴가 사유를 입력받는다
@@ -1051,7 +1257,10 @@ def request_vacation_handler(message, say, user_states, user_vacation_status, us
             send_direct_message_to_user(user_id, msg)
         
         # 신청을 마무리하면 관련 모든 정보를 삭제한다
-        del user_states[user_id]
-        del user_vacation_info[user_id]
-        del user_vacation_status[user_id]
+        if user_id in GlobalState.user_states:
+            del GlobalState.user_states[user_id]
+        if user_id in GlobalState.user_vacation_info:
+            del GlobalState.user_vacation_info[user_id]
+        if user_id in GlobalState.user_vacation_status:
+            del user_vacation_status[user_id]
         return

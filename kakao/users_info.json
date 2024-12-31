@@ -83,13 +83,6 @@
         "display_name": "Jun.kv 김기준",
         "authority": 2
     },
-    "U032BJQJMJQ": {
-        "id": "U032BJQJMJQ",
-        "name": "eddie",
-        "real_name": "장승룡 Eddie Chang",
-        "display_name": "eddie.kv 장승룡 (8번)",
-        "authority": 2
-    },
     "U032FEB8JFM": {
         "id": "U032FEB8JFM",
         "name": "simplepoll",
@@ -277,6 +270,13 @@
         "name": "jay",
         "real_name": "",
         "display_name": "Jay.kv 정지영",
+        "authority": 4
+    },
+    "U032BJQJMJQ": {
+        "id": "U032BJQJMJQ",
+        "name": "eddie",
+        "real_name": "",
+        "display_name": "eddie.kv 장승룡 (8번)",
         "authority": 4
     },
     "U032CGZ96MB": {
@@ -856,7 +856,7 @@
     "U06NG65CFHB": {
         "id": "U06NG65CFHB",
         "name": "wf_bot_a06njvdg63d",
-        "real_name": "예약 메시지 전송",
+        "real_name": "",
         "display_name": "",
         "authority": 5
     },
@@ -915,5 +915,12 @@
         "real_name": "Granola",
         "display_name": "",
         "authority": 4
+    },
+    "U0836CVML2W": {
+        "id": "U0836CVML2W",
+        "name": "wf_bot_a06mlue1bfx",
+        "real_name": "투자재원 현황 공유",
+        "display_name": "",
+        "authority": 5
     }
 }

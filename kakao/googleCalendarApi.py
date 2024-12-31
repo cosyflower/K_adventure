@@ -92,7 +92,7 @@ def set_out_of_office_event(user_id, start_date, end_date, summary='Out of Offic
             'timeZone': 'Asia/Seoul',
         },
         'transparency': 'opaque',
-        'visibility': 'private',
+        'visibility': 'public',
         'eventType': 'outOfOffice',
         'extendedProperties': {
             'private': {

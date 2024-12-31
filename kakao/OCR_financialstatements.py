@@ -1,15 +1,47 @@
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-import os
+from openai import OpenAI
+from collections import OrderedDict
+
+import gspread
+import re
+import json
+
 SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/cloud-platform']
 SERVICE_ACCOUNT_FILE = r'C:\Users\KV_dev\Desktop\K_adventure\kakao\zerobot-425701-15f85b16185c.json'
 creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 service = build('drive', 'v3', credentials=creds)
 
-from collections import OrderedDict
 def normalize_text(text):
     import unicodedata
     return unicodedata.normalize('NFC', text).replace(" ", "")
+
+def list_file_names_in_folder(folder_id):
+    """
+    Google Drive API를 사용해 지정된 폴더의 파일명을 리스트 형태로 반환합니다.
+    Returns:
+        list: 폴더 내 파일명의 리스트. (예: ['file1', 'file2', ...])
+    """
+    # 폴더 내 파일 검색 쿼리
+    query = f"'{folder_id}' in parents and trashed = false"
+    
+    # 파일 검색
+    results = service.files().list(
+        q=query,
+        fields="files(name)",  # 파일 이름만 가져오기
+        supportsAllDrives=True,
+        includeItemsFromAllDrives=True
+    ).execute()
+    
+    # 검색 결과에서 파일명 추출
+    items = results.get('files', [])
+    file_names = [file['name'].split('_')[0] for file in items]  # '_' 앞부분만 추출
+
+    if not file_names:
+        print('No files found.')
+        return []
+    else:
+        return file_names
 
 def list_files_in_folder(folder_id):
     query = f"'{folder_id}' in parents and trashed = false"
@@ -62,18 +94,25 @@ def process_pdf(file_data):
                 
     return text
 
+import pandas as pd
+import io
+
 def process_excel(file_data):
     xls = pd.ExcelFile(file_data)
     all_text = ''
     
     for sheet_name in xls.sheet_names:  # 모든 시트를 순회
-        df = pd.read_excel(file_data, sheet_name=sheet_name, dtype=str)  # 모든 값을 문자열로 변환하여 읽음
-        all_text += f"\n--- 시트: {sheet_name} ---\n"
-        
-        for index, row in df.iterrows():  # 각 행을 한 줄씩 읽기
-            # 빈값(NaN)이나 None을 '[빈값]'으로 대체
-            row_text = ', '.join([str(value) if pd.notna(value) and value != 'None' else '[빈값]' for value in row.values])
-            all_text += f"{index}: {row_text}\n"  # 행 번호와 데이터를 결합하여 저장
+        try:
+            df = pd.read_excel(file_data, sheet_name=sheet_name, dtype=str)  # 모든 값을 문자열로 변환
+            all_text += f"\n--- 시트: {sheet_name} ---\n"
+            
+            # 각 행을 순회하며 데이터 처리
+            for index, row in df.iterrows():
+                # 빈 값(NaN, None 등)을 '[빈값]'으로 대체
+                row_text = ', '.join([str(value) if pd.notna(value) and value not in ['None', ''] else '[빈값]' for value in row.values])
+                all_text += f"{index}: {row_text}\n"  # 행 번호와 데이터를 결합하여 저장
+        except Exception as sheet_error:
+            all_text += f"\n--- 시트: {sheet_name} 에서 오류 발생: {sheet_error} ---\n"
     
     return all_text
 
@@ -111,25 +150,18 @@ def send_single_image(image_data):
     #         이미지에 날인(도장)이 있다면 0. 날인확인 이라는 문구를 제일 앞에 추가해줘."""
             
     prompt = """입력된 이미지에서 제무상태표랑 손익계산서의 해당하는 정보를 전부 정리해줘.
-                세부 항목도 전부 정확한 값으로 모두 정리해주고 전기와 당기의 정보를 구분해서 정리해줘.
+                세부 항목도 전부 정확한 값으로 모두 정리해주고 전기 정보와 당기 정보가 있을텐데 정보를 구분해서 정리해줘.
                 빠지는 정보가 있으면 안돼.
                 이미지에 날짜 정보가 있으면 날짜 정보도 정리해줘.
                 이미지에 도장이나 낙인이 있으면 있다고 알려줘.
                 이렇게 모든 정보가 다 정리되어야해.
-                손익계산서에서는 
-                매출액, 매출원가, 매출총이익, 판매비와 관리비, 영업손실, 영업이익, 영업외수익, 영업외비용, 법인세차감전소실, 법인세차감전이익, 법인세, 당기순손실, 당기순이익, 이자비용, 연구개발비, 접대비, 복리후생비, 지급수수료
-                자매상태표에서는
-                유동자산, 당좌자산, 비유동자산, 자산총계, 유동부채, 비유동부채, 자본금, 자본잉여금, 자본조정, 기타포괄손익누계액, 자본총계
-                를 정리해줘
             """
-    
+
     api_key = 'sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ'
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}"
     }
-
-    # Prepare messages for a single image
     messages = [
         {
             "role": "user",
@@ -147,15 +179,11 @@ def send_single_image(image_data):
             ]
         }
     ]
-
-    # Payload for the API request
     payload = {
         "model": "gpt-4o",
         "messages": messages,
         "temperature" : 0.0
     }
-
-    # Send the request to OpenAI API
     response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
     return response.json()['choices'][0]['message']['content']
 
@@ -187,7 +215,9 @@ financialstatements_json_format = {
                 "자본조정":0,
                 "기타포괄손익누계액":0,
                 "자본총계":0,
-		"이익잉여금":0,
+              "이익잉여금":0,
+                "미처리결손금":0,
+                "결손금":0,
             },
             "기준일":"",
             "연결유무":"",
@@ -196,7 +226,9 @@ financialstatements_json_format = {
 prompt_financialstatements ="재무상태표와 손익계산서 pdf를 OCR를 통해서 페이지 단위로 텍스트 정보를 추출한거야. \
         입력값을 분석해서 입력한 json 형태의 값을 채워서 하나의 재무상태표와 하나의 손익계산서만 있는 json 형태로 출력해. \
         문서에 당기랑 전기가 있을텐데 모든 값은 당기에 해당하는 값으로 채워.\
-        이익잉여금이랑 결손금은 다른거야. 이익잉여금은 문서에서 없을 수도 있어.\
+        만약에 당기 정보 안에서도 누적금액이랑 3개월치 금액이 따로 있다면, 당기 정보 안에서 누적금액에 해당하는 내용으로 채워. \
+        결손금과 미처리 결손금, 이익잉여금은 모두 다 다른 항목이야. 정보가 없을 수 있지만 있는 정보는 따로 추출해.\
+        자본금은 하위 항목과 상위 항목이 같은 자본금이라는 명칭을 쓸텐데 추출할때는 상위 항목의 자본금을 추출해.\
         수 데이터는 정확한 값을 추출해.\
         기준일은 문서에 2024년 6월 30일 기준 이렇게 있으면 2024/06/30 이런 형태로 바꿔서 넣어.\
         영업손실이나 영업이익은 둘 중에 하나만 문서에 있어 없는 항목은 그냥 0으로 두면 돼. 법인세차감전손실과 법인세차감전이익, 당기순손실과 당기순이익도 마찬가지야. \
@@ -209,29 +241,17 @@ prompt_financialstatements ="재무상태표와 손익계산서 pdf를 OCR를 �
         정확히 다음의 json 형태로 출력해 key는 반드시 json 형태로 출력해고 value만 너가 채워야해 \
         출력 json 형태 : \n" + str(financialstatements_json_format)
 
-import openai
 def text_to_json_chatgpt(user_input, prompt):
-    # OpenAI API 키 설정
-    openai.api_key = 'sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ'
-
-    # GPT-4 API 호출
-    response = openai.ChatCompletion.create(
-        model="gpt-4o-mini",
+    client = OpenAI(api_key = 'sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
+    completion = client.beta.chat.completions.parse(
+        model="gpt-4o",
         messages=[
-            {
-                "role": "system",
-                "content": prompt
-            },
-            {
-                "role": "user",
-                "content": user_input
-            }
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": user_input}
         ],
         temperature=0.0
     )
-
-    # GPT 응답에서 결과를 추출
-    output = response['choices'][0]['message']['content']
+    output = completion.choices[0].message.content
     return output
 
 import json
@@ -241,7 +261,7 @@ def validate_json_format(data):
                       '영업외수익', '영업외비용', '법인세차감전손실', '법인세차감전이익', '법인세등', 
                       '당기순손실', '당기순이익'}
     재무상태표_keys = {'유동자산', '비유동자산', '자산총계', '유동부채', '비유동부채', '부채총계', 
-                      '자본금', '자본잉여금', '자본조정', '기타포괄손익누계액', '자본총계', '이익잉여금'}
+                      '자본금', '자본잉여금', '자본조정', '기타포괄손익누계액', '자본총계', '이익잉여금', '결손금', '미처리결손금'}
 
     if not (isinstance(data, dict) and required_keys.issubset(data.keys())):
         return False
@@ -350,6 +370,7 @@ def excel_pdf_to_json(excel_extracted_text, ocr_extracted_text, pdf_or_ocr_extra
     # pdf_or_ocr_output1 = chatgpt_output_to_json_form(text_to_json_chatgpt(pdf_or_ocr_extracted_text,prompt_financialstatements))
     # pdf_or_ocr_output2 = chatgpt_output_to_json_form(text_to_json_chatgpt(pdf_or_ocr_extracted_text,prompt_financialstatements))
     json_list_yes_stamp = [ocr_output1,ocr_output2]
+    # json_list = [excel_output1, excel_output2, ocr_output1, ocr_output2]
     json_list = [excel_output1, excel_output2, ocr_output1, ocr_output2]
     final_json_output = compare_multiple_jsons_for_excel_exist_files(json_list_yes_stamp, json_list)
     return final_json_output
@@ -360,6 +381,7 @@ def only_pdf_to_json(ocr_extracted_text, pdf_or_ocr_extracted_text, pdf_type):
     pdf_or_ocr_output1 = chatgpt_output_to_json_form(text_to_json_chatgpt(pdf_or_ocr_extracted_text,prompt_financialstatements))
     pdf_or_ocr_output2 = chatgpt_output_to_json_form(text_to_json_chatgpt(pdf_or_ocr_extracted_text,prompt_financialstatements))
     json_list_yes_stamp = [ocr_output1, ocr_output2]
+    # json_list = [pdf_or_ocr_output1, pdf_or_ocr_output2, ocr_output1, ocr_output2]
     json_list = [pdf_or_ocr_output1, pdf_or_ocr_output2, ocr_output1, ocr_output2]
     final_json_output = compare_multiple_jsons_for_excel_not_exist_files(json_list_yes_stamp, json_list, pdf_type)
     return final_json_output
@@ -490,71 +512,71 @@ def validate_financial_data(output_json, A):
     issues = []
     # Issue 1: 유동자산 + 비유동자산 = 자산총계
     if output_json["재무상태표"]["유동자산"]["값"] + output_json["재무상태표"]["비유동자산"]["값"] != output_json["재무상태표"]["자산총계"]["값"]:
-        for key in ["유동자산", "비유동자산", "자산총계"]:
-            output_json["재무상태표"][key]["검토"] = 0
+        # for key in ["유동자산", "비유동자산", "자산총계"]:
+        #     output_json["재무상태표"][key]["검토"] = 0
         issues.append("유동자산 + 비유동자산 != 자산총계")
     
     # Issue 2: 유동부채 + 비유동부채 = 부채총계
     if output_json["재무상태표"]["유동부채"]["값"] + output_json["재무상태표"]["비유동부채"]["값"] != output_json["재무상태표"]["부채총계"]["값"]:
-        for key in ["유동부채", "비유동부채", "부채총계"]:
-            output_json["재무상태표"][key]["검토"] = 0
+        # for key in ["유동부채", "비유동부채", "부채총계"]:
+        #     output_json["재무상태표"][key]["검토"] = 0
         issues.append("유동부채 + 비유동부채 != 부채총계")
     
     # Issue 3: 자본금 + 자본잉여금 + 자본조정 + 기타포괄손익누계액 + 이익잉여금 = 자본총계
     if (output_json["재무상태표"]["자본금"]["값"] + output_json["재무상태표"]["자본잉여금"]["값"] +
         output_json["재무상태표"]["자본조정"]["값"] + output_json["재무상태표"]["기타포괄손익누계액"]["값"] +
         output_json["재무상태표"]["이익잉여금"]["값"]) != output_json["재무상태표"]["자본총계"]["값"]:
-        for key in ["자본금", "자본잉여금", "자본조정", "기타포괄손익누계액", "이익잉여금", "자본총계"]:
-            output_json["재무상태표"][key]["검토"] = 0
+        # for key in ["자본금", "자본잉여금", "자본조정", "기타포괄손익누계액", "이익잉여금", "자본총계"]:
+        #     output_json["재무상태표"][key]["검토"] = 0
         issues.append("자본금+자본잉여금+자본조정+기타포괄손익누계액+이익잉여금 != 자본총계")
     
     # Issue 4: 매출액 - 매출원가 = 매출총이익
     if output_json["손익계산서"]["매출액"]["값"] - output_json["손익계산서"]["매출원가"]["값"] != output_json["손익계산서"]["매출총이익"]["값"]:
-        for key in ["매출액", "매출원가", "매출총이익"]:
-            output_json["손익계산서"][key]["검토"] = 0
+        # for key in ["매출액", "매출원가", "매출총이익"]:
+        #     output_json["손익계산서"][key]["검토"] = 0
         issues.append("매출액 - 매출원가 != 매출총이익")
     
     # Issue 5: 영업이익과 영업손실 값 둘 다 0이 아닌 경우
     if output_json["손익계산서"]["영업이익"]["값"] != 0 and output_json["손익계산서"]["영업손실"]["값"] != 0:
-        output_json["손익계산서"]["영업이익"]["검토"] = 0
-        output_json["손익계산서"]["영업손실"]["검토"] = 0
+        # output_json["손익계산서"]["영업이익"]["검토"] = 0
+        # output_json["손익계산서"]["영업손실"]["검토"] = 0
         issues.append("영업이익과 영업손실값 둘 다 추출됨")
     
     # Issue 6: 법인세차감전이익과 법인세차감전손실 값 둘 다 0이 아닌 경우
     if output_json["손익계산서"]["법인세차감전이익"]["값"] != 0 and output_json["손익계산서"]["법인세차감전손실"]["값"] != 0:
-        output_json["손익계산서"]["법인세차감전이익"]["검토"] = 0
-        output_json["손익계산서"]["법인세차감전손실"]["검토"] = 0
+        # output_json["손익계산서"]["법인세차감전이익"]["검토"] = 0
+        # output_json["손익계산서"]["법인세차감전손실"]["검토"] = 0
         issues.append("법인세차감전이익과 법인세차감전손실값 둘 다 추출됨")
     
     # Issue 7: 당기순이익과 당기순손실 값 둘 다 0이 아닌 경우
     if output_json["손익계산서"]["당기순이익"]["값"] != 0 and output_json["손익계산서"]["당기순손실"]["값"] != 0:
-        output_json["손익계산서"]["당기순이익"]["검토"] = 0
-        output_json["손익계산서"]["당기순손실"]["검토"] = 0
+        # output_json["손익계산서"]["당기순이익"]["검토"] = 0
+        # output_json["손익계산서"]["당기순손실"]["검토"] = 0
         issues.append("당기순이익과 당기순손실값 둘 다 추출됨")
     
     # Issue 8: 영업손실이 0일 때, 영업이익 = 매출총이익 - 판매비와관리비
     if output_json["손익계산서"]["영업손실"]["값"] == 0:
         if output_json["손익계산서"]["영업이익"]["값"] != output_json["손익계산서"]["매출총이익"]["값"] - output_json["손익계산서"]["판매비와관리비"]["값"]:
-            for key in ["영업이익", "매출총이익", "판매비와관리비"]:
-                output_json["손익계산서"][key]["검토"] = 0
+            # for key in ["영업이익", "매출총이익", "판매비와관리비"]:
+            #     output_json["손익계산서"][key]["검토"] = 0
             issues.append("영업이익 != 매출총이익-판매비와관리비")
     
     # Issue 8: 영업이익이 0일 때, -영업손실 = 매출총이익 - 판매비와관리비
     if output_json["손익계산서"]["영업이익"]["값"] == 0:
         if -output_json["손익계산서"]["영업손실"]["값"] != output_json["손익계산서"]["매출총이익"]["값"] - output_json["손익계산서"]["판매비와관리비"]["값"]:
-            for key in ["영업손실", "매출총이익", "판매비와관리비"]:
-                output_json["손익계산서"][key]["검토"] = 0
+            # for key in ["영업손실", "매출총이익", "판매비와관리비"]:
+            #     output_json["손익계산서"][key]["검토"] = 0
             issues.append("-영업손실 != 매출총이익-판매비와관리비")
     
     # Issue 9: 자산총계 - 부채총계 = 자본총계
     if output_json["재무상태표"]["자산총계"]["값"] - output_json["재무상태표"]["부채총계"]["값"] != output_json["재무상태표"]["자본총계"]["값"]:
-        for key in ["자산총계", "부채총계", "자본총계"]:
-            output_json["재무상태표"][key]["검토"] = 0
+        # for key in ["자산총계", "부채총계", "자본총계"]:
+        #     output_json["재무상태표"][key]["검토"] = 0
         issues.append("자산총계 - 부채총계 != 자본총계")
     
     # Issue 10: 자본금 = A
     if output_json["재무상태표"]["자본금"]["값"] != A:
-        output_json["재무상태표"]["자본금"]["검토"] = 0
+        # output_json["재무상태표"]["자본금"]["검토"] = 0
         issues.append("등본의 자본금과 값이 일치하지 않음")
     
     return output_json, issues
@@ -589,13 +611,268 @@ dummy_json_result = {
                     "기타포괄손익누계액": {"값": 0, "검토": 0},
                     "자본총계": {"값": 0, "검토": 0},
                     "이익잉여금":{"값": 0, "검토": 0},
+                    "결손금":{"값": 0, "검토": 0},
+                    "미처리결손금":{"값": 0, "검토": 0},
                 },
-                "기준일": {"값": "", "검토": 0},
-                "연결유무": {"값": "", "검토": 0},
-                "날인유무": {"값": "", "검토": 0}
+                "기준일": {"값": "error", "검토": 0},
+                "연결유무": {"값": "error", "검토": 0},
+                "날인유무": {"값": "error", "검토": 0}
             }
 
 def process_files(normalized_company_name_list, files_financialstatements):
+    print("normalized_company_name_list : " + str(normalized_company_name_list))
+    company_files = {}
+    for file_metadata in files_financialstatements:
+        company_name = normalize_text(file_metadata['name'].split('_')[0])
+        if company_name not in normalized_company_name_list:
+            continue
+        if company_name not in company_files:
+            company_files[company_name] = {'excel': None, 'pdf': None}
+        file_type = file_metadata['mimeType']
+        if file_type in ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel']:
+            # try:
+            file_data = download_file_data(file_metadata['id'])
+            excel_extracted_text = process_excel(file_data)
+            company_files[company_name]['excel'] = excel_extracted_text
+            # except:
+            #     print(company_name + "'s excel_extracted_text error")
+        elif file_type == 'application/pdf':
+            try:
+                file_data = download_file_data(file_metadata['id'])
+                file_data.seek(0)
+                pdf_text = process_pdf(file_data)
+                if len(pdf_text) > 500:
+                    pdf_type = "pdf"
+                    pdf_or_ocr_extracted_text = pdf_text
+                else:
+                    pdf_type = "ocr"
+                    file_data.seek(0)
+                    image_list = pdf_to_images_base64(file_data)
+                    pdf_or_ocr_extracted_text = ""
+                    for i,img_data in enumerate(image_list):
+                        pdf_or_ocr_extracted_text = pdf_or_ocr_extracted_text + str(i+1)+" 번째 페이지\n" + send_single_image(img_data) + "\n"   
+                file_data.seek(0)
+                image_list = pdf_to_images_base64(file_data)
+                ocr_extracted_text = ""
+                for i,img_data in enumerate(image_list):
+                    ocr_extracted_text = ocr_extracted_text + str(i+1)+" 번째 페이지\n" + send_single_image(img_data) + "\n"
+                company_files[company_name]['pdf'] = (ocr_extracted_text, pdf_or_ocr_extracted_text, pdf_type)
+            except:
+                print(company_name + "'s pdf_extracted_text error")
+    
+    for company_name, files in company_files.items():
+        if company_files[company_name]['excel'] and company_files[company_name]['pdf']:
+            try:
+                excel_extracted_text = company_files[company_name]['excel']
+                ocr_extracted_text = company_files[company_name]['pdf'][0]
+                pdf_or_ocr_extracted_text = company_files[company_name]['pdf'][1]
+                pdf_type = company_files[company_name]['pdf'][2]
+                output_json = excel_pdf_to_json(excel_extracted_text, ocr_extracted_text, pdf_or_ocr_extracted_text, pdf_type)
+            except:
+                output_json = dummy_json_result
+                print(company_name + "'s excel_pdf_to_json error")
+        elif company_files[company_name]['pdf']:
+            try:
+                ocr_extracted_text = company_files[company_name]['pdf'][0]
+                pdf_or_ocr_extracted_text = company_files[company_name]['pdf'][1]
+                pdf_type = company_files[company_name]['pdf'][2]
+                output_json = only_pdf_to_json(ocr_extracted_text, pdf_or_ocr_extracted_text, pdf_type)
+            except:
+                output_json = dummy_json_result
+                print(company_name + "'s only_pdf_to_json error")
+        else:  
+            output_json = dummy_json_result
+            print("pdf 파일이 없습니다.")
+        try:
+            capital = googleapi.get_capital_from_company_name(company_name)
+            output_json, issues = validate_financial_data(output_json, capital)
+        except:
+            capital = 0
+            output_json, issues = validate_financial_data(output_json, capital)
+            print(company_name + "'s googleapi.get_capital_from_company_name error")
+            issues.append("자본금을 불러오지 못함")
+        update_all_sheets(output_json, company_name, issues)
+                       
+# financialstatements_company_name_list = ["21세기전파상","가지랩","겟차","고이장례연구소","그렙","하이로컬","Market Stadium", "M3TA", "KASA NETWORK", "Intelon", "홈즈컴퍼니", "홀릭스팩토리", "하이로컬","플랭","드리모"]
+
+
+# financialstatements_company_name_list = ["브룩허스트거라지"] ## 기업명
+# financialstatements_folder_id = '1DSlMhSMAskZGtS1t4eNeFHlAeW7AsaLy' ## 재무제표 폴더
+
+# normalized_company_name_list = [normalize_text(name) for name in financialstatements_company_name_list]
+# files_financialstatements = list_files_in_folder(financialstatements_folder_id)
+# process_files(normalized_company_name_list, files_financialstatements)
+
+######################################################################       OCR2       ########################################################################
+import json
+
+def get_real_items():
+    SHEET_ID = "1WACKlZYIoW7-aaLrzbeA3C4s9haTPnwQtr7LDi7PMSI"
+    SHEET_RANGES = ["재무상태표", "손익계산서"]  # 추가 시트 이름 포함
+    EXCLUSION_SHEET = "제외항목"
+    sheets_service = build('sheets', 'v4', credentials=creds)
+    sheet = sheets_service.spreadsheets()
+    actual_items = []
+    for SHEET_RANGE in SHEET_RANGES:
+        result = sheet.values().get(spreadsheetId=SHEET_ID, range=SHEET_RANGE).execute()
+        values = result.get('values', [])
+        if not values:
+            continue
+        data_columns = [row[4:] for row in values if len(row) > 4]
+        actual_items.extend([
+            re.sub(r"[^가-힣a-zA-Z()_]", "", item)  # 숫자와 특수기호 제거, ( ) _ 는 남김
+            for sublist in data_columns
+            for item in sublist if item
+        ])
+    exclusion_result = sheet.values().get(spreadsheetId=SHEET_ID, range=EXCLUSION_SHEET).execute()
+    exclusion_values = exclusion_result.get('values', [])
+    exclusion_items = [
+        re.sub(r"[^가-힣a-zA-Z()_]", "", item)  # 숫자와 특수기호 제거, ( ) _ 는 남김
+        for sublist in exclusion_values
+        for item in sublist if item
+    ]
+    return actual_items, exclusion_items
+
+
+from typing import Optional
+from pydantic import BaseModel
+
+class Output(BaseModel):
+    items: list[str]
+
+from pydantic import BaseModel
+def extract_item_from_txt_chatgpt(user_input):
+
+    prompt = """
+    재무상태표와 손익계산서 pdf를 OCR를 통해서 페이지 단위로 텍스트 정보를 추출한거야. \
+    대부분의 텍스트는 항목명에 해당할텐데 전체 문서에서 항목명에 해당하는 모든걸 추출해.\
+    감가상각누계액은 여러개가 있을 수 있어. \
+    바로 위에 있는 항목의 감가상각누계액이라는걸 구분해서 추출해.\
+    예를들어 바로 위 항목에 비품이 있으면 비품_감가상각누계액 이렇게 추출해.\
+    항목명에 해당하는 값 또는 금액이 없어도 항목명을 추출해.\
+    특수기호는 없애고 추출해.\
+    _는 남겨주고, 띄어쓰기 없이 추출해, json 형태로 출력해.
+    """ 
+
+    client = OpenAI(api_key = 'sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
+    completion = client.beta.chat.completions.parse(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": user_input}
+        ],
+        response_format=Output,
+    )
+
+    # GPT 응답에서 결과를 추출
+    output = completion.choices[0].message.parsed
+    return [
+        re.sub(r"[^가-힣a-zA-Z0-9_]", "", re.sub(r"^[\u2160-\u217F]+", "", item)).strip()
+        for item in output.items
+    ]
+
+prompt_ocr2 ="재무상태표와 손익계산서 pdf를 OCR를 통해서 페이지 단위로 텍스트 정보를 추출한거야. \
+        입력값을 분석해서 입력한 json 형태의 값을 채워서 하나의 재무상태표와 하나의 손익계산서만 있는 json 형태로 출력해. \
+        문서에 당기랑 전기가 있을텐데 모든 값은 당기에 해당하는 값으로 채워.\
+        만약에 당기 정보 안에서도 누적금액이랑 3개월치 금액이 따로 있다면, 당기 정보 안에서 누적금액에 해당하는 내용으로 채워. \
+        수 데이터는 정확한 값을 추출해.\
+        정확히 다음의 json 형태로 출력해 key는 반드시 json 형태로 출력해고 value만 너가 채워야해 \
+        출력 json 형태 : \n"
+
+import openai
+def text_to_json_chatgpt_ocr2(user_input, prompt):
+    
+    client = OpenAI(api_key = 'sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
+    completion = client.beta.chat.completions.parse(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": user_input}
+        ],
+        temperature=0.0
+    )
+
+    # GPT 응답에서 결과를 추출
+    output = completion.choices[0].message.content
+    return output
+    
+def process_json_list(json_list):
+    keys = json_list[0].keys()
+    result = {}
+    for key in keys:
+        values = [json_data.get(key) for json_data in json_list]
+        is_same = all(value == values[0] for value in values)
+        result[key] = {
+            "값": values[0],
+            "검토": 1 if is_same else 0
+        }
+    return result
+
+
+def excel_pdf_to_json_ocr2(excel_extracted_text, ocr_extracted_text, items):
+    result_dict = {item.replace(" ", ""): 0 for item in items}
+    formatted_json = json.dumps(result_dict, ensure_ascii=False, indent=4)
+    excel_output1 = chatgpt_output_to_json_form(text_to_json_chatgpt_ocr2(excel_extracted_text,prompt_ocr2+str(formatted_json)))
+    excel_output2 = chatgpt_output_to_json_form(text_to_json_chatgpt_ocr2(excel_extracted_text,prompt_ocr2+str(formatted_json)))
+    ocr_output1 = chatgpt_output_to_json_form(text_to_json_chatgpt_ocr2(ocr_extracted_text,prompt_ocr2+str(formatted_json)))
+    ocr_output2 = chatgpt_output_to_json_form(text_to_json_chatgpt_ocr2(ocr_extracted_text,prompt_ocr2+str(formatted_json)))
+    json_list = [excel_output1, excel_output2, ocr_output1, ocr_output2]
+    final_json_output = process_json_list(json_list)
+    return final_json_output
+
+def only_pdf_to_json_ocr2(ocr_extracted_text, pdf_or_ocr_extracted_text, items):
+    result_dict = {item.replace(" ", ""): 0 for item in items}
+    formatted_json = json.dumps(result_dict, ensure_ascii=False, indent=4)
+    ocr_output1 = chatgpt_output_to_json_form(text_to_json_chatgpt_ocr2(ocr_extracted_text,prompt_ocr2+str(formatted_json)))
+    ocr_output2 = chatgpt_output_to_json_form(text_to_json_chatgpt_ocr2(ocr_extracted_text,prompt_ocr2+str(formatted_json)))
+    pdf_or_ocr_output1 = chatgpt_output_to_json_form(text_to_json_chatgpt_ocr2(pdf_or_ocr_extracted_text,prompt_ocr2+str(formatted_json)))
+    pdf_or_ocr_output2 = chatgpt_output_to_json_form(text_to_json_chatgpt_ocr2(pdf_or_ocr_extracted_text,prompt_ocr2+str(formatted_json)))
+    json_list = [pdf_or_ocr_output1, pdf_or_ocr_output2, ocr_output1, ocr_output2]
+    final_json_output = process_json_list(json_list)
+    return final_json_output
+
+from gspread_formatting import format_cell_range, CellFormat, TextFormat, Color
+
+def write_json_to_sheet(json_data, company_name):
+    # Google Sheets 인증 및 스프레드시트 열기
+    gc = gspread.service_account(filename=r'C:\Users\KV_dev\Desktop\K_adventure\kakao\zerobot-425701-15f85b16185c.json')
+    spreadsheet = gc.open_by_key("1sKbhatzVFQKABl2dh1xaRZwbzFYARiPJLZ2MYMtVG2Y")
+    worksheet = spreadsheet.sheet1
+
+    # 기존 데이터 아래 한 줄 띄우기
+    existing_data = worksheet.get_all_values()
+    next_row = len(existing_data) + 2  # Leave one blank row
+
+    keys = list(json_data.keys())
+    values = [json_data[key]["값"] for key in keys]
+    checks = [json_data[key]["검토"] for key in keys]
+
+    # 헤더 작성
+    header_row = ["회사명"] + keys
+    worksheet.update(f"A{next_row}", [header_row])
+    next_row += 1
+
+    # 회사명과 값 작성
+    data_row = [company_name] + values
+    worksheet.update(f"A{next_row}", [data_row])
+
+    # 검토 값에 따라 글자색 설정
+    for col_index, check in enumerate(checks, start=2):
+        # 열과 행 범위 계산
+        column_letter = gspread.utils.rowcol_to_a1(next_row, col_index).split(str(next_row))[0]
+        cell_range = f"{column_letter}{next_row}"
+
+        # 색상 설정 (검정색 또는 빨간색)
+        text_color = Color(0, 0, 0) if check == 1 else Color(1, 0, 0)
+        cell_format = CellFormat(
+            textFormat=TextFormat(
+                foregroundColor=text_color
+            )
+        )
+        # 색상 적용
+        format_cell_range(worksheet, cell_range, cell_format)
+
+def ocr2_phase1(normalized_company_name_list, files_financialstatements):
     company_files = {}
     for file_metadata in files_financialstatements:
         company_name = normalize_text(file_metadata['name'].split('_')[0])
@@ -635,45 +912,140 @@ def process_files(normalized_company_name_list, files_financialstatements):
             except:
                 print(company_name + "'s pdf_extracted_text error")
 
+    phase1_output = {}
     for company_name, files in company_files.items():
-        if files['excel'] and files['pdf']:
+        if company_files[company_name]['excel'] and company_files[company_name]['pdf']:
             try:
-                excel_extracted_text = files['excel']
-                ocr_extracted_text = files['pdf'][0]
-                pdf_or_ocr_extracted_text = files['pdf'][1]
-                pdf_type = files['pdf'][2]
-                output_json = excel_pdf_to_json(excel_extracted_text, ocr_extracted_text, pdf_or_ocr_extracted_text, pdf_type)
+                excel_extracted_text = company_files[company_name]['excel']
+                # ocr_extracted_text = company_files[company_name]['pdf'][0]
+                pdf_or_ocr_extracted_text = company_files[company_name]['pdf'][1]
+                actual_items, exclusion_items = get_real_items()
+                items = extract_item_from_txt_chatgpt(pdf_or_ocr_extracted_text)
+                updated_items = [item for item in items if item not in exclusion_items]
+                extra_items = [item for item in updated_items if item not in actual_items]
+                output_json = excel_pdf_to_json_ocr2(excel_extracted_text, pdf_or_ocr_extracted_text, updated_items)
+                write_json_to_sheet(output_json, company_name)
             except:
-                output_json = dummy_json_result
+                output_json = {"error":{"값":0,"검토": 0}}
+                extra_items = ["해당기업오류남"]
+                write_json_to_sheet(output_json, company_name)
                 print(company_name + "'s excel_pdf_to_json error")
-        elif files['pdf']:
-            try:
-                ocr_extracted_text = files['pdf'][0]
-                pdf_or_ocr_extracted_text = files['pdf'][1]
-                pdf_type = files['pdf'][2]
-                output_json = only_pdf_to_json(ocr_extracted_text, pdf_or_ocr_extracted_text, pdf_type)
-            except:
-                output_json = dummy_json_result
-                print(company_name + "'s only_pdf_to_json error")
+            phase1_output[company_name] = extra_items
+        elif company_files[company_name]['pdf']:
+            # try:
+            ocr_extracted_text = company_files[company_name]['pdf'][0]
+            pdf_or_ocr_extracted_text = company_files[company_name]['pdf'][1]
+            items = extract_item_from_txt_chatgpt(ocr_extracted_text)
+            actual_items, exclusion_items = get_real_items()
+            items = extract_item_from_txt_chatgpt(ocr_extracted_text)
+            updated_items = [item for item in items if item not in exclusion_items]
+            extra_items = [item for item in updated_items if item not in actual_items]
+            output_json = only_pdf_to_json_ocr2(ocr_extracted_text, pdf_or_ocr_extracted_text, updated_items)
+            write_json_to_sheet(output_json, company_name)
+            # except:
+            #     output_json = {"error":{"값":0,"검토": 0}}
+            #     extra_items = ["해당기업오류남"]
+            #     write_json_to_sheet(output_json, company_name)
+            #     print(company_name + "'s only_pdf_to_json error")
+            phase1_output[company_name] = extra_items
         else:  
             output_json = dummy_json_result
             print("pdf 파일이 없습니다.")
-        try:
-            capital = googleapi.get_capital_from_company_name(company_name)
-            output_json, issues = validate_financial_data(output_json, capital)
-        except:
-            capital = 0
-            output_json, issues = validate_financial_data(output_json, capital)
-            print(company_name + "'s googleapi.get_capital_from_company_name error")
-            issues.append("자본금을 불러오지 못함")
-        update_all_sheets(output_json, company_name, issues)
-                       
-# financialstatements_company_name_list = ["21세기전파상","가지랩","겟차","고이장례연구소","그렙","하이로컬","Market Stadium", "M3TA", "KASA NETWORK", "Intelon", "홈즈컴퍼니", "홀릭스팩토리", "하이로컬","플랭","드리모"]
+    return phase1_output
 
+def get_info_equation_sheet():
+    # Google Sheets 연결
+    gc = gspread.service_account(filename=r'C:\Users\KV_dev\Desktop\K_adventure\kakao\zerobot-425701-15f85b16185c.json')
+    spreadsheet_id = '10slxMrxBKZcZc6ibA4H5M1D3y_XJhdpUPfgYHOxiMWE'
+    sheet = gc.open_by_key(spreadsheet_id).sheet1
 
-# financialstatements_company_name_list = ["하이로컬"] ## 기업명
-# financialstatements_folder_id = '1DSlMhSMAskZGtS1t4eNeFHlAeW7AsaLy' ## 재무제표 폴더
+    # 헤더와 데이터 가져오기
+    headers = sheet.row_values(1)  # 첫 번째 행 (헤더)
+    data = sheet.get_all_records(expected_headers=headers)  # 데이터 읽기
 
-# normalized_company_name_list = [normalize_text(name) for name in financialstatements_company_name_list]
-# files_financialstatements = list_files_in_folder(financialstatements_folder_id)
-# process_files(normalized_company_name_list, files_financialstatements)
+    # 결과 저장 변수
+    result_item = {}
+    equation = ""
+    using_item = set()
+
+    # 데이터 처리 (결과 값이 있는 줄만 필터링)
+    for row in data:
+        if row.get("결과"):  # "결과" 열에 값이 있는 경우만 처리
+            result = row.get("결과")
+            result = result.replace(" ", "")
+            formula = row.get("수식")
+            # 3번째 열 이후 모든 열 가져오기
+            items = [value.replace(" ", "") for key, value in row.items() if key not in ("결과", "수식") and value]
+
+            # 업데이트
+            result_item[result] = 0
+            equation += f"{result}={formula}\\\n"
+            using_item.update(items)
+
+    # 정렬된 using_item 리스트
+    using_item = sorted(using_item)
+    return result_item, equation.strip(), using_item
+
+def filtering_jsonlist(js, using_item):
+    result = []
+    missing_items = []  # 누락된 항목들을 모을 리스트
+    for item in js:
+        filtered_item = {key: item[key] for key in item if key == '회사명' or (key in using_item and key in item)}
+        missing = [key for key in using_item if key not in item]
+        if missing:
+            missing_items.append({'회사명': item.get('회사명', 'Unknown'), '누락 항목': missing})
+            continue  # 해당 아이템 건너뜀
+        result.append(filtered_item)
+    if missing_items:
+        print("누락된 항목이 있는 데이터:", missing_items)
+        return 0, missing_items
+    return 1, result
+
+def merge_and_deduplicate(data):
+    all_missing_items = set()  # 중복 제거를 위해 set 사용
+    for item in data:
+        all_missing_items.update(item.get('누락 항목', []))  # '누락 항목' 병합
+    return list(all_missing_items)  # 최종적으로 리스트로 반환
+
+def chatgpt_output_to_json_form(chatgpt_output):
+    match = re.search(r'\{.*\}', chatgpt_output, re.DOTALL)
+    json_output = match.group(0)
+    json_output = json.loads(json_output)
+    return json_output
+
+def ocr2_phase2_gpt(result_json, equation_prompt, js):
+    prompt = equation_prompt + " 는 수식에 대한 설명이야. 이 수식과 입력값을 분석해서 최종 결과로 " + str(result_json) + "이 포멧으로 출력해. 반드시 json 포멧이여야 해. 수식을 정확하게 계산해서 값을 구해."
+
+    client = OpenAI(api_key = 'sk-proj-KvJ1AX8zCUYXlEL7Q0fmT3BlbkFJghD5VpM4HRcyi0f8TBCQ')
+    completion = client.beta.chat.completions.parse(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": str(js)}
+        ],
+    )
+
+    # GPT 응답에서 결과를 추출
+    output = completion.choices[0].message.content
+    return chatgpt_output_to_json_form(output)
+
+def write_to_google_sheet(data):
+    # Google Sheets 연결
+    gc = gspread.service_account(filename=r'C:\Users\KV_dev\Desktop\K_adventure\kakao\zerobot-425701-15f85b16185c.json')
+    sheet = gc.open_by_key("1_jeDPUEAIhmUqwKEzGliuojkJ2UqRe8JvZCd9C2I4U8").sheet1
+
+    # 마지막 행 찾기
+    last_row = len(sheet.get_all_values())  # 현재 데이터가 있는 마지막 행 번호
+    row_number = last_row + 2  # 한 줄 띄우고 다음 줄부터 시작
+
+    for item in data:
+        # Key (헤더) 작성
+        sheet.insert_row(list(item.keys()), row_number)
+        row_number += 1
+
+        # Value (데이터) 작성
+        sheet.insert_row(list(item.values()), row_number)
+        row_number += 1
+
+        # 빈 줄 추가
+        row_number += 1

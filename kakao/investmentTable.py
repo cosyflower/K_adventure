@@ -21,6 +21,10 @@ import googleapi
 import pytz
 import locale
 import time
+from gspread_formatting import *
+from gspread import authorize
+from google.oauth2 import service_account
+from openpyxl.utils import get_column_letter
 
 from googleVacationApi import is_file_exists_in_directory
 
@@ -32,6 +36,7 @@ drive_service = build('drive', 'v3', credentials=credentials)
 
 # 폴더 ID 및 오늘 날짜 파일명
 folder_id = config.fileABCD_parent_folder_id
+copy_id = '1eK9rdEHm0rovV8H37c7r57e4eEXqUjQPe1LUMlA1QVI'
 
 # 파일 ID 조회 함수
 def get_file_id_in_folder(folder_id, file_name):
@@ -47,7 +52,7 @@ def get_file_id_in_folder(folder_id, file_name):
         # 파일이 존재하면 첫 번째 파일의 ID 반환, 없으면 None 반환
         if files:
             file_id = files[0].get('id')
-            print(f"File ID for '{file_name}': {file_id}")
+            # print(f"File ID for '{file_name}': {file_id}")
             return file_id
         else:
             print(f"No file named '{file_name}' found in the folder.")
@@ -81,36 +86,14 @@ def create_spreadsheet(folder_id, file_name):
             'parents': [folder_id]
         }
         file = drive_service.files().create(body=file_metadata, fields='id', supportsAllDrives=True).execute()
-        print(f"Created spreadsheet with ID: {file.get('id')}")
+        # print(f"Created spreadsheet with ID: {file.get('id')}")
     except HttpError as error:
         print(f"An error occurred while creating the spreadsheet: {error}")
-
-    # try:
-    #     # 파일 복사 설정
-    #     file_metadata = {
-    #         'name': file_name,
-    #         'parents': [folder_id]
-    #     }
-        
-    #     # 템플릿 스프레드시트 복사
-    #     file = drive_service.files().copy(
-    #         fileId=template_id,
-    #         body=file_metadata,
-    #         supportsAllDrives=True
-    #     ).execute()
-        
-    #     print(f"Created spreadsheet with ID: {file.get('id')}")
-    #     return file.get('id')
-        
-    # except HttpError as error:
-    #     print(f"An error occurred while creating the spreadsheet: {error}")
-    #     return None
 
 # 폴더 접근 권한 확인
 def check_folder_access(folder_id):
     try:
         drive_service.files().get(fileId=folder_id, supportsAllDrives=True).execute()
-        print("Access to folder is confirmed.")
         return True
     except HttpError as error:
         print(f"Cannot access folder: {error}")
@@ -218,8 +201,6 @@ def update_invest_date(file_id, basic_df, invest_df):
     cell_range = f"I2:I{len(투자기간_values) + 1}"  # 투자기간 열의 위치에 맞춰서 설정
     worksheet.update(cell_range, [[value] for value in 투자기간_values])
 
-    print('update invest_date completed')
-
 def fetch_sheet_as_dataframe(file_id, sheet_name):
     # Google Sheets 파일에 인증하고 열기
     gc = gspread.service_account(filename=SERVICE_ACCOUNT_FILE)
@@ -234,8 +215,8 @@ def fetch_sheet_as_dataframe(file_id, sheet_name):
     return df
 
 def update_invest_src(file_id, basic_df):
+    global copy_id
     invest_src_id = config.investment_resources_overview_id
-    copy_id = '1eK9rdEHm0rovV8H37c7r57e4eEXqUjQPe1LUMlA1QVI'
 
     # Google Sheets API 인증 설정
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
@@ -254,6 +235,66 @@ def update_invest_src(file_id, basic_df):
     # 대상 시트의 범위에 데이터를 업데이트 (전체 데이터 반영)
     destination_sheet.clear()  # 먼저 대상 시트의 내용을 지웁니다.
     destination_sheet.update('A1', source_data)  # A1 셀부터 데이터를 복사
+
+    dest_data = destination_sheet.get_all_values()
+
+    # 3번째 행에서 빈칸 제외
+    third_row_data = [cell for cell in dest_data[2] if cell.strip() != '']
+
+    # 21번째 행에서 '투자집행가능'으로 시작하지 않는 문자열 제외
+    twenty_first_row_data = [
+        cell for cell in dest_data[20] if cell.strip() != '' and not cell.startswith('투자집행가능')
+    ]
+
+    paired_data = list(zip(third_row_data, twenty_first_row_data))
+
+    # 파일 ID에 해당하는 스프레드시트 열기
+    target_sheet = client.open_by_key(file_id).sheet1
+    target_data = target_sheet.get_all_values()
+
+    # '조합명'이 포함된 행 찾기
+    start_row = None
+    for idx, row in enumerate(target_data, start=1):  # 1-based indexing
+        if '조합명' in row:
+            start_row = idx
+            break
+
+    if start_row is None:
+        print("Error: '조합명'을 찾을 수 없습니다.")
+        return
+    
+    # '조합명' 다음 행부터 업데이트
+    update_start_row = start_row + 1
+    
+    # A열에 조합명 이후로 빈칸찾기
+    # 빈칸 전까지 업데이트 진행
+    # 조합명 이후 데이터 - 빈칸 전 데이터까지 C열 데이터 업데이트 진행 (범위를 설정해두고)
+
+    # 범위 내에 있는 A열 데이터 추출
+    # A열 데이터 내 요소를 하나씩 조회하고
+    # paired_data 내 third_row_data에 조회한 요소가 존재하면 매칭된 twenty_first_row_data를 해당 데이터의 C열에 업데이트 한다
+    # 범위 내에서 업데이트를 모두 진행한다 
+    # A열 데이터 추출 (빈칸 전까지만)
+    a_column_data = []
+    for row in target_data[update_start_row - 1:]:  # 0-based indexing adjustment
+        if len(row) == 0 or row[0].strip() == '':  # 빈칸이면 중지
+            break
+        a_column_data.append(row[0])
+
+    # 범위 내 데이터 업데이트
+    for i, target_name in enumerate(a_column_data):
+        # paired_data에서 매칭 데이터 찾기
+        update_value = "-"
+        for pair in paired_data:
+            if target_name == pair[0]:  # A열 데이터와 paired_data의 third_row_data 매칭
+                update_value = pair[1]
+                break
+
+        # C열에 값 업데이트
+        target_cell = f'C{update_start_row + i}'
+        target_sheet.update(target_cell, [[update_value]])  # 값은 반드시 2D 리스트로 전달
+
+    return paired_data
 
 def get_basic_info_from_spreadsheet(file_id, sheet_name="Sheet1", target_keyword="조합명"):
     # Google API 자격 증명 설정 (서비스 계정 파일 필요)
@@ -310,19 +351,17 @@ def update_invest_distribution(file_id, fund_name, inv_id):
             break
 
     # D열의 데이터 반환
+    # fund_commitment =>>>> 펀드 약정 금액
     if row_num:
         fund_commitment = db7_sheet.cell(row_num, 5).value  # D열의 데이터 가져오기 (4는 D열에 해당)
-        print(f"펀드 약정 금액 : {fund_commitment}") 
+        # print(f"펀드 약정 금액 : {fund_commitment}") 
     else:
         print("fund_name을 찾을 수 없습니다.")
 
-    # fund_commitment =>>>> 펀드 약정 금액
-
-    # 마지막으로 작성된 데이터 위치 확인
     data = sheet.get_all_values()
     last_row = len(data) + 2  # 마지막 데이터 이후 한 줄을 건너뜀
 
-    # '3. 투자재원 배분 결정 : 투자재원 배분기준 지침 참조'
+    # '3. 투자재원 배분 결정 : 투자재원 배분기준 지침 참조' - 제목을 먼저 형성하고
     sheet.update(f'A{last_row}', [['3. 투자재원 배분 결정 : 투자재원 배분기준 지침 참조']])
     last_row = last_row + 2
 
@@ -353,15 +392,6 @@ def update_invest_distribution(file_id, fund_name, inv_id):
     second_filterd_df = basic_info_df[basic_info_df[8] == 'O']
 
     for _, row in second_filterd_df.iterrows():
-        # 호에서 inv_id 해당되는 데이터 파악하고 인정투자 금액의 합 구하기
-        # config.investment_present_table_id 스프레드 시트 중 '호'로 끝나는 시트만 조회
-        # inv_id를 키로 데이터를 탐색 and W열 값이 '여' 인 경우 AE값 AG값을 곱한다. AF가 기준 통화
-        # 합과 fund_commitment 비교한다
-        # 조건에 따라 O 혹은 X로 설정한다
-
-
-
-
         # 0번째 열과 9번째 열 값 추출
         data_to_add = [[row[0], row[8], '', '']]
         sheet.update(f'A{last_row}:D{last_row}', data_to_add)  # 열 A와 B에 각각 추가
@@ -382,9 +412,17 @@ def update_invest_distribution(file_id, fund_name, inv_id):
     # '(2) 발굴자' 셀을 찾고 우측 셀 값을 조회
     try:
         finder_cell = sheet.find('(2) 발굴자')
-        finder_right_value = sheet.cell(finder_cell.row, finder_cell.col + 1).value  # 우측 셀 값 가져오기
-        print(f'finder_right_value : {finder_right_value}')
+        # 우측 셀 값부터 빈칸이 나올 때까지 탐색
+        finder_right_values = []
+        col = finder_cell.col + 1  # 첫 번째 우측 셀부터 시작
+        while True:
+            cell_value = sheet.cell(finder_cell.row, col).value  # 현재 셀 값 가져오기
+            if not cell_value or cell_value.strip() == '':  # 빈칸이면 종료
+                break
+            finder_right_values.append(cell_value)  # 값을 리스트에 추가
+            col += 1  # 다음 열로 이동
 
+        # print(f'finder_right_values : {finder_right_values}')
 
         # 각 행에 대해 조건에 따라 값을 업데이트
         for _, row in second_filterd_df.iterrows():
@@ -400,10 +438,12 @@ def update_invest_distribution(file_id, fund_name, inv_id):
             full_staff = fund_manager_list + core_staff_list
             full_staff = [name.strip() for name in full_staff]  # 각 이름의 앞뒤 공백 제거
 
-            allocation_status = 'O' if finder_right_value in full_staff else 'X'
+            # finder_right_values 내 한명이라도 full_staff 내부에 존재한다면 'O' 아니면 'X'
+            # finder_right_values 내 한명이라도 full_staff 내부에 존재한다면 'O' 아니면 'X'
+            allocation_status = 'O' if any(name in full_staff for name in finder_right_values) else 'X'
 
             # 결과를 업데이트
-            sheet.update(f'A{last_row}', [[row[0], row[8],'' ,allocation_status]])  # A열, B열, D열에 데이터 추가
+            sheet.update(f'A{last_row}', [[row[0], row[8], '', allocation_status]])  # A열, B열, D열에 데이터 추가
             last_row += 1
 
     except gspread.exceptions.CellNotFound:
@@ -427,21 +467,18 @@ def update_invest_summary(file_id, fund_name):
     sheet.update(f'A{last_row}', [['(1) 투자 배분금액']])
     last_row += 1
 
-    headers_1 = [["투자조합명", "금번 투자금액 이내"]]
+    headers_1 = [["투자조합명", "금번 투자금액"]]
     sheet.update(f'A{last_row}:B{last_row}', headers_1)
     last_row += 1
 
-    # sheet에서 '(4) 투자예정금액' 셀을 탐색한다
-    # 해당 셀의 우측값을 조회한다
-    # money에 결과를 저장한다
-    # '(4) 투자예정금액' 셀을 탐색하고 우측 값을 조회하여 money에 저장
+    # sheet에서 '(4) 투자예정금액' 셀을 탐색한다 - 해당 셀의 우측값을 조회한다
+    # money에 결과를 저장한다 - '(4) 투자예정금액' 셀을 탐색하고 우측 값을 조회하여 money에 저장
     try:
         target_cell = sheet.find('(4) 투자예정금액')
         money = sheet.cell(target_cell.row, target_cell.col + 1).value  # 우측 셀 값 가져오기
-
-        # 확인용 출력
-        print(f'fund_name: {fund_name}')
-        print(f"투자예정금액 우측 값: {money}")
+        # DEBUGGING
+        # print(f'fund_name: {fund_name}')
+        # print(f"투자예정금액 우측 값: {money}")
         
     except gspread.exceptions.CellNotFound:
         print("셀 '(4) 투자예정금액'을 찾을 수 없습니다.")
@@ -462,8 +499,7 @@ def update_invest_summary(file_id, fund_name):
     last_row = last_row + 1
     sheet.update(f'A{last_row}', [['투자 가능한 조합 중 핵심운용인력이 발굴자로 있는 조합에 우선 배정']])
 
-
-
+    return money
 
 def get_all_data_from_spreadsheet(spreadsheeet_id):
     # 스프레드시트 ID 및 데이터 가져오기
@@ -504,16 +540,16 @@ def create_basic_info_table():
 
     # 3번째 행과 23번째 행 데이터 가져오기
     row_3 = sheet.row_values(3)
-    row_23 = sheet.row_values(23)
+    row_21 = sheet.row_values(23)
 
     # 3번째 행의 데이터에서 공백을 제외한 요소를 리스트로 저장
     row_3_filtered = [item for item in row_3 if item.strip() != '']
     # 23번째 행에서 '투자집행가능'으로 시작하지 않는 요소와 공백을 제외한 요소를 리스트로 저장
-    row_23_filtered = [item for item in row_23 if item.strip() != '' and not item.startswith('투자집행가능')]
+    row_23_filtered = [item for item in row_21 if item.strip() != '' and not item.startswith('투자집행가능')]
 
     # row_3_filtered와 row_23_filtered 각각의 요소를 쌍으로 묶기
     paired_data = list(zip(row_3_filtered, row_23_filtered))
-    print(paired_data)
+    # print(paired_data)
 
     result_list = []
     for name in row_3_filtered:
@@ -525,9 +561,6 @@ def create_basic_info_table():
                 break
         if not matched:
             result_list.append('-')
-
-    # 출력
-    print("결과 리스트:", result_list)
 
     table_data = pd.DataFrame({
         '조합명': filtered_data[NAME],  # 예: 조합명을 0번 인덱스로 설정
@@ -546,28 +579,22 @@ def create_basic_info_table():
 def create_invest_Target_Company_information(db_1_df, db_4_df):
     # db_1_df에서 회사명 조회
     company_names = db_1_df['회사명'].iloc[0] if '회사명' in db_1_df.columns else None
-    print("회사명:", company_names)
+    # print("회사명:", company_names)
     
     # db_4_df에서 발굴자1, 발굴자2, 발굴자3 조회
     discoverer1 = db_4_df['발굴자1'].iloc[0] if '발굴자1' in db_4_df.columns else None
     discoverer2 = db_4_df['발굴자2'].iloc[0] if '발굴자2' in db_4_df.columns else None
     discoverer3 = db_4_df['발굴자3'].iloc[0] if '발굴자3' in db_4_df.columns else None
-    print("발굴자1:", discoverer1)
-    print("발굴자2:", discoverer2)
-    print("발굴자3:", discoverer3)
     
     # db_4_df에서 'INV ID' 조회, 마지막 문자가 '1'이면 'O', 아니면 'X'
     if 'INV ID' in db_4_df.columns:
-        INV_STATUS= db_4_df['INV ID'].apply(lambda x: 'O' if str(x).endswith('1') else 'X').iloc[0]
-    print("INV ID 상태:", INV_STATUS)
+        INV_STATUS= db_4_df['INV ID'].apply(lambda x: 'X' if str(x).endswith('1') else 'O').iloc[0]
     
     # db_4_df에서 투자금액(원화) 조회
     investment_amount = db_4_df['투자금액(원화)'].iloc[0] if '투자금액(원화)' in db_4_df.columns else None
-    print("투자금액(원화):", investment_amount)
     
     # db_4_df에서 투자 납입일 조회
     investment_date = db_4_df['투자 납입일'].iloc[0] if '투자 납입일' in db_4_df.columns else None
-    print("투자 납입일:", investment_date)
 
     result_df = pd.DataFrame({
         '회사명': [company_names],
@@ -580,6 +607,261 @@ def create_invest_Target_Company_information(db_1_df, db_4_df):
     })
 
     return result_df
+
+def preprocess_data(str_number):
+    numeric_value = int(str_number.replace(',', ''))
+    return int(numeric_value)
+
+def preprocess_paired_data(paired_data):
+        processed_data = []
+        for name, value in paired_data:
+            # 쉼표 제거, 음수 처리 포함
+            try:
+                numeric_value = int(value.replace(',', ''))
+                numeric_value = int(numeric_value)
+            except ValueError:
+                numeric_value = 0  # 변환 실패 시 기본값
+            processed_data.append((name, numeric_value))
+        return processed_data
+
+def append_A(paired_data, future_invest, file_id):
+   
+    client = gspread.authorize(credentials)
+    # 스프레드시트 열기
+    spreadsheet = client.open_by_key(file_id)
+    worksheet = spreadsheet.sheet1  # 첫 번째 시트 가져오기
+
+    # A열 데이터 가져오기
+    column_A = worksheet.col_values(1)  # A열의 모든 데이터 가져오기
+
+    # 데이터의 시작점 찾기
+    start_row = None
+    for i, cell_value in enumerate(column_A, start=1):
+        if "(2) 투자의무비율 & 주목적/특수목적비율 충족 필요 조합 우선 배정 여부" in cell_value:
+            start_row = i + 2  # 해당 위치의 +2 행부터 작업 시작
+            break
+
+    if start_row is None:
+        raise ValueError("지정된 기준 문구를 찾을 수 없습니다.")
+    
+    # paired_data preprocessing
+    # 예시 : [('카카오-신한 제1호 트나이트 투자조합', '187,026,695'), ('카카오 그로스해킹 펀드', '-879,743,279'), ('카카오 코파일럿 제1호 펀드', '501,399,532'), ('카카오 코파일럿 제2호 펀드', '7,434,649,829')]
+    # 2번째 요소가 문자열인데 이를 숫자로 변환해야 함. 음수도 존재하는 상황임.
+    # 숫자로 변환하는 코드가 필요
+    processed_paired_data = preprocess_paired_data(paired_data)
+    processed_future_invest = preprocess_data(future_invest)
+
+    # 지정된 범위 내 데이터를 처리
+    updates = []  # 업데이트할 데이터 저장
+    row = start_row
+    while True:
+        # A열 값 가져오기
+        cell_A_value = worksheet.cell(row, 1).value
+        if not cell_A_value:  # 빈칸이 나오면 중단
+            break
+
+        # paired_data와 비교
+        matched_pair = next((pair for pair in processed_paired_data if pair[0] == cell_A_value), None)
+        if matched_pair:
+            # 두 번째 요소와 future_invest 비교
+            second_value = matched_pair[1]
+            result = "O" if processed_future_invest <= second_value else "X"
+        else:
+            result = "-"
+
+        # C열 업데이트 데이터 추가
+        updates.append([result])
+        row += 1  # 다음 행으로 이동
+
+    # 업데이트를 한 번의 호출로 처리
+    end_row = start_row + len(updates) - 1
+    worksheet.update(f"C{start_row}:C{end_row}", updates)
+
+    # file_id spreadsheet1 열어서 A열 값에 '(3) 핵심운용인력 우선 배정 가능'인 행 데이터 위치 구하기
+    # 데이터 위치 + 2 의 C열에도 updates를 반영하려고 한다
+    # updates 내 요소 개수만큼 행 데이터의 C열을 업데이트 한다 (요소 개수와 범위에 해당되는 행 데이터의 개수가 동일하다는 말)
+    # '(3) 핵심운용인력 우선 배정 가능'을 찾기
+    start_row_3 = next(
+        (i + 2 for i, val in enumerate(column_A, start=1)
+         if '(3) 핵심운용인력 우선 배정 가능' in val),
+        None
+    )
+    if start_row_3 is None:
+        raise ValueError("지정된 텍스트 '(3) 핵심운용인력 우선 배정 가능'을 찾을 수 없습니다.")
+
+    # 해당 위치 +2부터 C열 업데이트
+    updates_3 = []  # 새로운 업데이트 리스트
+    row_3 = start_row_3
+    for i in range(len(updates)):
+        # C열 업데이트
+        updates_3.append([updates[i][0]])
+
+    # C열 업데이트 적용
+    end_row_3 = start_row_3 + len(updates_3) - 1
+    worksheet.update(f"C{start_row_3}:C{end_row_3}", updates_3)
+
+def append_B(file_id, inv_id):
+    # Google Sheets API 클라이언트 인증
+    client = gspread.authorize(credentials)
+    
+    # 첫 번째 스프레드시트: 투자 재원 계산
+    spreadsheet_1 = client.open_by_key(config.investment_present_table_id)
+    worksheet_1 = spreadsheet_1.worksheet('통합')
+    
+    # A열, W열, AE열, AG열 데이터 가져오기
+    column_A_1 = worksheet_1.col_values(1)  # A열 데이터
+    column_W = worksheet_1.col_values(23)  # W열 데이터
+    column_AE = worksheet_1.col_values(31)  # AE열 데이터
+    column_AG = worksheet_1.col_values(33)  # AG열 데이터
+
+    # 문자열 정리 함수
+    def clean_number(value):
+        try:
+            return float(value.strip().replace(',', '').replace(' ', ''))  # 쉼표와 공백 제거 후 float 변환
+        except (ValueError, AttributeError):
+            return None  # 변환 실패 시 None 반환
+        
+    for i, value in enumerate(column_A_1):
+        if value == inv_id:
+            worksheet_name = worksheet_1.cell(i + 1, 3).value  # 해당 행의 C열 값 확인
+            break
+    else:
+        raise ValueError(f"inv_id {inv_id} not found in column A.")
+
+    # config.investment_present_table_id 내 스프레드시트 중에 이름이 worksheet_name인 워크시트의 전체 데이터를 조회
+    worksheet_target = spreadsheet_1.worksheet(worksheet_name)
+    rows = worksheet_target.get_all_values()
+
+    # 데이터를 조회할 때 W열 값이 '여'인 행 데이터들만 조회
+    filtered_rows = [
+        row for row in rows if len(row) >= 23 and row[22] == '여'
+    ]
+
+    # 조회한 데이터들 중 A열 값이 inv_id인 행 데이터 위치를 확인하고 해당 위치 전까지의 행 데이터들만 남긴다. 이 때 순서를 유지해서 행 데이터를 남겨야 해.
+    # 남은 행 데이터들에 대해서 각 행 데이터의 AE열값과 AG열 값을 곱함
+    # 곱합 값들을 누적해서 합해서 invest_verified_sum 변수에 저장한다
+    # config.investment_present_table_id 내 스프레드시트 중에 이름이 worksheet_name인 워크시트의 전체 데이터를 조회
+    worksheet_target = spreadsheet_1.worksheet(worksheet_name)
+    rows = worksheet_target.get_all_values()
+
+    # 데이터를 조회할 때 W열 값이 '여'인 행 데이터들만 필터링
+    filtered_rows = [
+        row for row in rows if len(row) >= 23 and row[22] == '여'
+    ]
+
+    # 조회한 데이터들 중 A열 값이 inv_id인 행 데이터 위치를 확인
+    for idx, row in enumerate(filtered_rows):
+        if len(row) >= 1 and row[0] == inv_id:
+            target_index = idx
+            break
+    else:
+        target_index = len(filtered_rows)  # inv_id가 없으면 모든 데이터를 포함
+
+    # 해당 위치 전까지의 데이터만 남김 (순서를 유지)
+    remaining_rows = filtered_rows[:target_index]
+
+    # 남은 행 데이터들에 대해서 각 행 데이터의 AE열 값과 AG열 값을 곱한 값을 누적
+    invest_verified_sum = 0
+    for row in remaining_rows:
+        if len(row) >= 33:  # 데이터의 AE, AG 열이 존재하는지 확인
+            ae_value = clean_number(row[30])  # AE열 값
+            ag_value = clean_number(row[32])  # AG열 값
+            if ae_value is not None and ag_value is not None:
+                invest_verified_sum += ae_value * ag_value
+
+    # 두 번째 스프레드시트: 조합명 - 투자약정금액 쌍 가져오기
+    spreadsheet_2 = client.open_by_key(file_id)
+    worksheet_2 = spreadsheet_2.sheet1  # 첫 번째 시트 가져오기
+    column_A_2 = worksheet_2.col_values(1)
+    column_B = worksheet_2.col_values(2)
+
+    # '조합명' 위치 찾기
+    start_row_2 = next(
+        (i + 1 for i, val in enumerate(column_A_2, start=1) if val == '조합명'),
+        None
+    )
+
+    if start_row_2 is None:
+        raise ValueError("'조합명'을 찾을 수 없습니다.")
+
+    table_1_pairs = []  # 결과를 저장할 리스트
+    for row in range(start_row_2 -1, len(column_A_2)):
+        a_value = column_A_2[row] if row < len(column_A_2) else None
+        b_value = column_B[row] if row < len(column_B) else None
+
+        # 빈칸을 만나면 중단
+        if not a_value:
+            break
+
+        # 데이터가 유효한 경우 쌍으로 묶어 저장
+        if a_value and b_value:
+            table_1_pairs.append((a_value, b_value))
+    
+    # file_id의 spreadsheet를 열고 A열의 데이터 값에서 '(3) 핵심운용인력 우선 배정 가능'인 행 데이터의 위치를 탐색한다
+    # 해당 행 데이터의 위치 +2 부터 빈칸을 만나기전까지 범위를 파악한다
+    # 범위 내의 A열의 데이터 값들을 comparing_keys에 리스트 형식으로 저장한다
+    start_row_3 = next(
+        (i + 1 for i, val in enumerate(column_A_2, start=1)
+         if val == '(3) 핵심운용인력 우선 배정 가능'),
+        None
+    )
+    if start_row_3 is None:
+        raise ValueError("지정된 텍스트 '(3) 핵심운용인력 우선 배정 가능'을 찾을 수 없습니다.")
+
+    # 범위 내 A열 데이터 수집
+    comparing_keys = []
+    for row in range(start_row_3, len(column_A_2)):
+        a_value = column_A_2[row] if row < len(column_A_2) else None
+        # 빈칸을 만나면 중단
+        if not a_value:
+            break
+
+        comparing_keys.append(a_value)
+
+    # 조건 비교 및 결과 리스트 생성
+    results = []
+    for key in comparing_keys:
+        # table_1_pairs에서 매칭된 값 찾기
+        match = next((pair[1] for pair in table_1_pairs if pair[0] == key), None)
+        if match is not None:
+            # 비교: 20% 이상인지 확인
+            # minus value checking!!!!!
+            match = float(match.replace(',', '').strip())
+            result = 'X' if invest_verified_sum >= (match * 0.2) else 'O'
+            results.append(result)
+
+    # file_id의 spreadsheet를 열고 A열의 데이터 값에서 '(2) 투자의무비율 & 주목적/특수목적비율 충족 필요 조합 우선 배정 여부'인 행 데이터 위치 찾기
+    # 해당 행 데이터의 위치 + 2 부터 빈칸 전까지의 범위 구하기
+    # 해당 범위의 D열에 result 내 요소를 순서대로 업데이트 하기 
+    # '(2) 투자의무비율 & 주목적/특수목적비율 충족 필요 조합 우선 배정 여부' 텍스트 찾기
+    start_row_4 = next(
+        (i + 2 for i, val in enumerate(column_A_2, start=1)
+         if '(2) 투자의무비율 & 주목적/특수목적비율 충족 필요 조합 우선 배정 여부' in val),
+        None
+    )
+    if start_row_4 is None:
+        raise ValueError("지정된 텍스트 '(2) 투자의무비율 & 주목적/특수목적비율 충족 필요 조합 우선 배정 여부'를 찾을 수 없습니다.")
+
+    # 지정된 범위 내 C열에 results 리스트 값을 업데이트
+    updates = []
+    for i, result in enumerate(results):
+        updates.append([result])  # 각 결과를 C열에 추가
+
+    end_row_4 = start_row_4 + len(updates) - 1
+    worksheet_2.update(f"D{start_row_4}:D{end_row_4}", updates)
+
+def style_spreadsheet(file_id):
+        client = gspread.authorize(credentials)
+        # 파일을 가져오기
+        spreadsheet = client.open_by_key(file_id)
+        worksheet = spreadsheet.sheet1  # 기본적으로 첫 번째 시트를 선택
+
+        # 열 너비를 데이터에 맞게 자동으로 조정하기
+        for col in range(1, worksheet.col_count + 1):
+            column_values = worksheet.col_values(col)
+            max_length = max(len(str(value)) for value in column_values)
+            worksheet.resize(rows=worksheet.row_count, cols=col)
+            worksheet.format(f'{get_column_letter(col)}1', {'width': max_length * 1.2})
 
 def create_investmentTable(db_1_df, db_4_df, db_7_df, kv_id, inv_id):
     fund_name = db_7_df['펀드명'].iloc[0]
@@ -604,12 +886,13 @@ def create_investmentTable(db_1_df, db_4_df, db_7_df, kv_id, inv_id):
     update_basic_with_dataframes(file_id, basic_df)
     update_invest_with_dataframes(file_id, invest_df)
 
-    print('디버그 출력창------------')
-    print(f'basic_df column : {basic_df.columns}')
-    print(f'invest_df column : {invest_df.columns}')
-    print('디버그 출력창------------')
-
-    update_invest_date(file_id, basic_df, invest_df)
-    update_invest_src(file_id, basic_df) # 테스트 시트 확인하기 
+    update_invest_date(file_id, basic_df, invest_df) # 투자 기간 업데이트하기
+    paired_data = update_invest_src(file_id, basic_df) # 투자 재원 업데이트하기 
     update_invest_distribution(file_id, fund_name, inv_id)
-    update_invest_summary(file_id, fund_name)
+    future_invest = update_invest_summary(file_id, fund_name)
+
+    append_A(paired_data, future_invest, file_id) # 잔여재원여부 업데이트
+    append_B(file_id, inv_id) # 투자의무 비율 충족 여부 
+
+    # 스타일 변환하기 
+    # style_spreadsheet(file_id)

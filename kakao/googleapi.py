@@ -239,7 +239,7 @@ def make_docx_fileA(db_1,db_4,db_7, current_time):
     INVESTMENT_PRICE = change_money_form(db_4['투자단가(원화)'].iloc[0]) 
     INVESTMENT_CATEGORY = db_4['투자유형(투자시)'].iloc[0]
     BANK_NAME = db_7['수탁은행'].iloc[0]
-    BANK_NUMBER = db_7['수탁 MMDA 계좌번호'].iloc[0]
+    BANK_NUMBER = db_7['수탁 계좌번호'].iloc[0]
 
     EXPECT_INVESTMENT_DATE = db_4['투자 납입일'].iloc[0]
     year, month, day = EXPECT_INVESTMENT_DATE.split('-')

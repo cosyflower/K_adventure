@@ -7,10 +7,309 @@ import requests
 from config import intern_channel_id, executives_channel_id, management_channel_id, advisor_id
 from directMessageApi import send_direct_message_to_user
 import config
+import re
+
+def register_security_system_handlers(app, client, handle_message_events):
+    
+    @app.action("rosebot_8_id")
+    def security_system_menu_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        # 보안 시스템 메뉴를 버튼으로 출력
+        buttons = [
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "1. 전체 사용자 권한 조회"
+                },
+                "value": "view_all_users",
+                "action_id": "view_all_users"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "2. 신규 사용자 권한 배정"
+                },
+                "value": "assign_new_user",
+                "action_id": "assign_new_user"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "3. 내 권한 조회"
+                },
+                "value": "view_self_authority",
+                "action_id": "view_self_authority"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "4. 권한 변경된 사용자 조회"
+                },
+                "value": "view_changed_users",
+                "action_id": "view_changed_users"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "5. 권한 업데이트"
+                },
+                "value": "change_authority",
+                "action_id": "change_authority"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "6. 임시 운영자 배정"
+                },
+                "value": "assign_temp_admin",
+                "action_id": "assign_temp_admin"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "7. 임시 운영자 목록 조회"
+                },
+                "value": "view_temp_admins",
+                "action_id": "view_temp_admins"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "8. 임시 운영자 회수"
+                },
+                "value": "revoke_temp_admin",
+                "action_id": "revoke_temp_admin"
+            }
+        ]
+        
+        # 블록 메시지를 전송
+        say(
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "보안 시스템을 작동합니다. 원하는 기능의 버튼을 눌러주세요:"
+                    }
+                },
+                {
+                    "type": "actions",
+                    "elements": buttons
+                }
+            ],
+            text="보안 시스템 메뉴"
+        )
+        
+    @app.action("view_all_users")
+    def view_all_users_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            # 전체 사용자 권한 조회
+            msg = "전체 사용자 권한 목록:\n"
+            with open("users_info.json", 'r', encoding='utf-8') as file:
+                users_info = json.load(file)
+
+            for i, (id, info) in enumerate(users_info.items()):
+                authority_name = {1: "관리팀", 2: "임직원", 3: "인턴", 4: "미정"}.get(info['authority'], "알 수 없음")
+                msg += f"{i + 1}. 이름: {info['name']}, 권한: {authority_name}\n"
+
+            say(msg)
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+    @app.action("assign_new_user")
+    def assign_new_user_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        # 권한 업데이트
+        try:
+            update_authority()
+            say(f"<@{user_id}> 신규 사용자 권한 배정이 완료되었습니다.")
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+    @app.action("view_self_authority")
+    def view_self_authority_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            authority = get_user_authority(user_id)
+            authority_name = {1: "관리팀", 2: "임직원", 3: "인턴", 4: "미정"}.get(authority, "알 수 없음")
+            say(f"<@{user_id}>님의 권한은 '{authority_name}'입니다.")
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+    @app.action("view_changed_users")
+    def view_changed_users_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            msg = "권한 변경된 사용자 목록:\n"
+            with open("authority_change_list.json", 'r', encoding='utf-8') as file:
+                authority_changes = json.load(file)
+
+            with open("users_info.json", 'r', encoding='utf-8') as file:
+                users_info = json.load(file)
+
+            for i, (id, authority) in enumerate(authority_changes.items()):
+                name = users_info[id]['name']
+                authority_name = {1: "관리팀", 2: "임직원", 3: "인턴", 4: "미정"}.get(authority, "알 수 없음")
+                msg += f"{i + 1}. 이름: {name}, 변경된 권한: {authority_name}\n"
+
+            say(msg)
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+    @app.action("change_authority")
+    def change_authority_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            # 사용자 목록 생성
+            with open("users_info.json", 'r', encoding='utf-8') as file:
+                users_info = json.load(file)
+
+            user_buttons = [
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": f"{i + 1}. {info['name']}"},
+                    "value": id,
+                    "action_id": f"change_user_{id}"
+                }
+                for i, (id, info) in enumerate(users_info.items())
+            ]
+
+            blocks = [
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": "권한을 변경할 사용자를 선택하세요:"}
+                },
+                {
+                    "type": "actions",
+                    "elements": user_buttons
+                }
+            ]
+            say(blocks=blocks)
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+
+    @app.action("assign_temp_admin")
+    def assign_temp_admin_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            # 임시 관리자 지정
+            msg = "임시 관리자로 지정할 사용자를 선택하세요."
+            # 동일한 방식으로 사용자 목록 표시
+            say(msg)
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+    @app.action("view_temp_admins")
+    def view_temp_admins_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            # 임시 관리자 목록 조회
+            msg = "현재 임시 관리자 목록은 다음과 같습니다:\n"
+            with open("advisor_list.json", 'r', encoding='utf-8') as file:
+                advisor_list = json.load(file)
+
+            for i, (id, name) in enumerate(advisor_list.items()):
+                msg += f"{i + 1}. 이름: {name}, ID: {id}\n"
+
+            msg += "\n목록 조회가 완료되었습니다."
+            say(msg)
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+    @app.action("revoke_temp_admin")
+    def revoke_temp_admin_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            # 임시 관리자 목록 버튼 생성
+            with open("advisor_list.json", 'r', encoding='utf-8') as file:
+                advisor_list = json.load(file)
+
+            if not advisor_list:
+                say(f"임시 관리자가 없습니다.")
+                return
+
+            user_buttons = [
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": f"{i + 1}. {name}"},
+                    "value": id,
+                    "action_id": f"remove_admin_{id}"
+                }
+                for i, (id, name) in enumerate(advisor_list.items())
+            ]
+
+            blocks = [
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": "권한을 회수할 임시 관리자를 선택하세요:"}
+                },
+                {
+                    "type": "actions",
+                    "elements": user_buttons
+                }
+            ]
+            say(blocks=blocks)
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+
+    @app.action(re.compile(r"remove_admin_(.+)"))
+    def remove_admin_handler(ack, body, say, context):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+        target_id = context['matches'][0]  # 선택된 사용자의 ID
+
+        try:
+            # 임시 관리자 목록에서 삭제
+            with open("advisor_list.json", 'r', encoding='utf-8') as file:
+                advisor_list = json.load(file)
+
+            if target_id in advisor_list:
+                removed_name = advisor_list.pop(target_id)
+                with open("advisor_list.json", 'w', encoding='utf-8') as file:
+                    json.dump(advisor_list, file, ensure_ascii=False, indent=4)
+
+                msg = f"{removed_name}({target_id}) 님의 임시 관리자 권한이 회수되었습니다."
+                say(msg)
+            else:
+                say(f"해당 사용자는 이미 임시 관리자가 아닙니다.")
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+
 def security_system_user_function_handler(message, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list):
     user_id = message['user']
     user_input = message['text']
     user_input = process_user_input(user_input)
+
     if user_input == '종료':
         msg = (f"종료합니다.")
         send_direct_message_to_user(user_id, msg)

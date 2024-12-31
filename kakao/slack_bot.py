@@ -19,14 +19,14 @@ from user_commend import docx_generate, security_system, vacation_system_list, c
 
 from document4create import docx_generating_company_name_handler, docx_generating_inv_choice_handler #, docx_generating_docx_category_handler
 
-from security_system import security_system_user_function_handler, security_system_authority_category_handler, security_system_authority_update_json_file_handler, security_system_advisor_authority_make_handler, security_system_advisor_authority_delete_handler, get_user_authority, update_authority
+from security_system import security_system_user_function_handler, security_system_authority_category_handler, security_system_authority_update_json_file_handler, security_system_advisor_authority_make_handler, security_system_advisor_authority_delete_handler, get_user_authority, update_authority, register_security_system_handlers
 
 from rosebot import rose_bot_handler
 from term_deposit_rotation import deposit_rotation_system_handler, deposit_rotation_system_low_model_handler#, deposit_rotation_system_high_model_handler
 # Testing for vacation
 from notification import notify_today_vacation_info, notify_deposit_info, notify_one_by_one_partner
 from formatting import process_user_input
-from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler
+from googleVacationApi import request_vacation_handler, cancel_vacation_handler, vacation_purpose_handler, register_google_vacation_handlers
 from directMessageApi import send_direct_message_to_user
 from config import dummy_vacation_directory_id
 from onebyone import find_oneByone_handler, update_spreadsheet_on_oneByone, match_people, get_name_list_from_json, find_oneByone
@@ -37,8 +37,6 @@ from slack_view import execute_rosebot_by_button
 # testing for validating on generating docx
 from datetime import datetime, timedelta
 from GlobalState import GlobalState
-
-from slack_view import vacation_handler_by_button
 
 app = App(token=config.bot_token_id)
 client = app.client
@@ -67,7 +65,6 @@ cancel_vacation_status = GlobalState.cancel_vacation_status
 user_responses = GlobalState.user_responses
 
 # StateManger만을 활용해서 컨트롤하고자 함
-# 이것도 GlobalState에 선언해서 사용하는 방법이 더 나을듯!
 class StateManager:
     def __init__(self, global_states):
         self.global_states = global_states
@@ -79,17 +76,17 @@ class StateManager:
             raise KeyError(f"Invalid category: {category}")
         self.global_states[category][user_id] = state
 
-    def get_state(self, category, user_id):
-        """Get the state of a specific user under a given category."""
+    def get_state(self, category, user_id, default=None, raise_error=False):
         if category not in self.global_states:
             raise KeyError(f"Invalid category: {category}")
-        return self.global_states[category].get(user_id)
+        if raise_error and user_id not in self.global_states[category]:
+            raise KeyError(f"State not found for user_id: {user_id} in category: {category}")
+        return self.global_states[category].get(user_id, default)
 
     def remove_state(self, category, user_id):
-        """Remove the state of a specific user under a given category."""
         if category not in self.global_states:
             raise KeyError(f"Invalid category: {category}")
-        self.global_states[category].pop(user_id, None)
+        del self.global_states[category][user_id]
 
     def get_all_states(self, category):
         """Get all states under a given category."""
@@ -98,7 +95,6 @@ class StateManager:
         return self.global_states[category]
 
     def clear_category(self, category):
-        """Clear all states in a category."""
         if category not in self.global_states:
             raise KeyError(f"Invalid category: {category}")
         self.global_states[category].clear()
@@ -229,65 +225,49 @@ def message_im_events(event, next):
     if event.get("channel_type") == "im":
         next()
 
+# Helper function
+def extract_user_info(body):
+    return {
+        "user_id": body["user"]["id"],
+        "message": body["message"],
+        "channel_id": body["channel"]["id"]
+    }
+
 # 예 / 아니오 셀렉션 액션 만들기
 @app.action("yes_button_init") # action_id - make each handler
 def handle_yes_action_init(ack, body, say):
     ack()  # 응답 확인
-    user_id = body["user"]["id"]
-    message = body['message']
-    channel_id = body['channel']['id']
+    user_info = extract_user_info(body)
 
-    # 사용자의 응답을 저장 (True)
-    user_responses[user_id] = True
-    say(f"<@{user_id}> 님, OCR 프로그램을 시작합니다.")
+    StateManager.set_state(user_responses, user_info['user_id'], True)
+    say(f"<@{user_info['user_id']}> 님, OCR 프로그램을 시작합니다.")
 
-    user_states[user_id] = 'ocr_1_or_2'
-    ocr_transform_handler(message, say, user_states, client, user_responses, channel_id, user_id, '')
+    StateManager.set_state(user_states, user_info['user_id'], 'ocr_1_or_2')
+    ocr_transform_handler(user_info['message'], say, user_states, client, user_responses, user_info['channel_id'], user_info['user_id'], user_input='')
     
 @app.action("no_button_init")
 def handle_no_action_init(ack, body, say):
     ack()  # 응답 확인
-    user_id = body["user"]["id"]
-    message = body['message']
-    channel_id = body['channel']['id']
+    user_info = extract_user_info(body)
 
-    say(f"<@{user_id}> 님, OCR 프로그램을 종료합니다.")
+    say(f"<@{user_info['user_id']}> 님, OCR 프로그램을 종료합니다.")
     # 사용자의 응답을 저장 (False)
-    user_responses[user_id] = False
-    # 프로그램 종료 로직을 여기에 추가
+    StateManager.set_state(user_responses, user_info['user_id'], False)
 
     # 유저 상태에서 정보를 제거해야 함 
-    if user_id in user_states:
-        del user_states[user_id]
+    if user_info['user_id'] in user_states:
+        StateManager.remove_state(user_states, user_info['user_id'])
 
 @app.action("yes_button_progress") # action_id - make each handler
 def handle_yes_action_init(ack, body, say):
     ack()  # 응답 확인
-    user_id = body["user"]["id"]
-    message = body['message']
-    channel_id = body['channel']['id']
+    user_info = extract_user_info(body)
 
-    # 사용자의 응답을 저장 (True)
-    user_responses[user_id] = True
-    # 버튼 누르면 바로 나오는 문장은 바로 아래 코드
-    say(f"<@{user_id}> 님, OCR 프로그램을 진행합니다.")
+    StateManager.set_state(user_responses, user_info['user_id'], True)
+    say(f"<@{user_info['user_id']}> 님, OCR 프로그램을 진행합니다.")
 
-    user_states[user_id] = 'ocr_progress'
-    ocr_transform_handler(message, say, user_states, client, user_responses, channel_id, user_id, '')
-    
-@app.action("no_button_progress")
-def handle_no_action_init(ack, body, say):
-    ack()  # 응답 확인
-    user_id = body["user"]["id"]
-    message = body['message']
-    channel_id = body['channel']['id']
-
-    say(f"<@{user_id}> 님, OCR 프로그램을 종료합니다.")
-    # 사용자의 응답을 저장 (False)
-    user_responses[user_id] = False
-    # 프로그램 종료 로직을 여기에 추가
-    if user_id in user_states:
-        del user_states[user_id]
+    StateManager.set_state(user_states, user_info['user_id'], 'ocr_progress')
+    ocr_transform_handler(user_info['message'], say, user_states, client, user_responses, user_info['channel_id'], user_info['user_id'], user_input='')
 
 # ----------------------------
 # _________ROSEBOT____________
@@ -339,7 +319,7 @@ def rosebot_2_ack(ack, body, say):
 
     if get_user_authority(user_id) < 3:
         msg = ("인사 총무 기능을 진행합니다. *아래의 링크를 확인하세요*\n"
-                "https://forms.gle/xWeE1qWNCjLrrBob7"
+                "https://docs.google.com/forms/d/e/1FAIpQLSdD_cNNoI_Y6ROaFUb8QONw4jmwtz9XcadswnDfmbFAV2gTWw/viewform"
                 )
         send_direct_message_to_user(user_id, msg)
         if user_id in user_states:
@@ -358,7 +338,7 @@ def rosebot_3_ack(ack, body, say):
     channel_id = body['channel']['id']
 
     if get_user_authority(user_id) < 3:
-        msg = (f"문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
+        msg = (f"문서 5종 생성을 진행합니다. 잠시만 기다려주세요.")
         send_direct_message_to_user(user_id, msg)
         user_states[user_id] = 'docx_generating_waiting_company_name'
         
@@ -453,40 +433,40 @@ def rosebot_7_ack(ack, body, say):
         if user_id in user_states:
             del user_states[user_id]
 
-@app.action("rosebot_8_id")
-def rosebot_8_ack(ack, body, say):
-    ack()  # 응답 확인
-    user_id = body["user"]["id"]
-    message = body['message']
-    channel_id = body['channel']['id']
+# @app.action("rosebot_8_id")
+# def rosebot_8_ack(ack, body, say):
+#     ack()  # 응답 확인
+#     user_id = body["user"]["id"]
+#     message = body['message']
+#     channel_id = body['channel']['id']
 
-    if get_user_authority(user_id) < 4:
-        msg = (f"보안시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
-            "1. 전체 사용자 권한 조회\n"
-            "2. 신규 사용자 권한 배정\n"
-            "3. 내 권한 조회\n"
-            "4. 권한이 변경된 사용자 조회([임시]운영자 전용)\n"
-            "5. 권한 업데이트([임시]운영자 전용)\n"
-            "6. 임시 운영자 배정(운영자 전용)\n"
-            "7. 임시 운영자 목록 조회(운영자 전용)\n"
-            "8. 임시 운영자 회수(운영자 전용)\n(종료를 원하시면 '종료'를 입력해주세요)"
-            )
-        send_direct_message_to_user(user_id, msg)
-        user_states[user_id] = 'security_system_waiting_function_number'
+#     if get_user_authority(user_id) < 4:
+#         msg = (f"보안시스템을 작동합니다. 원하는 기능의 번호를 입력해주세요. (번호만 입력해주세요) \n"
+#             "1. 전체 사용자 권한 조회\n"
+#             "2. 신규 사용자 권한 배정\n"
+#             "3. 내 권한 조회\n"
+#             "4. 권한이 변경된 사용자 조회([임시]운영자 전용)\n"
+#             "5. 권한 업데이트([임시]운영자 전용)\n"
+#             "6. 임시 운영자 배정(운영자 전용)\n"
+#             "7. 임시 운영자 목록 조회(운영자 전용)\n"
+#             "8. 임시 운영자 회수(운영자 전용)\n(종료를 원하시면 '종료'를 입력해주세요)"
+#             )
+#         send_direct_message_to_user(user_id, msg)
+#         user_states[user_id] = 'security_system_waiting_function_number'
 
-        event = {
-            "type": "message",
-            "user": user_id,
-            "text": "Security_Sytem", 
-            "channel": channel_id
-        }
+#         event = {
+#             "type": "message",
+#             "user": user_id,
+#             "text": "Security_Sytem", 
+#             "channel": channel_id
+#         }
 
-        handle_message_events(event, say)
-    else:
-        msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
-        send_direct_message_to_user(user_id, msg)
-        if user_id in user_states:
-            del user_states[user_id]
+#         handle_message_events(event, say)
+#     else:
+#         msg = (f"<@{user_id}>님은 권한이 없습니다. 종료합니다")
+#         send_direct_message_to_user(user_id, msg)
+#         if user_id in user_states:
+#             del user_states[user_id]
 
 @app.action("rosebot_9_id")
 def rosebot_9_ack(ack, body, say):
@@ -495,16 +475,7 @@ def rosebot_9_ack(ack, body, say):
     message = body['message']
     channel_id = body['channel']['id']
 
-    user_responses[user_id] = None  # 초기화
-    msg = (f"*[주의] OCR program의 주의사항은 다음과 같습니다.*\n"
-            "0. https://drive.google.com/drive/folders/1jO0EZViYdpuCgChcD_g1zwcTVYq-7321\n"
-            "1. 현재 날짜를 기준으로 *위 링크*의 폴더를 탐색합니다. ex) 2024-10-03 -> 24년_3분기_등기부등본\n"
-            "2. 파일명의 구성은 회사 이름을 시작으로 '_'로 구분되어야 합니다. ex) 라포랩스_재무제표.. \n"
-            "3. 회사 이름에 오타가 없는지 다시 한번 확인해주세요. 약식명, 풀네임을 기준으로 회사를 검색합니다.\n"
-            "4. 폴더에 파일을 올바르게 넣었는지 확인하세요. 링크의 구글 드라이브 내 문서 종류 맞게 넣어야 합니다.\n"
-            "5. OCR 기능이 진행되는 동안 다른 기능을 추가로 실행할 수 없습니다. 실행 시 주의 사항을 확인하며 진행해주세요.\n"
-            )
-    send_direct_message_to_user(user_id, msg)
+    StateManager.set_state(user_responses, user_id, None)
     check_yes_or_no_init(user_id, channel_id, client, content='OCR 프로그램을 시작하시겠습니까?')
 
 
@@ -519,7 +490,16 @@ def ocr_1(ack, body, say):
 
     user_states[user_id] = 'ocr_handler'
     user_responses[user_id] = 'OCR_1'
-    say(f"<@{user_id}> 님, OCR 1을 실행합니다. 잠시만 기다려주세요...")
+    
+    msg = (f"*[주의] OCR 1의 주의사항은 다음과 같습니다.*\n"
+            "0. https://drive.google.com/drive/folders/1jO0EZViYdpuCgChcD_g1zwcTVYq-7321\n"
+            "1. 현재 날짜를 기준으로 *위 링크*의 폴더를 탐색합니다. ex) 2024-10-03 -> 24년_3분기_등기부등본\n"
+            "2. 파일명의 구성은 회사 이름을 시작으로 '_'로 구분되어야 합니다. ex) 라포랩스_재무제표.. \n"
+            "3. 회사 이름에 오타가 없는지 다시 한번 확인해주세요. 약식명, 풀네임을 기준으로 회사를 검색합니다.\n"
+            "4. 폴더에 파일을 올바르게 넣었는지 확인하세요. 링크의 구글 드라이브 내 문서 종류 맞게 넣어야 합니다.\n"
+            "5. OCR 기능이 진행되는 동안 다른 기능을 추가로 실행할 수 없습니다. 실행 시 주의 사항을 확인하며 진행해주세요.\n"
+            )
+    send_direct_message_to_user(user_id, msg)
 
     ocr_transform_handler(message, say, user_states, client, user_responses, channel_id, user_id, '')
 
@@ -532,9 +512,44 @@ def ocr_2(ack, body, say):
 
     user_states[user_id] = 'ocr_handler'
     user_responses[user_id] = 'OCR_2'
-    say(f"<@{user_id}> 님, OCR 2를 실행합니다. 잠시만 기다려주세요...")
+
+    msg = (f"*[주의] OCR 2의 주의사항은 다음과 같습니다.*\n"
+            "0. https://docs.google.com/spreadsheets/d/1sKbhatzVFQKABl2dh1xaRZwbzFYARiPJLZ2MYMtVG2Y/\n"
+            "1. OCR 2는 2개의 phase로 구성되어 있습니다. \n"
+            "2. phase 1은 재무제표로부터 검토용 자료를 생성합니다.\n"
+            "3. 검토용 자료 내 존재하지 않는 실제 항목을 업데이트 해주세요.\n"
+            "4. 모든 항목을 업데이트 한 이후에 2번째 phase를 진행해주세요.\n"
+            )
+    send_direct_message_to_user(user_id, msg)
 
     ocr_transform_handler(message, say, user_states, client, user_responses, channel_id, user_id, '')
+
+@app.action("OCR_2_1")
+def ocr_2_1(ack, body, say):
+    ack()  # 응답 확인
+    user_id = body["user"]["id"]
+    message = body['message']
+    channel_id = body['channel']['id']
+
+    user_states[user_id] = 'ocr_handler'
+    user_responses[user_id] = 'OCR_2_1'
+    say(f"<@{user_id}> 님, 검토용 자료 생성 및 항목 검증 기능을 실행합니다.")
+
+    ocr_transform_handler(message, say, user_states, client, user_responses, channel_id, user_id, '')
+
+@app.action("OCR_2_2")
+def ocr_2_2(ack, body, say):
+    ack()  # 응답 확인
+    user_id = body["user"]["id"]
+    message = body['message']
+    channel_id = body['channel']['id']
+
+    user_states[user_id] = 'ocr_handler'
+    user_responses[user_id] = 'OCR_2_2'
+    say(f"<@{user_id}> 님, OCR 진행 기능을 실행합니다.")
+
+    ocr_transform_handler(message, say, user_states, client, user_responses, channel_id, user_id, '')
+
 
 @app.action("OCR_1_1")
 def ocr_1(ack, body, say):
@@ -588,7 +603,6 @@ def ocr_1(ack, body, say):
 
     ocr_transform_handler(message, say, user_states, client, user_responses, channel_id, user_id, '')
 
-
 # ------------------------------------------------------------------------------
 
 # 메인 핵심 로직
@@ -601,7 +615,8 @@ def handle_message_events(event, say):
     user_input = event['text']
     channel_id = event.get('channel')
     
-    if process_user_input(user_input) == '비활성화' and user_id == 'U05R7FD8Y85': # 영무 유저 아이디(관리자)
+    # 관리자 아이디만 설정 - 비활성화 입력시 로제봇 비활성화하는 기능을 말함
+    if process_user_input(user_input) == '비활성화' and user_id == 'U05R7FD8Y85':
         is_bot_active = False
         say(f"<@{user_id}> 님, 로제봇이 비활성화되었습니다.")
         return 
@@ -624,7 +639,7 @@ def handle_message_events(event, say):
             )
             send_direct_message_to_user(user_id, msg)
             user_states[user_id] = 'rosebot_waiting_only_number'
-        #########################   문서4종시스템    ########################################
+        #########################   문서5종시스템    ########################################
         elif user_states[user_id] == 'docx_generating_waiting_company_name': 
             docx_generating_company_name_handler(event, say, user_states, inv_list_info, inv_info)
         elif user_states[user_id] == 'docx_generating_waiting_inv_choice':
@@ -675,13 +690,13 @@ def handle_channel_messages(event, say, client):
         # user_purpose_handler(event, say)
         pass
 
-@app.event("app_mention")
-def handle_message_events(event, say):
-    user_id = event['user']
-    user_input = event['text']
-    ### 사용자 명령어 인식 프로세스
-    user_input = process_user_input(user_input)
-    # send_direct_message_to_user(user_id, user_input)
+# @app.event("app_mention") --- mention하는 경우에 호출하고 싶은 경우에는 이 코드를 활성화시키면 됨.
+# def handle_message_events(event, say):
+#     user_id = event['user']
+#     user_input = event['text']
+#     ### 사용자 명령어 인식 프로세스
+#     user_input = process_user_input(user_input)
+#     # send_direct_message_to_user(user_id, user_input)
 
 # Direct Function except ROSEBOT
 def user_purpose_handler(message, say):
@@ -694,7 +709,7 @@ def user_purpose_handler(message, say):
 
     if purpose == "문서4종":
         if get_user_authority(user_id) < 3:
-            msg = (f"문서 4종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
+            msg = (f"문서 5종 생성을 진행합니다. 회사명을 입력해주세요 (종료를 원하시면 '종료'를 입력해주세요)")
             send_direct_message_to_user(user_id, msg)
             user_states[user_id] = 'docx_generating_waiting_company_name'
         else:
@@ -762,7 +777,7 @@ def user_purpose_handler(message, say):
     elif purpose == "인사총무시스템":
         if get_user_authority(user_id) < 3:
             msg = ("인사 총무 기능을 진행합니다. *아래의 링크를 확인하세요*\n"
-                    "https://forms.gle/xWeE1qWNCjLrrBob7"
+                    "https://docs.google.com/forms/d/e/1FAIpQLSdD_cNNoI_Y6ROaFUb8QONw4jmwtz9XcadswnDfmbFAV2gTWw/viewform"
             )
             send_direct_message_to_user(user_id, msg)
         else:
@@ -788,9 +803,15 @@ def user_purpose_handler(message, say):
         msg = (f"없는 기능입니다. 다시 입력해주세요")
         send_direct_message_to_user(user_id, msg)
 
+# GoogleVacationApi Handler Registered
+# 외부 파일의 핸들러 함수를 활용하는 경우에는 이렇게 등록을 해야 하고
+# 외부 파일에서는 함수명을 정의한 이후에 @action 함수를 넣어주면 해결된다
+# 공통된 앱을 적용해야만 인식이 가능하다
+register_google_vacation_handlers(app, client, handle_message_events)
+register_security_system_handlers(app, client, handle_message_events)
+
 if __name__ == "__main__":
     update_authority()
     scheduler_thread = threading.Thread(target=run_scheduler)
     scheduler_thread.start()
     SocketModeHandler(app,config.app_token_id).start()
-    
