@@ -16,6 +16,7 @@ import pytz
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import config
+import investmentTable
 
 def get_last_company_name():
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -88,6 +89,20 @@ def get_db1_info_from_kv_id(kv_id):
     row = df1[df1['KV ID'] == kv_id]
     return row
 
+def get_db2_info_from_kv_id(kv_id):
+    scope2 = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+    creds2 = ServiceAccountCredentials.from_json_keyfile_name(config.kakao_json_key_path, scope2)
+    client2 = gspread.authorize(creds2)
+    spreadsheet_id2 = config.db_2_id  # 스프레드시트 주소에 있는 아이디 가져오기
+    spreadsheet2 = client2.open_by_key(spreadsheet_id2)
+    worksheet2 = spreadsheet2.worksheet("2024")  # '2024' 시트명을 지정
+    data2 = worksheet2.get_all_values()
+    df2 = pd.DataFrame(data2)
+    df2.columns = df2.iloc[0]
+    df2 = df2[1:]
+    row = df2[df2['KV ID'] == kv_id]
+    return row
+
 def get_db3_info_from_kv_id(kv_id):
     scope3 = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
     creds3 = ServiceAccountCredentials.from_json_keyfile_name(config.kakao_json_key_path, scope3)
@@ -112,9 +127,9 @@ def get_db4_info_from_inv_id(inv_id):
     spreadsheet_id = config.db_4_id # 스프레드시트 주소에 있는 아이디 가져오기
     spreadsheet = client.open_by_key(spreadsheet_id)
     worksheet = spreadsheet.sheet1
-    data = worksheet.get_all_values()
+    data = worksheet.get_all_values() 
     df = pd.DataFrame(data)
-    df.columns = df.iloc[0]
+    df.columns = df.iloc[0] 
     df = df[1:]
     row = df[df['INV ID'] == inv_id]
     return row
@@ -149,13 +164,13 @@ def get_day_of_week(input_date_str):
 def change_count_form(num):
     num = str(num)
     num = num.replace(',', '')
-    num = float(num)
+    num = int(num)
     return f"{num:,}"
 
 def change_money_form(num):
     num = str(num)
     num = num.replace(',', '')
-    num = float(num)
+    num = int(num)
     return f"{num:,}원"
 
 def change_money_form2(num):
@@ -187,7 +202,7 @@ def make_docx_fileA(db_1,db_4,db_7, current_time):
     
     COMPANY_NAME = db_1['회사명'].iloc[0]
 
-    new_document = drive_service.files().copy(fileId=document_id, body={'name': COMPANY_NAME+'_운용지시서'},supportsAllDrives=True).execute()     
+    new_document = drive_service.files().copy(fileId=document_id, body={'name': '운용지시서_' + COMPANY_NAME},supportsAllDrives=True).execute()     
     new_document_id = new_document.get('id')
 
     FUND_NAME = db_7['펀드명'].iloc[0]
@@ -209,22 +224,22 @@ def make_docx_fileA(db_1,db_4,db_7, current_time):
     
     OVERSEAS_COMPANY1 = db_1['해외기업여부'].iloc[0] 
     if OVERSEAS_COMPANY1 == "여":
-        OVERSEAS_COMPANY1 = "O"
-    else:
         OVERSEAS_COMPANY1 = ""
+    else:
+        OVERSEAS_COMPANY1 = "O"
 
     OVERSEAS_COMPANY2 = db_1['해외기업여부'].iloc[0] 
     if OVERSEAS_COMPANY2 == "여":
-        OVERSEAS_COMPANY2 = ""
-    else:
         OVERSEAS_COMPANY2 = "O"
+    else:
+        OVERSEAS_COMPANY2 = ""
 
     INVESTMENT_AMOUNT = change_money_form(db_4['투자금액(원화)'].iloc[0]) 
     INVESTMENT_COUNT = change_count_form(db_4['인수 주식수'].iloc[0])
     INVESTMENT_PRICE = change_money_form(db_4['투자단가(원화)'].iloc[0]) 
     INVESTMENT_CATEGORY = db_4['투자유형(투자시)'].iloc[0]
     BANK_NAME = db_7['수탁은행'].iloc[0]
-    BANK_NUMBER = db_7['수탁 MMDA 계좌번호'].iloc[0]
+    BANK_NUMBER = db_7['수탁 계좌번호'].iloc[0]
 
     EXPECT_INVESTMENT_DATE = db_4['투자 납입일'].iloc[0]
     year, month, day = EXPECT_INVESTMENT_DATE.split('-')
@@ -373,9 +388,8 @@ def make_docx_fileA(db_1,db_4,db_7, current_time):
     parent_folder_id = config.fileABCD_parent_folder_id
 
     folder_name = current_time + "_" + COMPANY_NAME
-
     query = f"'{parent_folder_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
-    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True).execute()
+    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
     
     if items:
@@ -394,8 +408,8 @@ def make_docx_fileA(db_1,db_4,db_7, current_time):
     file = drive_service.files().update(fileId=new_document_id,
                                         addParents=folder_id,
                                         removeParents=previous_parents,
-                                        fields='id, parents',supportsAllDrives=True).execute()
-    print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
+                                        fields='id, parents', supportsAllDrives=True).execute()
+    # print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
 # 투자심의위원회 의사록
 def make_docx_fileB(db_1,db_4,db_7, current_time):
     SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
@@ -407,7 +421,7 @@ def make_docx_fileB(db_1,db_4,db_7, current_time):
 
     COMPANY_NAME = db_1['회사명'].iloc[0]
 
-    new_document = drive_service.files().copy(fileId=document_id, body={'name': COMPANY_NAME + '_투심위의사록'},supportsAllDrives=True).execute()     
+    new_document = drive_service.files().copy(fileId=document_id, body={'name': '투심위의사록_' + COMPANY_NAME},supportsAllDrives=True).execute()     
     new_document_id = new_document.get('id')
 
     INVESTMENT_DATE_MONDAY = get_day_of_week(db_4['투자 납입일'].iloc[0])
@@ -533,7 +547,7 @@ def make_docx_fileB(db_1,db_4,db_7, current_time):
     folder_name = current_time + "_" + COMPANY_NAME
 
     query = f"'{parent_folder_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
-    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True).execute()
+    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
     
     if items:
@@ -553,7 +567,7 @@ def make_docx_fileB(db_1,db_4,db_7, current_time):
                                         addParents=folder_id,
                                         removeParents=previous_parents,
                                         fields='id, parents',supportsAllDrives=True).execute()
-    print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
+    # print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
     return new_document_id
 # 준법사항 체크리스트(벤처투자조합)
 def make_docx_fileC(db_1,db_4,db_7,total_investment, total_investment_in, current_time):
@@ -565,7 +579,7 @@ def make_docx_fileC(db_1,db_4,db_7,total_investment, total_investment_in, curren
     document_id = config.fileC_id
     COMPANY_NAME = db_1['회사명'].iloc[0]
 
-    new_document = drive_service.files().copy(fileId=document_id, body={'name': COMPANY_NAME+'_준법사항_체크리스트'},supportsAllDrives=True).execute()     
+    new_document = drive_service.files().copy(fileId=document_id, body={'name': '준법사항_체크리스트_' + COMPANY_NAME},supportsAllDrives=True).execute()     
     new_document_id = new_document.get('id')
 
     FUND_NAME = db_7['펀드명'].iloc[0]
@@ -842,7 +856,7 @@ def make_docx_fileC(db_1,db_4,db_7,total_investment, total_investment_in, curren
     folder_name = current_time + "_" + COMPANY_NAME
 
     query = f"'{parent_folder_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
-    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True).execute()
+    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
     
     if items:
@@ -862,7 +876,7 @@ def make_docx_fileC(db_1,db_4,db_7,total_investment, total_investment_in, curren
                                         addParents=folder_id,
                                         removeParents=previous_parents,
                                         fields='id, parents',supportsAllDrives=True).execute()
-    print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
+    # print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
 # 투자집행품의서
 def make_docx_fileD(db_1,db_4,db_7, current_time):
     SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
@@ -874,7 +888,7 @@ def make_docx_fileD(db_1,db_4,db_7, current_time):
 
     COMPANY_NAME = db_1['회사명'].iloc[0]
 
-    new_document = drive_service.files().copy(fileId=document_id, body={'name': COMPANY_NAME + '_투자집행품의서'},supportsAllDrives=True).execute()     
+    new_document = drive_service.files().copy(fileId=document_id, body={'name':'투자집행품의서_' + COMPANY_NAME},supportsAllDrives=True).execute()     
     new_document_id = new_document.get('id')
 
     DRAFT_DATE = db_4['투자 납입일'].iloc[0]
@@ -960,7 +974,7 @@ def make_docx_fileD(db_1,db_4,db_7, current_time):
     folder_name = current_time + "_" + COMPANY_NAME
 
     query = f"'{parent_folder_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
-    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True).execute()
+    results = drive_service.files().list(q=query, fields="files(id, name)",supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
     items = results.get('files', [])
     
     if items:
@@ -980,7 +994,7 @@ def make_docx_fileD(db_1,db_4,db_7, current_time):
                                         addParents=folder_id,
                                         removeParents=previous_parents,
                                         fields='id, parents',supportsAllDrives=True).execute()
-    print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
+    # print(f"새 문서 ID: {new_document_id}, 저장된 폴더 ID: {folder_id}")
 
 def get_extra_info_frome_inv_id(inv_id,fund_num):
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -1071,7 +1085,7 @@ def update_tableB(db_7,doc_id):
             })
 
     result = service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
-    print(f'Updated {len(result.get("replies")) // 2} placeholders in the document.')
+    # print(f'Updated {len(result.get("replies")) // 2} placeholders in the document.')
 
 def update_tableB_ver2(doc_id):
 
@@ -1128,7 +1142,7 @@ def update_tableB_ver2(doc_id):
             body={'requests': requests}
         ).execute()
 
-        print(f"Deleted rows containing '{search_string}' from the document.")
+        # print(f"Deleted rows containing '{search_string}' from the document.")
 
 def get_all_company_names():
     scope1 = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -1169,26 +1183,42 @@ def get_inv_list_and_date(company_name):
         investments.append({'inv_id': row['INV ID'], 'investment_date': row['투자 납입일']})
     return investments
 
+def get_capital_from_company_name(company_name):
+    kv_id = get_company_id_from_company_name(company_name)
+    db_2 = get_db2_info_from_kv_id(kv_id)
+    db_2['기준시점'] = pd.to_datetime(db_2['기준시점'], format="%Y.%m")
+
+    latest_row = db_2.sort_values(by='기준시점', ascending=False).iloc[0]
+    total_shares = float(latest_row['총발행주식수'].replace(",", "")) if isinstance(latest_row['총발행주식수'], str) else latest_row['총발행주식수']
+    face_value = float(latest_row['액면가'].replace(",", "")) if isinstance(latest_row['액면가'], str) else latest_row['액면가']
+    total_value = total_shares * face_value
+    return total_value
+
 if __name__ == "__main__":
+    print(get_capital_from_company_name("샌디플로어"))
+
     # all_company_names = get_all_company_names()
     # print(all_company_names)
     # print(investments)
     # id,name = get_last_company_name()
-    kv_id = get_company_id_from_company_name("(주)라포랩스")
-    inv_id, _ = get_inv_id_from_company_id(kv_id)
+    # kv_id = get_company_id_from_company_name("샌디플로어")
+    # db_2 = get_db2_info_from_kv_id(kv_id)
+    # print(db_2)
+    # inv_id, _ = get_inv_id_from_company_id(kv_id)
 
-    # kv_id = get_kv_id_from_inv_id(inv_id)
-    print(inv_id)
-    inv_id = inv_id[2]
-    db_1 = get_db1_info_from_kv_id(kv_id)
-    db_4 = get_db4_info_from_inv_id(inv_id)
-    fund_num = db_4['투자한 조합'].iloc[-1]
-    db_7 = get_db7_info_from_fund_num(fund_num)
-    print(db_7)
-    total_investment, total_investment_in = get_extra_info_frome_inv_id(inv_id,fund_num)
-    make_docx_fileA(db_1,db_4,db_7)
-    new_document_id = make_docx_fileB(db_1,db_4,db_7)
-    update_tableB(db_7,new_document_id)
-    update_tableB_ver2(new_document_id)
-    make_docx_fileC(db_1, db_4, db_7, total_investment, total_investment_in)
-    make_docx_fileD(db_1,db_4,db_7)
+    # # kv_id = get_kv_id_from_inv_id(inv_id)
+    # print(inv_id)
+    # inv_id = inv_id[2]
+    # db_1 = get_db1_info_from_kv_id(kv_id)
+    # db_4 = get_db4_info_from_inv_id(inv_id)
+    # fund_num = db_4['투자한 조합'].iloc[-1]
+    # db_7 = get_db7_info_from_fund_num(fund_num)
+
+    # print(db_7)
+    # total_investment, total_investment_in = get_extra_info_frome_inv_id(inv_id,fund_num)
+    # make_docx_fileA(db_1,db_4,db_7)
+    # new_document_id = make_docx_fileB(db_1,db_4,db_7)
+    # update_tableB(db_7,new_document_id)
+    # update_tableB_ver2(new_document_id)
+    # make_docx_fileC(db_1, db_4, db_7, total_investment, total_investment_in)
+    # make_docx_fileD(db_1,db_4,db_7)

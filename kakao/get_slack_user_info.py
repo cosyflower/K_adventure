@@ -84,6 +84,7 @@ def get_channel_users(channel_id):
             })
 
     return users_info
+
 ## 새로운 사람 들어 왔을 때 이 함수 사용
 def update_authority():
 

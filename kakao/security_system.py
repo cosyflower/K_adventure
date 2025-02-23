@@ -1,0 +1,814 @@
+from formatting import process_user_input, get_proper_file_name
+import googleapi
+import gspread
+import chatgpt
+import json
+import requests
+from config import intern_channel_id, executives_channel_id, management_channel_id, advisor_id
+from directMessageApi import send_direct_message_to_user
+import config
+import re
+
+def register_security_system_handlers(app, client, handle_message_events):
+    
+    @app.action("rosebot_8_id")
+    def security_system_menu_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        # 보안 시스템 메뉴를 버튼으로 출력
+        buttons = [
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "1. 전체 사용자 권한 조회"
+                },
+                "value": "view_all_users",
+                "action_id": "view_all_users"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "2. 신규 사용자 권한 배정"
+                },
+                "value": "assign_new_user",
+                "action_id": "assign_new_user"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "3. 내 권한 조회"
+                },
+                "value": "view_self_authority",
+                "action_id": "view_self_authority"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "4. 권한 변경된 사용자 조회"
+                },
+                "value": "view_changed_users",
+                "action_id": "view_changed_users"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "5. 권한 업데이트"
+                },
+                "value": "change_authority",
+                "action_id": "change_authority"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "6. 임시 운영자 배정"
+                },
+                "value": "assign_temp_admin",
+                "action_id": "assign_temp_admin"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "7. 임시 운영자 목록 조회"
+                },
+                "value": "view_temp_admins",
+                "action_id": "view_temp_admins"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "8. 임시 운영자 회수"
+                },
+                "value": "revoke_temp_admin",
+                "action_id": "revoke_temp_admin"
+            }
+        ]
+        
+        # 블록 메시지를 전송
+        say(
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "보안 시스템을 작동합니다. 원하는 기능의 버튼을 눌러주세요:"
+                    }
+                },
+                {
+                    "type": "actions",
+                    "elements": buttons
+                }
+            ],
+            text="보안 시스템 메뉴"
+        )
+        
+    @app.action("view_all_users")
+    def view_all_users_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            # 전체 사용자 권한 조회
+            msg = "전체 사용자 권한 목록:\n"
+            with open("users_info.json", 'r', encoding='utf-8') as file:
+                users_info = json.load(file)
+
+            for i, (id, info) in enumerate(users_info.items()):
+                authority_name = {1: "관리팀", 2: "임직원", 3: "인턴", 4: "미정"}.get(info['authority'], "알 수 없음")
+                msg += f"{i + 1}. 이름: {info['name']}, 권한: {authority_name}\n"
+
+            say(msg)
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+    @app.action("assign_new_user")
+    def assign_new_user_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        # 권한 업데이트
+        try:
+            update_authority()
+            say(f"<@{user_id}> 신규 사용자 권한 배정이 완료되었습니다.")
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+    @app.action("view_self_authority")
+    def view_self_authority_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            authority = get_user_authority(user_id)
+            authority_name = {1: "관리팀", 2: "임직원", 3: "인턴", 4: "미정"}.get(authority, "알 수 없음")
+            say(f"<@{user_id}>님의 권한은 '{authority_name}'입니다.")
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+    @app.action("view_changed_users")
+    def view_changed_users_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            msg = "권한 변경된 사용자 목록:\n"
+            with open("authority_change_list.json", 'r', encoding='utf-8') as file:
+                authority_changes = json.load(file)
+
+            with open("users_info.json", 'r', encoding='utf-8') as file:
+                users_info = json.load(file)
+
+            for i, (id, authority) in enumerate(authority_changes.items()):
+                name = users_info[id]['name']
+                authority_name = {1: "관리팀", 2: "임직원", 3: "인턴", 4: "미정"}.get(authority, "알 수 없음")
+                msg += f"{i + 1}. 이름: {name}, 변경된 권한: {authority_name}\n"
+
+            say(msg)
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+    @app.action("change_authority")
+    def change_authority_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            # 사용자 목록 생성
+            with open("users_info.json", 'r', encoding='utf-8') as file:
+                users_info = json.load(file)
+
+            user_buttons = [
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": f"{i + 1}. {info['name']}"},
+                    "value": id,
+                    "action_id": f"change_user_{id}"
+                }
+                for i, (id, info) in enumerate(users_info.items())
+            ]
+
+            blocks = [
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": "권한을 변경할 사용자를 선택하세요:"}
+                },
+                {
+                    "type": "actions",
+                    "elements": user_buttons
+                }
+            ]
+            say(blocks=blocks)
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+
+    @app.action("assign_temp_admin")
+    def assign_temp_admin_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            # 임시 관리자 지정
+            msg = "임시 관리자로 지정할 사용자를 선택하세요."
+            # 동일한 방식으로 사용자 목록 표시
+            say(msg)
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+    @app.action("view_temp_admins")
+    def view_temp_admins_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            # 임시 관리자 목록 조회
+            msg = "현재 임시 관리자 목록은 다음과 같습니다:\n"
+            with open("advisor_list.json", 'r', encoding='utf-8') as file:
+                advisor_list = json.load(file)
+
+            for i, (id, name) in enumerate(advisor_list.items()):
+                msg += f"{i + 1}. 이름: {name}, ID: {id}\n"
+
+            msg += "\n목록 조회가 완료되었습니다."
+            say(msg)
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+    @app.action("revoke_temp_admin")
+    def revoke_temp_admin_handler(ack, body, say):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+
+        try:
+            # 임시 관리자 목록 버튼 생성
+            with open("advisor_list.json", 'r', encoding='utf-8') as file:
+                advisor_list = json.load(file)
+
+            if not advisor_list:
+                say(f"임시 관리자가 없습니다.")
+                return
+
+            user_buttons = [
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": f"{i + 1}. {name}"},
+                    "value": id,
+                    "action_id": f"remove_admin_{id}"
+                }
+                for i, (id, name) in enumerate(advisor_list.items())
+            ]
+
+            blocks = [
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": "권한을 회수할 임시 관리자를 선택하세요:"}
+                },
+                {
+                    "type": "actions",
+                    "elements": user_buttons
+                }
+            ]
+            say(blocks=blocks)
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+
+    @app.action(re.compile(r"remove_admin_(.+)"))
+    def remove_admin_handler(ack, body, say, context):
+        ack()  # 버튼 클릭 응답
+        user_id = body["user"]["id"]
+        target_id = context['matches'][0]  # 선택된 사용자의 ID
+
+        try:
+            # 임시 관리자 목록에서 삭제
+            with open("advisor_list.json", 'r', encoding='utf-8') as file:
+                advisor_list = json.load(file)
+
+            if target_id in advisor_list:
+                removed_name = advisor_list.pop(target_id)
+                with open("advisor_list.json", 'w', encoding='utf-8') as file:
+                    json.dump(advisor_list, file, ensure_ascii=False, indent=4)
+
+                msg = f"{removed_name}({target_id}) 님의 임시 관리자 권한이 회수되었습니다."
+                say(msg)
+            else:
+                say(f"해당 사용자는 이미 임시 관리자가 아닙니다.")
+        except Exception as e:
+            say(f"오류 발생: {str(e)}")
+
+
+def security_system_user_function_handler(message, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list):
+    user_id = message['user']
+    user_input = message['text']
+    user_input = process_user_input(user_input)
+
+    if user_input == '종료':
+        msg = (f"종료합니다.")
+        send_direct_message_to_user(user_id, msg)
+        del user_states[user_id]
+    else:
+        if user_input.isdigit():
+            user_input = int(user_input)
+            if user_input==1: # 전체 사용자 권한 조회
+                msg = (f"전체 사용자 권한을 조회합니다")
+                send_direct_message_to_user(user_id, msg)
+                comment = "\n"
+                with open("users_info.json", 'r', encoding='utf-8') as file:
+                    user_info_list = json.load(file)
+                for i, (id, info) in enumerate(user_info_list.items()):
+                    authority_name = ""
+                    if info['authority'] == 1:
+                        authority_name = "관리팀"
+                        comment = comment + f"{i+1}. 이름: {info['name']}, 권한: {authority_name}\n"
+                    elif info['authority'] == 2:
+                        authority_name = "임직원"
+                        comment = comment + f"{i+1}. 이름: {info['name']}, 권한: {authority_name}\n"
+                    elif info['authority'] == 3:
+                        authority_name = "인턴"
+                        comment = comment + f"{i+1}. 이름: {info['name']}, 권한: {authority_name}\n"
+                    # else:
+                    #     authority_name = "미정"
+                    #comment = comment + f"{i}. id: {info['id']}, name: {info['name']}, authority: {authority_name}\n"
+                msg = (f"{comment} 전체 사용자 권한 조회가 끝났습니다")
+                send_direct_message_to_user(user_id, msg)
+                del user_states[user_id]
+            elif user_input==4: # 권한 변경된 사용자 조회
+                if is_fake_advisor(user_id) or is_real_advisor(user_id):
+                    msg = (f"권한 변경된 사용자를 조회합니다")
+                    send_direct_message_to_user(user_id, msg)
+                    comment = ""
+                    with open("authority_change_list.json", 'r', encoding='utf-8') as file:
+                        authority_change_list = json.load(file)
+                    with open("users_info.json", 'r', encoding='utf-8') as file:
+                        user_info_list = json.load(file)
+                    for i, (id, authority) in enumerate(authority_change_list.items()):
+                        authority_name = ""
+                        if authority == 1:
+                            authority_name = "관리팀"
+                        elif authority == 2:
+                            authority_name = "임직원"
+                        elif authority == 3:
+                            authority_name = "인턴"
+                        else:
+                            authority_name = "미정"
+                        comment = comment + f"{i}. 이름: {user_info_list[id]['name']}, 권한: {authority_name}\n"
+                    msg = (f"{comment}권한 변경된 사용자 조회가 끝났습니다")
+                    send_direct_message_to_user(user_id, msg)
+                    del user_states[user_id]
+                else:
+                    msg = (f"<@{user_id}>님은 권한이 없습니다.")
+                    send_direct_message_to_user(user_id, msg)
+                    del user_states[user_id]
+            elif user_input==5: # 권한 변경
+                if is_fake_advisor(user_id) or is_real_advisor(user_id):
+                    with open('users_info.json', 'r', encoding='utf-8') as json_file:
+                        users_info = json.load(json_file)
+                    user_details = []
+                    for key, user_data in users_info.items():
+                        authority_name = ""
+                        if user_data['authority'] == 1:
+                            authority_name = "관리팀"
+                            user_details.append({'real_name': user_data['real_name'], 'name': user_data['name'], 'id': user_data['id'], 'authority_name': authority_name, 'authority': user_data['authority']})
+                        elif user_data['authority'] == 2:
+                            authority_name = "임직원"
+                            user_details.append({'real_name': user_data['real_name'], 'name': user_data['name'], 'id': user_data['id'], 'authority_name': authority_name, 'authority': user_data['authority']})
+                        elif user_data['authority'] == 3:
+                            authority_name = "인턴"
+                            user_details.append({'real_name': user_data['real_name'], 'name': user_data['name'], 'id': user_data['id'], 'authority_name': authority_name, 'authority': user_data['authority']})
+                        elif user_data['authority'] == 4:
+                            authority_name = "미정"
+                            user_details.append({'real_name': user_data['real_name'], 'name': user_data['name'], 'id': user_data['id'], 'authority_name': authority_name, 'authority': user_data['authority']})
+                    choice = ""
+                    for i,data in enumerate(user_details):
+                        choice = choice + f"\n{i+1}. '이름':{data['name']}, '권한': {data['authority']}"
+                    msg = (f"권한을 변경할 사람의 번호를 입력해주세요(번호만 입력해주세요){choice}\n(종료를 원하시면 '종료'를 입력해주세요)")
+                    send_direct_message_to_user(user_id, msg)
+                    user_states[user_id] = 'security_system_waiting_authority_category'
+                    security_system_user_info_list[user_id] = user_details
+                else:
+                    msg = (f"<@{user_id}>님은 권한이 없습니다.")
+                    send_direct_message_to_user(user_id, msg)
+                    del user_states[user_id]
+            elif user_input==2: # 신규 사용자 권한 배정
+                update_authority()
+                msg = (f"신규 사용자 권한 배정이 끝났습니다. 종료합니다.")
+                send_direct_message_to_user(user_id, msg)
+                del user_states[user_id]
+            elif user_input==3: # 사용자 권환 조회
+                with open("users_info.json", 'r', encoding='utf-8') as file:
+                    user_info_list = json.load(file)
+                if user_info_list[user_id]['authority'] == 1:
+                    authority_name = "관리팀"
+                elif user_info_list[user_id]['authority'] == 2:
+                    authority_name = "임직원"
+                elif user_info_list[user_id]['authority'] == 3:
+                    authority_name = "인턴"
+                else:
+                    authority_name = "미정"
+                msg = (f"<@{user_id}>님의 권한은 {authority_name} 입니다. 종료합니다.")
+                send_direct_message_to_user(user_id, msg)
+                del user_states[user_id]
+            elif user_input==6: # 임시 관리자 배정
+                if is_real_advisor(user_id):
+                    with open('users_info.json', 'r', encoding='utf-8') as json_file:
+                        users_info = json.load(json_file)
+                    user_details = []
+                    for key, user_data in users_info.items():
+                        authority_name = ""
+                        if user_data['authority'] == 1:
+                            authority_name = "관리팀"
+                            user_details.append({'real_name': user_data['real_name'], 'name': user_data['name'], 'id': user_data['id'], 'authority_name': authority_name, 'authority': user_data['authority']})
+                        elif user_data['authority'] == 2:
+                            authority_name = "임직원"
+                            user_details.append({'real_name': user_data['real_name'], 'name': user_data['name'], 'id': user_data['id'], 'authority_name': authority_name, 'authority': user_data['authority']})
+                        elif user_data['authority'] == 3:
+                            authority_name = "인턴"
+                            user_details.append({'real_name': user_data['real_name'], 'name': user_data['name'], 'id': user_data['id'], 'authority_name': authority_name, 'authority': user_data['authority']})
+                        # user_details.append({'real_name': user_data['real_name'], 'id': user_data['id'], 'authority_name': authority_name, 'authority': user_data['authority']})
+                    choice = ""
+                    for i,data in enumerate(user_details):
+                        choice = choice + f"\n{i+1}. '이름':{data['name']}"
+                    msg = (f"관리자 권한을 부여할 사용자의 번호를 입력해주세요(번호만 입력해주세요){choice}\n(종료를 원하시면 '종료'를 입력해주세요)")
+                    send_direct_message_to_user(user_id, msg)
+                    user_states[user_id] = 'security_system_advisor_authority_make'
+                    security_system_advisor_user_info_list[user_id] = user_details
+                else:
+                    msg = (f"<@{user_id}>님은 권한이 없습니다.")
+                    send_direct_message_to_user(user_id, msg)
+                    del user_states[user_id]
+            elif user_input==7: # 임시 관리자 목록 조회
+                if is_real_advisor(user_id):
+                    comment = ""
+                    with open("advisor_list.json", 'r', encoding='utf-8') as file:
+                        advisor_list = json.load(file)
+                    for i,(id, name) in enumerate(advisor_list.items()):
+                        comment = comment + f"{i+1}. {name}({id})\n"
+                    msg = (f"현재 임시 관리자 목록은 다음과 같습니다\n{comment}\n목록 조회가 끝났습니다")
+                    send_direct_message_to_user(user_id, msg)
+                    del user_states[user_id]
+                else:
+                    msg = (f"<@{user_id}>님은 권한이 없습니다.")
+                    send_direct_message_to_user(user_id, msg)
+                    del user_states[user_id]
+            elif user_input==8: # 임시 관리자 회수
+                if is_real_advisor(user_id):
+                    comment = ""
+                    with open("advisor_list.json", 'r', encoding='utf-8') as file:
+                        advisor_list = json.load(file)
+                    user_details = []
+                    for i,(id, name) in enumerate(advisor_list.items()):
+                        comment = comment + f"{i+1}. {name}({id})\n"
+                        user_details.append({'name': name, 'id': id})
+                    msg = (f"임시 관리자 권한을 회수할 사용자의 번호를 입력해주세요(번호만 입력해주세요)\n{comment}(종료를 원하시면 '종료'를 입력해주세요)")
+                    send_direct_message_to_user(user_id, msg)
+                    user_states[user_id] = 'security_system_advisor_authority_delete'
+                    security_system_advisor_user_info_list[user_id] = user_details
+                else:
+                    msg = (f"<@{user_id}>님은 권한이 없습니다.")
+                    send_direct_message_to_user(user_id, msg)
+                    del user_states[user_id]
+            else:
+                msg = (f"정확한 숫자를 입력해주세요")
+                send_direct_message_to_user(user_id, msg)
+                user_states[user_id] = 'security_system_waiting_function_number'
+        else:
+            msg = (f"숫자만 입력해주세요")
+            send_direct_message_to_user(user_id, msg)
+            user_states[user_id] = 'security_system_waiting_function_number'
+
+def security_system_authority_category_handler(message, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list):
+    user_id = message['user']
+    user_input = message['text']
+    user_input = process_user_input(user_input)
+    if user_input == '종료':
+        msg = (f"종료합니다.")
+        send_direct_message_to_user(user_id, msg)
+        del user_states[user_id]
+    else:
+        user_details = security_system_user_info_list[user_id]
+        user_num = len(user_details)
+        if user_input.isdigit():
+            user_input = int(user_input)
+            if (user_input > user_num) or (user_input < 0):
+                msg = (f"보기에 있는 숫자만 입력해주세요")
+                send_direct_message_to_user(user_id, msg)
+                user_states[user_id] = 'security_system_waiting_authority_category'
+            else:
+                data = user_details[user_input-1]
+                real_name = data['real_name']
+                id = data['id']
+                authority = data['authority']
+                authority_name = data['authority_name']
+                if authority == 1:
+                    authority_name = "관리자"
+                elif authority == 2:
+                    authority_name = "임직원"
+                elif authority == 3:
+                    authority_name = "인턴"
+                else:
+                    authority_name = "미정"
+                choice = ""
+                if authority != 1:
+                    choice = choice + "\n1. 관리자"
+                if authority != 2:
+                    choice = choice + "\n2. 임직원"
+                if authority != 3:
+                    choice = choice + "\n3. 인턴"
+                if authority != 4:
+                    choice = choice + "\n4. 미정"
+                msg = (f"{real_name}님의 현재 권한은 {authority_name}입니다\n 업데이트할 권한의 번호를 입력해주세요(번호만 입력해주세요){choice}\n(종료를 원하시면 '종료'를 입력해주세요)")
+                send_direct_message_to_user(user_id, msg)
+                user_states[user_id] = 'security_system_json_file'
+                security_system_user_info_list[user_id] = data
+        else:
+            msg = (f"<@{user_id}> 숫자만 입력해주세요")
+            send_direct_message_to_user(user_id, msg)
+            user_states[user_id] = 'security_system_waiting_authority_category'
+
+def security_system_authority_update_json_file_handler(message, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list):
+    user_id = message['user']
+    user_input = message['text']
+    user_input = process_user_input(user_input)
+    if user_input == '종료':
+        msg = (f"종료합니다.")
+        send_direct_message_to_user(user_id, msg)
+        del user_states[user_id]
+    else:
+        data = security_system_user_info_list[user_id]
+        real_name = data['real_name']
+        id = data['id']
+        authority = data['authority']
+        if user_input.isdigit():
+            user_input = int(user_input)
+            if (user_input == authority) or (user_input < 0 or (user_input > 4)):
+                msg = (f"보기에 있는 숫자만 입력해주세요")
+                send_direct_message_to_user(user_id, msg)
+                user_states[user_id] = 'authority_update_json_file'
+            else:
+                with open('users_info.json', 'r', encoding='utf-8') as json_file:
+                    users_info = json.load(json_file)
+                for user_id, user_data in users_info.items():
+                    if user_data['real_name'] == real_name:
+                        user_data['authority'] = user_input
+                        with open("authority_change_list.json", 'r') as file:
+                            authority_change_list = json.load(file)
+                        authority_change_list[id] = user_input
+                        with open("authority_change_list.json", 'w') as file:
+                            json.dump(authority_change_list, file, indent=4)
+                with open('users_info.json', 'w', encoding='utf-8') as json_file:
+                    json.dump(users_info, json_file, ensure_ascii=False, indent=4)
+                msg = (f"{real_name}님의 권한이 변경되었습니다")
+                del user_states[user_id]
+                del security_system_user_info_list[user_id]
+        else:
+            msg = (f"숫자만 입력해주세요")
+            send_direct_message_to_user(user_id, msg)
+            user_states[user_id] = 'authority_update_json_file'
+            
+def security_system_advisor_authority_make_handler(message, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list):
+    user_id = message['user']
+    user_input = message['text']
+    user_input = process_user_input(user_input)
+    if user_input == '종료':
+        msg = (f"종료합니다.")
+        send_direct_message_to_user(user_id, msg)
+        del user_states[user_id]
+    else:
+        user_details = security_system_advisor_user_info_list[user_id]
+        user_num = len(user_details)
+        if user_input.isdigit():
+            user_input = int(user_input)
+            if (user_input > user_num) or (user_input < 0):
+                msg = (f"보기에 있는 숫자만 입력해주세요")
+                send_direct_message_to_user(user_id, msg)
+                user_states[user_id] = 'security_system_advisor_authority_make'
+            else:
+                data = user_details[user_input-1]
+                real_name = data['real_name']
+                id = data['id']
+                with open("advisor_list.json", 'r') as file:
+                    advisor_list = json.load(file)
+                advisor_list[id] = real_name
+                with open("advisor_list.json", 'w') as file:
+                    json.dump(advisor_list, file, indent=4)
+                msg = (f"{real_name}({id}) 님에게 관리자 권한을 부여했습니다.")
+                send_direct_message_to_user(user_id, msg)
+                comment = ""
+                with open("advisor_list.json", 'r', encoding='utf-8') as file:
+                    advisor_list = json.load(file)
+                for i,(id, name) in enumerate(advisor_list.items()):
+                    comment = comment + f"{i+1}. {name}({id})\n"
+                msg = (f"현재 임시 관리자 목록은 다음과 같습니다\n{comment}\n목록 조회가 끝났습니다")
+                send_direct_message_to_user(user_id, msg)
+                del user_states[user_id]
+                del security_system_advisor_user_info_list[user_id]
+        else:
+            msg = (f"숫자만 입력해주세요")
+            send_direct_message_to_user(user_id, msg)
+            user_states[user_id] = 'security_system_advisor_authority_make'
+
+def security_system_advisor_authority_delete_handler(message, say, user_states, security_system_user_info_list, security_system_advisor_user_info_list):
+    user_id = message['user']
+    user_input = message['text']
+    user_input = process_user_input(user_input)
+    if user_input == '종료':
+        msg = (f"종료합니다.")
+        send_direct_message_to_user(user_id, msg)
+        del user_states[user_id]
+    else:
+        user_details = security_system_advisor_user_info_list[user_id]
+        user_num = len(user_details)
+        if user_input.isdigit():
+            user_input = int(user_input)
+            if (user_input > user_num) or (user_input < 0):
+                msg = (f"보기에 있는 숫자만 입력해주세요")
+                send_direct_message_to_user(user_id, msg)
+                user_states[user_id] = 'security_system_advisor_authority_delete'
+            else:
+                data = user_details[user_input-1]
+                name = data['name']
+                id = data['id']
+                with open("advisor_list.json", 'r', encoding='utf-8') as file:
+                    advisor_list = json.load(file)
+                del advisor_list[id]
+                with open("advisor_list.json", 'w', encoding='utf-8') as file:
+                    json.dump(advisor_list, file, indent=4)
+                msg = (f"{name}({id}) 님에게 관리자 권한을 삭제합니다")
+                send_direct_message_to_user(user_id, msg)
+                comment = ""
+                with open("advisor_list.json", 'r', encoding='utf-8') as file:
+                    advisor_list = json.load(file)
+                for i,(id, name) in enumerate(advisor_list.items()):
+                    comment = comment + f"{i+1}. {name}({id})\n"
+                msg = (f"현재 임시 관리자 목록은 다음과 같습니다\n{comment}\n목록 조회가 끝났습니다")
+                send_direct_message_to_user(user_id, msg)
+                del user_states[user_id]
+                del security_system_advisor_user_info_list[user_id]
+        else:
+            msg = (f"숫자만 입력해주세요")
+            send_direct_message_to_user(user_id, msg)
+            user_states[user_id] = 'security_system_advisor_authority_delete'
+
+#####################################################################################################################################################################
+
+def get_user_authority(user_id):
+    with open("users_info.json", 'r', encoding='utf-8') as file:
+        users_info_list = json.load(file)
+    return users_info_list[user_id]['authority']
+
+def is_fake_advisor(user_id):
+    with open("advisor_list.json", 'r', encoding='utf-8') as file:
+        advisor_list = json.load(file)
+    return user_id in advisor_list
+
+def is_real_advisor(user_id):
+    return user_id == advisor_id
+
+def get_all_users():
+    url = "https://slack.com/api/users.list"
+    headers = {
+        "Authorization": f"Bearer {config.bot_token_id}"
+    }
+    params = {
+        "limit": 100  # 한 번에 최대 200명의 사용자를 가져올 수 있습니다.
+    }
+
+    all_users = []
+    while True:
+        response = requests.get(url, headers=headers, params=params)
+        data = response.json()
+        all_users.extend(data.get("members", []))
+        # 다음 페이지가 있는 경우, cursor 정보를 사용하여 계속 가져옵니다.
+        next_cursor = data.get("response_metadata", {}).get("next_cursor")
+        if next_cursor:
+            params["cursor"] = next_cursor
+        else:
+            break
+    # 사용자 ID와 이름을 포함한 목록 생성
+    users_info = [{
+        "id": user["id"],
+        "name": user["name"],
+        "real_name": user.get("real_name", ""),
+        "display_name": user["profile"].get("display_name", "")
+    } for user in all_users]
+
+    return users_info
+
+def get_channel_users(channel_id):
+    # Step 1: Get member IDs from the channel
+    def get_channel_members(channel_id):
+        url = "https://slack.com/api/conversations.members"
+        headers = {
+            "Authorization": f"Bearer {config.bot_token_id}"
+        }
+        params = {
+            "channel": channel_id
+        }
+
+        member_ids = []
+        while True:
+            response = requests.get(url, headers=headers, params=params)
+            data = response.json()
+            member_ids.extend(data.get("members", []))
+            # 다음 페이지가 있는 경우, cursor 정보를 사용하여 계속 가져옵니다.
+            next_cursor = data.get("response_metadata", {}).get("next_cursor")
+            if next_cursor:
+                params["cursor"] = next_cursor
+            else:
+                break
+            print(member_ids)
+        return member_ids
+
+    # Step 2: Get user info for each member ID
+    def get_user_info(user_id):
+        url = "https://slack.com/api/users.info"
+        headers = {
+            "Authorization": f"Bearer {config.bot_token_id}"
+        }
+        params = {
+            "user": user_id
+        }
+
+        response = requests.get(url, headers=headers, params=params)
+        data = response.json()
+        return data.get("user")
+
+
+    member_ids = get_channel_members(channel_id)
+    users_info = []
+
+    for user_id in member_ids:
+        user_info = get_user_info(user_id)
+        if user_info:
+            users_info.append({
+                "id": user_info["id"],
+                "name": user_info["name"],
+                "real_name": user_info.get("real_name", ""),
+                "display_name": user_info["profile"].get("display_name", "")
+            })
+
+    return users_info
+## 새로운 사람 들어 왔을 때 이 함수 사용
+
+def contains_keywords(user):
+    for key in ['name', 'real_name', 'display_name']:
+        if key in user:
+            value = user[key].lower()
+            if any(keyword in value for keyword in ["simple", "bot", "_", "notion", "zapier", "admin"]):
+                return True
+    return False
+
+def update_authority():
+
+    management = get_channel_users(management_channel_id)
+    executives = get_channel_users(executives_channel_id)
+    intern = get_channel_users(intern_channel_id)
+    all_user = get_all_users()
+
+    user_info_dict = {}
+    for user in management:
+        if contains_keywords(user):
+            authority = 5
+        else:
+            authority = 1
+        user_info_dict[user['id']] = {**user, 'authority': authority}
+
+    for user in executives:
+        if user['id'] not in user_info_dict:
+            if contains_keywords(user):
+                authority = 5
+            else:
+                authority = 2
+            user_info_dict[user['id']] = {**user, 'authority': authority}
+
+    for user in intern:
+        if user['id'] not in user_info_dict:
+            if contains_keywords(user):
+                authority = 5
+            else:
+                authority = 3
+            user_info_dict[user['id']] = {**user, 'authority': authority}
+
+    for user in all_user:
+        if user['id'] not in user_info_dict:
+            if contains_keywords(user):
+                authority = 5
+            else:
+                authority = 4
+            user_info_dict[user['id']] = {**user, 'authority': authority}
+
+    with open("authority_change_list.json", 'r') as file:
+        authority_change_list = json.load(file)
+    for user_id, new_authority in authority_change_list.items():
+        if user_id in user_info_dict:
+            user_info_dict[user_id]['authority'] = new_authority
+    with open('users_info.json', 'w', encoding='utf-8') as json_file:
+        json.dump(user_info_dict, json_file, ensure_ascii=False, indent=4)    

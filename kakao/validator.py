@@ -1,0 +1,202 @@
+import re
+from datetime import datetime, timedelta
+import holidays
+
+###### 새로 추가된 validator.py 파일
+##### 해당 파일에서는 검증 관련 함수만 넣을 예정
+
+"""
+* 예외 처리 관련 함수들을 모아둔 Module
+* Process for validating inputs depending on proper format such as Date or name
+
+"""
+def is_valid_date_only_day(date_str, comparison_date_str=None):
+    # 정규식 패턴 정의 (YYYY-MM-DD)
+    date_pattern = r'^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$'
+    
+    # date_str 형식 검증
+    if not re.match(date_pattern, date_str):
+        return False
+    
+    # 날짜 유효성 검사
+    try:
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+    except ValueError:
+        return False
+    
+    # comparison_date_str이 주어졌을 때의 처리
+    if comparison_date_str:
+        if not re.match(date_pattern, comparison_date_str):
+            return False
+        try:
+            comparison_date_obj = datetime.strptime(comparison_date_str, '%Y-%m-%d')
+        except ValueError:
+            return False
+        # date_str이 comparison_date_str 이상인지 비교
+        return date_obj >= comparison_date_obj
+    
+    # comparison_date_str이 없는 경우 형식이 올바른지 여부 반환
+    return True
+
+def is_valid_date(date_str, comparison_date_str=None):
+    # 정규식 패턴 정의 (YYYY-MM-DD HH:MM)
+    date_pattern = r'^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):[0-5]\d$'
+    # date_str 형식 검증
+    if not re.match(date_pattern, date_str):
+        return False
+    # 날짜 및 시간 유효성 검사
+    try:
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d %H:%M')
+    except ValueError:
+        return False
+    # comparison_date_str이 주어졌을 때의 처리
+    if comparison_date_str:
+        if not re.match(date_pattern, comparison_date_str):
+            return False
+        try:
+            comparison_date_obj = datetime.strptime(comparison_date_str, '%Y-%m-%d %H:%M')
+        except ValueError:
+            return False
+        # date_str이 comparison_date_str 이상인지 비교
+        return date_obj >= comparison_date_obj
+    # comparison_date_str이 없는 경우 형식이 올바른지 여부 반환
+    return True
+    
+
+def is_valid_vacation_sequence(vacation_seqence):
+    # 정규식 - 수 입력했는지 확인하기
+    if re.fullmatch(r'\d+', vacation_seqence):
+        reason_sequence = int(vacation_seqence)
+        if 1 <= reason_sequence <= 5:
+            return True
+    
+    return False
+
+def is_valid_vacation_reason_sequence(vacation_reason_sequence):
+    # 정규식 - 수 입력되었는지 확인하기
+    if re.fullmatch(r'\d+', vacation_reason_sequence):
+        reason_sequence = int(vacation_reason_sequence)
+        if 1 <= reason_sequence <= 8:
+            return True
+    
+    return False
+
+def is_valid_email(email):
+    # 이메일 형식을 검증하기 위한 정규식 패턴
+    # 추후 삭제 - 입력을 확인하기 위해서 임시 print
+    print(email)
+
+    if email is None:
+        return False
+
+    pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+
+    # 정규식 패턴과 일치하는지 확인
+    if re.match(pattern, email):
+        return True
+    else:
+        return False
+    
+def is_valid_confirm_sequence(confirm_sequence):
+    if re.fullmatch(r'\d+', confirm_sequence):
+        reason_sequence = int(confirm_sequence)
+        if reason_sequence <= 1:
+            return True
+    
+    return False
+
+def is_valid_cancel_sequence(cancel_sequeunce_list, candidate):
+    for num in cancel_sequeunce_list:
+        num = str(num)
+        if re.fullmatch(r'\d+', num):
+            reason_sequence = int(num)
+            if 1 > reason_sequence or reason_sequence > candidate:
+                return False
+        else:
+            return False
+    return True
+
+
+def is_valid_vacation_purpose(user_input):
+    # 수인지 확인
+    # 1,2,3,4중 하나인지 확인
+    # 모두 만족하면 True, 하나라도 만족하지 못하면 False를 반환한다
+    try:
+        # 입력이 수인지 확인
+        number = int(user_input)
+    except ValueError:
+        # 입력이 수가 아닌 경우
+        return False
+    
+    # 1, 2, 3, 4중 하나인지 확인
+    if number in [1, 2, 3, 4]:
+        return True
+    else:
+        return False
+    
+def is_valid_user_purpose(user_input):
+    # 수인지 확인
+    # 모두 만족하면 True, 하나라도 만족하지 못하면 False를 반환한다
+    try:
+        # 입력이 수인지 확인
+        number = int(user_input)
+    except ValueError:
+        # 입력이 수가 아닌 경우
+        return False
+    
+    # 1, 2, 3, 4, 5, 6 중 하나인지 확인
+    if number in [1, 2, 3, 4, 5, 6, 7]:
+        return True
+    else:
+        return False
+
+def is_number(input_string):
+    # 정규식 패턴: ^-?\d+(\.\d+)?$
+    # ^        : 문자열의 시작
+    # -?       : 음수일 수 있으므로 '-'가 0번 또는 1번 올 수 있음
+    # \d+      : 하나 이상의 숫자
+    # (\.\d+)? : 소수점을 기준으로 그 뒤에 하나 이상의 숫자가 올 수 있음
+    # $        : 문자열의 끝
+    pattern = r'^-?\d+(\.\d+)?$'
+    return re.match(pattern, input_string)
+
+def is_holiday(date_str):
+    # 입력된 문자열을 datetime 객체로 변환
+    date_obj = datetime.strptime(date_str, '%Y-%m-%d %H:%M')
+
+    # 대한민국의 공휴일을 가져옴
+    kr_holidays = holidays.KR()
+
+    # 날짜가 공휴일, 대체 공휴일 또는 주말인지 확인
+    if date_obj.date() in kr_holidays:
+        return True, f"공휴일: {kr_holidays.get(date_obj.date())}"
+    elif date_obj.weekday() >= 5:  # 5: 토요일, 6: 일요일
+        return True, "주말"
+    else:
+        return False, None
+
+# 시작 날짜 ~ 종료 날짜 내 휴일이 존재하는지, 존재한다면 몇 일이 존재하는지 확인하는 함수
+def count_holidays(start_date_str, end_date_str):
+    # 시작 날짜와 종료 날짜를 datetime 객체로 변환
+    start_date = datetime.strptime(start_date_str, '%Y-%m-%d %H:%M')
+    end_date = datetime.strptime(end_date_str, '%Y-%m-%d %H:%M')
+    
+    # 날짜 범위 내의 휴일 수를 세기 위한 변수 초기화 + 휴가 신청 총 날짜 세기
+    vacation_count = 0
+    holiday_count = 0
+    holiday_details = []
+
+    # 시작 날짜부터 종료 날짜까지의 모든 날짜를 확인
+    current_date = start_date
+    while current_date <= end_date:
+        # 현재 날짜가 휴일인지 확인
+        vacation_count += 1
+        is_holiday_flag, holiday_name = is_holiday(current_date.strftime('%Y-%m-%d %H:%M'))
+        if is_holiday_flag:
+            holiday_count += 1
+            holiday_details.append(f"{current_date.strftime('%Y-%m-%d')}: {holiday_name}")
+        
+        # 다음 날짜로 이동
+        current_date += timedelta(days=1)
+    
+    return vacation_count, holiday_count, holiday_details
