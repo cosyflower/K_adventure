@@ -1,4 +1,4 @@
-# 로제봇 (RozeBot) - Slack 통합 자동화 봇
+# 로제봇 (RoseBot) - Slack 통합 자동화 봇
 
 ## 소개
 
